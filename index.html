@@ -456,9 +456,37 @@
       <div class="payment-total-block"><small>ยอดชำระ</small><strong id="modalTotal">฿0</strong></div>
     </div>
 
-    <div class="payment-methods">
-      <button data-method="เงินสด">เงินสด</button>
-      <button data-method="QR">QR Code</button>
+    <div class="payment-methods payment-method-cards-v33">
+      <button data-method="เงินสด" class="payment-method-card-v33 cash-card-v33">
+        <span class="payment-method-icon-v33 cash-icon-v33" aria-hidden="true">
+          <svg viewBox="0 0 64 44" fill="none">
+            <rect x="8" y="8" width="42" height="26" rx="4" stroke="currentColor" stroke-width="3"/>
+            <rect x="14" y="4" width="42" height="26" rx="4" stroke="currentColor" stroke-width="3" opacity=".65"/>
+            <circle cx="35" cy="21" r="7" stroke="currentColor" stroke-width="3"/>
+            <path d="M18 15h4M48 25h4" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+          </svg>
+        </span>
+        <span class="payment-method-copy-v33">
+          <strong>เงินสด</strong>
+          <small>ชำระด้วยเงินสด</small>
+        </span>
+      </button>
+
+      <button data-method="QR" class="payment-method-card-v33 qr-card-v33">
+        <span class="payment-method-icon-v33 qr-icon-v33" aria-hidden="true">
+          <svg viewBox="0 0 64 64" fill="none">
+            <path d="M8 24V10a2 2 0 0 1 2-2h14M40 8h14a2 2 0 0 1 2 2v14M56 40v14a2 2 0 0 1-2 2H40M24 56H10a2 2 0 0 1-2-2V40" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+            <rect x="18" y="18" width="10" height="10" stroke="currentColor" stroke-width="3"/>
+            <rect x="36" y="18" width="10" height="10" stroke="currentColor" stroke-width="3"/>
+            <rect x="18" y="36" width="10" height="10" stroke="currentColor" stroke-width="3"/>
+            <path d="M36 36h4v4h-4zM44 36h4v8h-4zM36 44h8v4h-8z" fill="currentColor"/>
+          </svg>
+        </span>
+        <span class="payment-method-copy-v33">
+          <strong>คิวอาร์โค้ด</strong>
+          <small>สแกนเพื่อชำระเงิน</small>
+        </span>
+      </button>
     </div>
 
     <div id="cashArea" class="hidden">
@@ -471,6 +499,7 @@
 
       <div class="quick-bank-title">ปุ่มธนบัตร — กดซ้ำเพื่อบวกยอดได้</div>
       <div class="quick-bank">
+        <button type="button" data-bank="10">฿10</button>
         <button type="button" data-bank="20">฿20</button>
         <button type="button" data-bank="50">฿50</button>
         <button type="button" data-bank="100">฿100</button>
