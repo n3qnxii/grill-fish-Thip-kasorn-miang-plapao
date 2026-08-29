@@ -2983,3 +2983,327 @@ body.cash-keypad-open{
 @media(max-width:800px){
   .queue-ticket-copy-v35 small{display:none!important}
 }
+
+/* =====================================================================
+   V36 — Orders date / orange preorder details / blue money / line charts
+   ===================================================================== */
+
+/* Orders: date is readable but compact */
+.orders-clean-table .order-date{
+  white-space:nowrap!important;
+  color:#6F665F!important;
+  font-weight:600!important;
+}
+
+/* Preorder customer + pickup section: warm orange visual hierarchy */
+#preCustomerDetails.preorder-customer-details{
+  border:1px solid #F1C99D!important;
+  background:#FFF9F2!important;
+}
+#preCustomerDetails.preorder-customer-details > summary{
+  background:#FFF1DF!important;
+  color:#3B3129!important;
+  border-bottom-color:#F1C99D!important;
+}
+#preCustomerDetails.preorder-customer-details > summary b{
+  color:#C8640B!important;
+}
+#preCustomerDetails.preorder-customer-details > summary small{
+  color:#9A765A!important;
+}
+#preCustomerDetails .details-chevron{
+  color:#D96F0B!important;
+}
+#preCustomerDetails label{
+  color:#7B5B43!important;
+}
+#preCustomerDetails input,
+#preCustomerDetails select{
+  background:#FFFFFF!important;
+  border-color:#EFC79E!important;
+}
+#preCustomerDetails input:focus,
+#preCustomerDetails select:focus{
+  border-color:#F28C28!important;
+  box-shadow:0 0 0 2px rgba(242,140,40,.10)!important;
+  outline:none!important;
+}
+
+/* Main / product page: ONLY money values use blue. Quantity text remains normal. */
+#sale .product .price,
+#sale .cart-items .cart-item small,
+#sale .summary-row b,
+#sale .total-row strong{
+  color:#32679F!important;
+}
+
+/* Keep product names, quantities, selected counts and controls in their normal colors */
+#sale .product strong,
+#sale .cart-item strong,
+#sale .qty,
+#sale .qty button,
+#sale .selected-items-count,
+#sale .cart-head h2{
+  color:inherit;
+}
+
+/* =====================================================================
+   V37 — Category delete / swipe reminder / sold-out redirect
+   ===================================================================== */
+.category-add-row-v37{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) auto auto!important;
+  gap:10px!important;
+  align-items:center!important;
+}
+.category-add-row-v37 input{
+  min-width:0!important;
+}
+.category-delete-btn-v37,
+.category-trash-v37{
+  border:1px solid #F1B4B4!important;
+  background:#FFF7F7!important;
+  color:#C94A4A!important;
+  border-radius:10px!important;
+  font-family:inherit!important;
+  font-weight:700!important;
+  cursor:pointer!important;
+}
+.category-delete-btn-v37{
+  min-height:42px!important;
+  padding:0 14px!important;
+}
+.category-manager-row-v37{
+  display:grid!important;
+  grid-template-columns:minmax(180px,1fr) auto!important;
+  align-items:center!important;
+  gap:12px!important;
+}
+.category-manager-actions-v37{
+  display:flex!important;
+  gap:7px!important;
+  align-items:center!important;
+  flex-wrap:nowrap!important;
+}
+.category-arrow-v37{
+  width:42px!important;
+  min-width:42px!important;
+  padding:0!important;
+}
+.category-save-v37{
+  white-space:nowrap!important;
+}
+.category-trash-v37{
+  min-height:38px!important;
+  padding:0 12px!important;
+  white-space:nowrap!important;
+}
+@media(max-width:900px){
+  .category-add-row-v37{grid-template-columns:1fr 1fr!important}
+  .category-add-row-v37 input{grid-column:1/-1}
+  .category-manager-row-v37{grid-template-columns:1fr!important}
+  .category-manager-actions-v37{justify-content:flex-end!important;flex-wrap:wrap!important}
+}
+
+/* Notification can be dismissed with X or a left/right swipe on touch devices */
+.bell-order-v37{
+  position:relative!important;
+  padding-right:38px!important;
+  transition:transform .16s ease,opacity .16s ease!important;
+  touch-action:pan-y!important;
+}
+.bell-order-v37.swiped-away-v37{
+  transform:translateX(80px)!important;
+  opacity:0!important;
+}
+.bell-dismiss-v37{
+  position:absolute!important;
+  top:50%!important;
+  right:6px!important;
+  transform:translateY(-50%)!important;
+  width:27px!important;
+  height:27px!important;
+  border:0!important;
+  border-radius:50%!important;
+  background:#FFF1DF!important;
+  color:#D96F0B!important;
+  font-size:17px!important;
+  font-weight:700!important;
+  line-height:1!important;
+  cursor:pointer!important;
+}
+
+/* Sold-out product remains tappable so staff can jump straight to Stock */
+#sale .product.sold-out-v37{
+  opacity:.62!important;
+  cursor:pointer!important;
+  border-style:dashed!important;
+  background:#FAFAFA!important;
+}
+#sale .product.sold-out-v37 small{
+  color:#C94A4A!important;
+  font-weight:700!important;
+}
+
+/* =====================================================================
+   V38 — Admin store dropdown + balanced Add Menu layout
+   ===================================================================== */
+
+/* Store settings collapsible card */
+.admin-store-details-v38{
+  padding:0!important;
+  overflow:hidden!important;
+}
+.admin-store-summary-v38{
+  list-style:none!important;
+  cursor:pointer!important;
+  padding:16px 18px!important;
+  margin:0!important;
+  user-select:none!important;
+}
+.admin-store-summary-v38::-webkit-details-marker{
+  display:none!important;
+}
+.admin-store-summary-v38::marker{
+  display:none!important;
+  content:""!important;
+}
+.admin-summary-right-v38{
+  display:flex!important;
+  align-items:center!important;
+  gap:10px!important;
+}
+.admin-details-chevron-v38{
+  width:30px!important;
+  height:30px!important;
+  display:grid!important;
+  place-items:center!important;
+  border:1px solid #F2C99B!important;
+  border-radius:9px!important;
+  background:#FFF8EF!important;
+  color:#D96F0B!important;
+  font-size:17px!important;
+  font-weight:700!important;
+  transition:transform .16s ease!important;
+}
+.admin-store-details-v38[open] .admin-details-chevron-v38{
+  transform:rotate(180deg)!important;
+}
+.admin-store-body-v38{
+  display:grid!important;
+  gap:8px!important;
+  padding:16px 18px 18px!important;
+  border-top:1px solid #EEE7DF!important;
+}
+.admin-store-body-v38 label{
+  margin-top:2px!important;
+}
+.admin-store-body-v38 input{
+  width:100%!important;
+  min-height:44px!important;
+}
+.admin-store-body-v38 #saveShopBtn{
+  margin-top:6px!important;
+}
+
+/* Add Menu: name/category occupy balanced columns */
+.admin-product-form-v38{
+  grid-template-columns:minmax(260px,1fr) minmax(320px,1fr)!important;
+  column-gap:18px!important;
+  row-gap:16px!important;
+  align-items:start!important;
+}
+.admin-product-name-field-v38,
+.admin-product-category-field-v38{
+  min-width:0!important;
+}
+.admin-product-name-field-v38 #newName,
+.admin-product-category-field-v38 #newCategory{
+  width:100%!important;
+  min-height:46px!important;
+  height:46px!important;
+}
+.admin-product-category-field-v38 .category-add-row-v37{
+  margin-top:10px!important;
+  grid-template-columns:minmax(160px,1fr) auto auto!important;
+  gap:10px!important;
+}
+.admin-product-category-field-v38 .category-add-row-v37 input,
+.admin-product-category-field-v38 .category-add-row-v37 button{
+  min-height:44px!important;
+}
+
+/* Keep lower product fields aligned in two columns */
+.admin-product-form-v38 > div:not(.admin-product-name-field-v38):not(.admin-product-category-field-v38){
+  min-width:0!important;
+}
+.admin-product-form-v38 input,
+.admin-product-form-v38 select{
+  box-sizing:border-box!important;
+}
+
+/* Tablet / narrower widths */
+@media(max-width:1050px){
+  .admin-product-form-v38{
+    grid-template-columns:1fr!important;
+  }
+  .admin-product-category-field-v38 .category-add-row-v37{
+    grid-template-columns:1fr 1fr!important;
+  }
+  .admin-product-category-field-v38 .category-add-row-v37 input{
+    grid-column:1/-1!important;
+  }
+}
+
+/* =====================================================================
+   V39 — Orange queue ticket toolbar + cleaner category add row
+   ===================================================================== */
+
+/* Queue ticket preview page buttons */
+body.queue-ticket-preview-v39 .screen-actions button,
+.queue-ticket-toolbar-v39 button{
+  min-height:46px!important;
+  border-radius:10px!important;
+  font-weight:700!important;
+}
+
+/* If queue ticket uses the existing inline screen-actions markup */
+.screen-actions button:first-child{
+  background:#FFF1DF!important;
+  border:1px solid #F2B36F!important;
+  color:#D96F0B!important;
+}
+.screen-actions button:last-child{
+  background:#F28C28!important;
+  border:1px solid #E67A18!important;
+  color:#FFFFFF!important;
+}
+.screen-actions button:first-child:hover{
+  background:#FFE8CC!important;
+}
+.screen-actions button:last-child:hover{
+  background:#E98220!important;
+}
+
+/* Add-category row now only has name + add button */
+.category-add-row-v39{
+  grid-template-columns:minmax(0,1fr) auto!important;
+  gap:10px!important;
+}
+.category-add-row-v39 #newCategoryName{
+  width:100%!important;
+  min-width:0!important;
+}
+.category-add-row-v39 #addCategoryBtn{
+  min-width:150px!important;
+  white-space:nowrap!important;
+}
+
+@media(max-width:780px){
+  .category-add-row-v39{
+    grid-template-columns:1fr!important;
+  }
+  .category-add-row-v39 #addCategoryBtn{
+    width:100%!important;
+  }
+}
