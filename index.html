@@ -44,10 +44,10 @@
       <div id="pinDots" class="pin-dots"><i></i><i></i><i></i><i></i></div>
       <input id="pinInput" type="password" inputmode="none" maxlength="4" aria-label="PIN" readonly>
       <div class="pin-pad">
-        <button data-pin="1">1</button><button data-pin="2">2</button><button data-pin="3">3</button>
-        <button data-pin="4">4</button><button data-pin="5">5</button><button data-pin="6">6</button>
-        <button data-pin="7">7</button><button data-pin="8">8</button><button data-pin="9">9</button>
-        <button id="pinBack" class="key-muted">⌫</button><button data-pin="0">0</button><button id="loginBtn" class="key-enter">✓</button>
+        <button type="button" data-pin="1">1</button><button type="button" data-pin="2">2</button><button type="button" data-pin="3">3</button>
+        <button type="button" data-pin="4">4</button><button type="button" data-pin="5">5</button><button type="button" data-pin="6">6</button>
+        <button type="button" data-pin="7">7</button><button type="button" data-pin="8">8</button><button type="button" data-pin="9">9</button>
+        <button type="button" id="pinBack" class="key-muted">⌫</button><button type="button" data-pin="0">0</button><button type="button" id="loginBtn" class="key-enter">✓</button>
       </div>
       <p id="loginHint" class="login-hint">เลือกพนักงานก่อน แล้วกรอก PIN 4 หลัก</p>
     </div>
@@ -75,17 +75,23 @@
   <div class="sidebar-utility">
     <div class="sidebar-utility-bell"><div id="bellTopHost"></div><span class="sidebar-utility-label">แจ้งเตือน</span></div>
     <div class="sidebar-clock clock"><b id="clockTime">--:--:--</b><small>เวลาปัจจุบัน</small></div>
-    <div class="sidebar-staff staff-switch-wrap">
-      <button id="staffQuickCard" class="staff-quick-card" type="button" aria-label="เปลี่ยนพนักงาน">
-        <span class="staff-avatar-icon">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
-        </span>
-        <span class="staff-card-copy"><b id="staffQuickName">พนักงาน</b><small id="staffQuickRole">ผู้ดูแลระบบ</small></span>
-      </button>
-      <select id="staffQuickSwitch" class="staff-quick-switch visually-hidden-select" aria-label="เปลี่ยนพนักงาน"></select>
-      <div id="staffQuickMenu" class="staff-quick-menu hidden"></div>
-    </div>
-    <span class="staff-pill hidden" id="staffBadge"></span>
+    
+<div class="sidebar-staff staff-switch-wrap staff-switch-v29">
+  <div id="staffAccountPopoverV29" class="staff-account-popover-v29 hidden">
+    <div id="staffAccountListV29" class="staff-account-list-v29"></div>
+  </div>
+
+  <button type="button" id="staffAccountCardV29" class="staff-account-card-v29" aria-label="เปลี่ยนบัญชีพนักงาน">
+    <span class="staff-account-avatar-v29" aria-hidden="true">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+    </span>
+    <span class="staff-account-copy-v29">
+      <b id="staffAccountNameV29">พนักงาน</b>
+      <small id="staffAccountRoleV29">ผู้ดูแลระบบ</small>
+    </span>
+  </button>
+</div>
+<span class="staff-pill hidden" id="staffBadge"></span>
     <button id="logoutBtn" class="sidebar-logout icon-btn" title="ออกจากระบบ" aria-label="ออกจากระบบ">
       <svg class="logout-svg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 5H5v14h5"/><path d="m14 8 4 4-4 4M18 12H8"/></svg>
       <span>ออกจากระบบ</span>
@@ -154,106 +160,134 @@
       </div>
     </section>
 
-    <!-- PREORDER UNIFIED -->
+    <!-- PREORDER UNIFIED V24 -->
     <section id="preorder" class="page hidden">
       <div class="page-heading preorder-page-heading">
-        <div><h2>สั่งล่วงหน้า</h2><p>ดูรายการที่นัดรับและสร้างออเดอร์ใหม่ในหน้าเดียว</p></div>
+        <div><h2>สั่งล่วงหน้า</h2></div>
       </div>
 
-      <div class="preorder-unified-layout">
-        <section class="card preorder-list-pane">
-          <div class="preorder-pane-head preorder-pane-head-clean">
+      <div class="preorder-page-tabs-v25" role="tablist" aria-label="หน้าสั่งล่วงหน้า">
+        <button type="button" class="active" data-pre-page-tab="list">รายการสั่งล่วงหน้า</button>
+        <button type="button" data-pre-page-tab="create">สร้างออเดอร์ล่วงหน้า</button>
+      </div>
+
+      <div class="preorder-page-panel-v25 active" data-pre-page-panel="list">
+        <section class="card preorder-list-pane preorder-list-pane-v24">
+          <div class="preorder-pane-head preorder-pane-head-v24">
             <div>
               <h3>รายการสั่งล่วงหน้า</h3>
-              <p id="preListTitle">รายการสั่งล่วงหน้า</p>
+              <p id="preListTitle">รายการสั่งล่วงหน้าทั้งหมด</p>
             </div>
           </div>
 
-          <div class="preorder-list-toolbar">
-            <div class="preorder-search-wrap">
+          <div class="preorder-search-row">
+            <div class="preorder-search-box">
               <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
-              <input id="preListSearch" placeholder="ค้นหาชื่อลูกค้า / เบอร์โทร / รายการ">
+              <input id="preListSearch" type="search" placeholder="ค้นหาชื่อลูกค้า / เบอร์โทร / รายการ">
             </div>
+          </div>
+
+          <div class="preorder-filter-card">
+            <div class="preorder-filter-label">วันที่รับ</div>
             <div class="preorder-date-filter">
-              <span>วันที่รับ</span>
               <input id="preListDate" type="date" aria-label="เลือกวันที่รับ">
+              <button id="preListTomorrowBtn" type="button" class="btn-neutral">พรุ่งนี้</button>
+              <button id="preListAllBtn" type="button" class="btn-neutral">ทุกวัน</button>
             </div>
           </div>
 
-          <div class="preorder-status-tabs" id="preorderStatusTabs">
-            <button class="pre-status-filter active" data-pre-filter="all">ทั้งหมด</button>
-            <button class="pre-status-filter" data-pre-filter="pending">รอยืนยัน</button>
-            <button class="pre-status-filter" data-pre-filter="confirmed">ยืนยันแล้ว</button>
-            <button class="pre-status-filter" data-pre-filter="preparing">กำลังเตรียม</button>
-            <button class="pre-status-filter" data-pre-filter="ready">พร้อมรับ</button>
-            <button class="pre-status-filter" data-pre-filter="cancelled">ยกเลิก</button>
+          <div id="preStatusTabs" class="pre-status-tabs" role="tablist" aria-label="กรองสถานะ">
+            <button type="button" class="active" data-pre-status="all">ทั้งหมด</button>
+            <button type="button" data-pre-status="pending">รอยืนยัน</button>
+            <button type="button" data-pre-status="confirmed">ยืนยันแล้ว</button>
+            <button type="button" data-pre-status="preparing">กำลังเตรียม</button>
+            <button type="button" data-pre-status="ready">พร้อมรับ</button>
+            <button type="button" data-pre-status="cancelled">ยกเลิก</button>
           </div>
 
-          <div class="pre-list-quick-actions">
-            <button id="preListTomorrowBtn" class="btn-neutral">พรุ่งนี้</button>
-            <button id="preListAllBtn" class="btn-neutral">ทุกวัน</button>
-            <button id="newPreorderFromListBtn" class="primary btn-strong hidden">สร้างรายการ</button>
-          </div>
-          <div id="preparationSummary" class="prep-summary"></div>
-          <div id="preorderList" class="table-wrap preorder-list-table"></div>
+          <div id="preparationSummary" class="prep-summary prep-summary-v24"></div>
+          <div id="preorderList" class="preorder-card-list"></div>
         </section>
+      </div>
 
-        <section class="card preorder-create-pane">
-          <details class="preorder-customer-details" open>
-            <summary>
-              <div>
-                <h3>ข้อมูลลูกค้าและเวลารับ</h3>
-                <p>กดเพื่อพับ/กางข้อมูลลูกค้า</p>
+      <div class="preorder-page-panel-v25" data-pre-page-panel="create">
+        <section class="card preorder-create-v25">
+          <div class="preorder-create-head-v25">
+            <div>
+              <h3>สร้างออเดอร์ล่วงหน้า</h3>
+              <p>เลือกสินค้าได้จากพื้นที่หลัก และเปิดข้อมูลลูกค้าเมื่อพร้อมบันทึก</p>
+            </div>
+            <div id="tomorrowBadge" class="date-badge"></div>
+          </div>
+
+          <div class="preorder-create-layout-v25">
+            <div class="preorder-product-side-v25">
+              <div class="preorder-items-head preorder-items-head-v24">
+                <div>
+                  <h3>เลือกสินค้า</h3>
+                  <p>เลือกหมวด แล้วกด − / + หรือแตะตัวเลขเพื่อกรอกจำนวน สูงสุด 100</p>
+                </div>
               </div>
+              <div id="preCategoryTabs" class="pre-category-tabs"></div>
+              <div class="preorder-products-column preorder-products-column-v25 preorder-products-readable">
+                <div id="preProducts" class="pre-products pre-products-v24"></div>
+              </div>
+            </div>
+
+            <aside class="preorder-order-side-v25 preorder-order-side-readable">
+              <details id="preCustomerDetails" class="preorder-customer-details">
+            <summary>
+              <span>
+                <b>ข้อมูลลูกค้าและเวลารับ</b>
+                <small>กดเพื่อพับ / กางข้อมูล</small>
+              </span>
               <span class="details-chevron">⌄</span>
             </summary>
-            <div class="preorder-customer-grid preorder-customer-grid-v23">
-            <div>
-              <label>ชื่อลูกค้า *</label>
-              <input id="preCustomer" placeholder="กรอกชื่อลูกค้า">
-            </div>
-            <div>
-              <label>วันที่รับ *</label>
-              <input id="preDate" type="date">
-            </div>
-            <div>
-              <label>เบอร์โทร</label>
-              <input id="prePhone" inputmode="tel" placeholder="08x-xxx-xxxx" readonly>
-            </div>
-            <div>
-              <label>เวลารับ *</label>
-              <div class="pre-time-picker">
-                <select id="preHour" aria-label="ชั่วโมง"></select>
-                <span>:</span>
-                <select id="preMinute" aria-label="นาที"></select>
+
+            <div class="preorder-customer-grid preorder-customer-grid-v24">
+              <div>
+                <label>ชื่อลูกค้า *</label>
+                <input id="preCustomer" placeholder="กรอกชื่อลูกค้า">
               </div>
-              <input id="preTime" type="hidden">
+              <div>
+                <label>เบอร์โทร</label>
+                <input id="prePhone" inputmode="none" placeholder="08x-xxx-xxxx" readonly>
+              </div>
+
+              <div>
+                <label>วันที่รับ *</label>
+                <input id="preDate" type="date">
+              </div>
+              <div>
+                <label>เวลารับ *</label>
+                <div class="preorder-time-selects">
+                  <select id="preHour" aria-label="ชั่วโมงรับ"></select>
+                  <span>:</span>
+                  <select id="preMinute" aria-label="นาทีรับ"></select>
+                </div>
+                <input id="preTime" type="hidden" value="17:00">
+              </div>
+
+              <div class="pre-note-field">
+                <label>หมายเหตุ</label>
+                <input id="preNote" placeholder="เพิ่มหมายเหตุ (ถ้ามี)">
+              </div>
+              <input id="preDateTime" type="hidden">
             </div>
-            <div class="pre-note-field">
-              <label>หมายเหตุ</label>
-              <input id="preNote" placeholder="เพิ่มหมายเหตุ (ถ้ามี)">
-            </div>
-            <input id="preDateTime" type="hidden">
-          </div>
           </details>
-
-          
-
-          <div class="preorder-items-head">
-            <div><h3>รายการสั่งล่วงหน้า</h3><p>จำนวนใช้ Numeric Keypad เดิม สูงสุด 100</p></div>
-          </div>
-          <div class="preorder-create-body">
-            <div class="preorder-products-column">
-              <div id="preProducts" class="pre-products"></div>
-            </div>
-            <aside class="pre-summary pre-summary-inline">
-              <h3>รายการที่เลือก</h3>
-              <div id="preCartItems"><p class="empty">ยังไม่ได้เลือกสินค้า</p></div>
-              <div class="total-row"><span>รวมทั้งหมด</span><strong id="preTotal">฿0</strong></div>
-              <div class="preorder-action-row">
-                <button id="clearPreorderBtn" class="btn-neutral">ยกเลิก</button>
-                <button id="savePreorderBtn" class="primary btn-strong">บันทึกรายการสั่งล่วงหน้า</button>
+              <aside class="pre-summary pre-summary-inline pre-summary-v24">
+              <div>
+                <h3>รายการที่เลือก</h3>
+                <div id="preCartItems"><p class="empty">ยังไม่ได้เลือกสินค้า</p></div>
               </div>
+              <div class="pre-summary-bottom">
+                <div class="total-row"><span>รวมทั้งหมด</span><strong id="preTotal">฿0</strong></div>
+                <div class="preorder-action-row">
+                  <button id="clearPreorderBtn" type="button" class="btn-neutral">ล้างรายการ</button>
+                  <button id="savePreorderBtn" type="button" class="primary btn-strong">บันทึกรายการสั่งล่วงหน้า</button>
+                </div>
+              </div>
+            </aside>
             </aside>
           </div>
         </section>
@@ -473,15 +507,16 @@
   <div class="cash-keypad-modal">
     <div class="cash-keypad-popup-head">
       <div><small>ลูกค้าจ่าย</small><strong id="popupCashDisplay">฿0</strong></div>
-      <button id="closeCashKeypad" class="close-circle">×</button>
+      <button type="button" id="closeCashKeypad" class="close-circle">×</button>
     </div>
     <div class="popup-payment-keypad">
-      <button data-popup-key="1">1</button><button data-popup-key="2">2</button><button data-popup-key="3">3</button>
-      <button data-popup-key="4">4</button><button data-popup-key="5">5</button><button data-popup-key="6">6</button>
-      <button data-popup-key="7">7</button><button data-popup-key="8">8</button><button data-popup-key="9">9</button>
-      <button id="popupCashBack" class="key-secondary">⌫</button><button data-popup-key="0">0</button><button id="popupCashClear" class="key-clear">ล้าง</button>
+      <button type="button" data-popup-key="1">1</button><button type="button" data-popup-key="2">2</button><button type="button" data-popup-key="3">3</button>
+      <button type="button" data-popup-key="4">4</button><button type="button" data-popup-key="5">5</button><button type="button" data-popup-key="6">6</button>
+      <button type="button" data-popup-key="7">7</button><button type="button" data-popup-key="8">8</button><button type="button" data-popup-key="9">9</button>
+      <button type="button" id="popupCashBack" class="key-secondary">⌫</button><button type="button" data-popup-key="0">0</button><button type="button" id="popupCashClear" class="key-clear">ล้าง</button>
     </div>
-    <button id="confirmCashKeypad" class="primary full keypad-done">ใช้จำนวนนี้</button>
+    <button type="button" id="exactCashBtn" class="cash-exact-btn">พอดี</button>
+    <button type="button" id="confirmCashKeypad" class="primary full keypad-done">ใช้จำนวนนี้</button>
   </div>
 </div>
 
