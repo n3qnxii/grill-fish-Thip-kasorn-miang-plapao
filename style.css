@@ -2474,3 +2474,171 @@ body.cash-keypad-open{
 #staffSwitchModal{
   z-index:2147483000!important;
 }
+
+/* =====================================================================
+   V30 — QR fullscreen + payment/keypad color polish
+   ===================================================================== */
+
+/* QR expanded view must sit above payment modal and every normal overlay */
+#qrFullscreen.qr-fullscreen{
+  position:fixed!important;
+  inset:0!important;
+  z-index:2147483647!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  background:rgba(17,12,8,.90)!important;
+}
+#qrFullscreen.qr-fullscreen.hidden{
+  display:none!important;
+}
+#qrFullscreen .qr-fullscreen-card{
+  position:relative!important;
+  z-index:2147483647!important;
+}
+#qrFullscreen .qr-fullscreen-close{
+  z-index:2147483647!important;
+}
+
+/* Payment method tabs: text stays black, selected uses softer orange */
+.payment-methods button,
+.payment-methods button.selected{
+  color:#171717!important;
+  font-weight:700!important;
+}
+.payment-methods button{
+  background:#FFFFFF!important;
+  border-color:#E4E4E1!important;
+}
+.payment-methods button.selected{
+  background:#FFF1DF!important;
+  border-color:#F3A45E!important;
+}
+
+/* Cash numeric keypad: all labels/numbers black and softer button fills */
+#cashKeypadPopup .cash-keypad-popup-head small,
+#cashKeypadPopup .cash-keypad-popup-head strong,
+#cashKeypadPopup .popup-payment-keypad button,
+#cashKeypadPopup .cash-exact-btn,
+#cashKeypadPopup .keypad-done,
+#cashKeypadPopup .close-circle{
+  color:#111111!important;
+}
+
+#cashKeypadPopup .cash-keypad-popup-head strong{
+  color:#111111!important;
+}
+
+#cashKeypadPopup .popup-payment-keypad button{
+  background:#FFFFFF!important;
+  border-color:#E4E4E1!important;
+}
+#cashKeypadPopup .popup-payment-keypad button:active{
+  background:#F7F3EE!important;
+  color:#111111!important;
+}
+
+#cashKeypadPopup .popup-payment-keypad .key-secondary{
+  background:#F5EFE8!important;
+  border-color:#E7DED4!important;
+  color:#111111!important;
+}
+
+#cashKeypadPopup .popup-payment-keypad .key-clear{
+  background:#FFF1DF!important;
+  border-color:#F3C18F!important;
+  color:#111111!important;
+}
+
+#cashKeypadPopup .cash-exact-btn{
+  background:#EAF6EE!important;
+  border-color:#B9DFC5!important;
+  color:#111111!important;
+}
+#cashKeypadPopup .cash-exact-btn:active{
+  background:#DDF0E3!important;
+  color:#111111!important;
+}
+
+#cashKeypadPopup .keypad-done{
+  background:#FFE4C5!important;
+  border-color:#F2BB7E!important;
+  color:#111111!important;
+}
+#cashKeypadPopup .keypad-done:active{
+  background:#FFD9AD!important;
+  color:#111111!important;
+}
+
+/* Preorder minus / quantity / plus controls use black text */
+#preProducts .pre-controls button,
+#preProducts .pre-controls .pre-qty-button,
+[data-pre-page-panel="create"] .pre-product-v24 .pre-controls button,
+[data-pre-page-panel="create"] .pre-product-v24 .pre-controls .pre-qty-button{
+  color:#111111!important;
+}
+#preProducts .pre-controls button:active,
+#preProducts .pre-controls button.pos-tapped,
+[data-pre-page-panel="create"] .pre-product-v24 .pre-controls button:active,
+[data-pre-page-panel="create"] .pre-product-v24 .pre-controls button.pos-tapped{
+  color:#111111!important;
+  background:#F1E9E0!important;
+}
+
+/* =====================================================================
+   V31 — Numeric Keypad Action Colors
+   Match the POS warm orange / success palette with clearer hierarchy.
+   ===================================================================== */
+
+/* ล้าง — destructive secondary action */
+#cashKeypadPopup .popup-payment-keypad .key-clear{
+  background:#FCEDEC!important;
+  border:1px solid #F4C6C2!important;
+  color:#C84A43!important;
+  font-weight:700!important;
+}
+#cashKeypadPopup .popup-payment-keypad .key-clear:hover{
+  background:#F9E1DF!important;
+}
+#cashKeypadPopup .popup-payment-keypad .key-clear:active{
+  background:#F4D4D1!important;
+  color:#B73E38!important;
+}
+
+/* พอดี — success action */
+#cashKeypadPopup .cash-exact-btn{
+  background:#EAF6EE!important;
+  border:1px solid #B9DFC5!important;
+  color:#267343!important;
+  font-weight:700!important;
+}
+#cashKeypadPopup .cash-exact-btn:hover{
+  background:#DFF1E5!important;
+}
+#cashKeypadPopup .cash-exact-btn:active{
+  background:#D4EBDD!important;
+  color:#1F6138!important;
+}
+
+/* ใช้จำนวนนี้ — primary orange action */
+#cashKeypadPopup .keypad-done{
+  background:#F28C28!important;
+  border:1px solid #E27A17!important;
+  color:#FFFFFF!important;
+  font-weight:700!important;
+}
+#cashKeypadPopup .keypad-done:hover{
+  background:#E98220!important;
+}
+#cashKeypadPopup .keypad-done:active{
+  background:#D97616!important;
+  color:#FFFFFF!important;
+}
+
+/* Keep icon/button labels crisp */
+#cashKeypadPopup .popup-payment-keypad .key-secondary{
+  background:#F5EFE8!important;
+  border:1px solid #E5DCD2!important;
+  color:#2B2724!important;
+  font-weight:700!important;
+}
