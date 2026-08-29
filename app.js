@@ -353,7 +353,7 @@ function advanceDailyOrderNumber(){
 function loadState(){try{const x=JSON.parse(localStorage.getItem(STORAGE_KEY)||"null")||clone(demoState);if(!x.settings)x.settings=clone(demoState.settings);if(typeof x.settings.qrImage!=="string")x.settings.qrImage="";if(typeof x.settings.promptPayId!=="string")x.settings.promptPayId="";
 if(!x.settings.dailyOrderCounters||typeof x.settings.dailyOrderCounters!=="object")x.settings.dailyOrderCounters={};
 if(!Array.isArray(x.settings.customCategories))x.settings.customCategories=[];if(!Array.isArray(x.settings.categoryOrder))x.settings.categoryOrder=[];if(!Array.isArray(x.products))x.products=clone(demoState.products);if(!Array.isArray(x.orders))x.orders=[];if(!Array.isArray(x.preorders))x.preorders=[];if(!Array.isArray(x.heldOrders))x.heldOrders=[];x.staff=clone(STAFF_LIST);return x}catch(e){return clone(demoState)}}
-let state=loadState(),currentUser=null,selectedStaffId=null,cart=[],selectedMethod=null,lastOrder=null,currentCategory="ปลาชุดใหญ่",dashboardRange="today",lastCashReceived=0,lastChange=0,preorderCart=[];
+let state=loadState(),currentUser=null,selectedStaffId=null,cart=[],selectedMethod=null,lastOrder=null,currentCategory="ปลาชุดใหญ่",dashboardRange="today",orderStatusFilter="today",preorderStatusFilter="all",lastCashReceived=0,lastChange=0,preorderCart=[];
 // V10.7 shop name migration for existing saved data
 if(state.settings&&state.settings.shopName===("ร้านทิพย์เกษรเมี่ยงปลาเผา"+"ทิพย์เกษร")){state.settings.shopName="ร้านทิพย์เกษรเมี่ยงปลาเผา";saveState();}
 function saveState(){state.staff=clone(STAFF_LIST);localStorage.setItem(STORAGE_KEY,JSON.stringify(state))}
@@ -453,12 +453,16 @@ function applyCurrentUser(staff){
   currentUser=staff;
   $("loginScreen").classList.add("hidden");$("app").classList.remove("hidden");
   $("staffBadge").textContent=`${staff.name} · ${staff.role==="owner"?"เจ้าของ":"พนักงาน"}`;
-  document.querySelectorAll(".owner-only").forEach(el=>el.classList.toggle("hidden",staff.role!=="owner"));
+  const isOwner=staff.role==="owner"&&staff.name==="คุณทองสุข";
+  document.querySelectorAll(".owner-only").forEach(el=>el.classList.toggle("hidden",!isOwner));
   const quick=$("staffQuickSwitch");
   if(quick){
     quick.innerHTML=STAFF_LIST.map(s=>`<option value="${s.id}">${s.name}${s.role==="owner"?" · เจ้าของ":""}</option>`).join("");
     quick.value=String(staff.id);
   }
+  if($("staffQuickName"))$("staffQuickName").textContent=staff.name;
+  if($("staffQuickRole"))$("staffQuickRole").textContent=staff.role==="owner"?"ผู้ดูแลระบบ":"พนักงาน";
+  if($("staffQuickMenu"))$("staffQuickMenu").innerHTML=STAFF_LIST.map(s=>`<button type="button" class="${s.id===staff.id?"active":""}" data-quick-staff="${s.id}"><span>${s.name}</span><small>${s.role==="owner"?"ผู้ดูแลระบบ":"พนักงาน"}</small></button>`).join("");
   if(staff.role!=="owner"&&!$("dashboard").classList.contains("hidden"))openPage("sale");
   if(staff.role!=="owner"&&!$("admin").classList.contains("hidden"))openPage("sale");
   renderAll();
@@ -471,7 +475,7 @@ function renderSwitchPinDots(){[...$("switchPinDots").children].forEach((d,i)=>d
 function clearSwitchPin(message="กรอก PIN 4 หลัก"){$("switchPinInput").value="";renderSwitchPinDots();$("switchPinHint").textContent=message}
 function openStaffSwitch(id){
   const staff=STAFF_LIST.find(s=>s.id===Number(id));if(!staff||staff.id===currentUser?.id){if($("staffQuickSwitch"))$("staffQuickSwitch").value=String(currentUser?.id||"");return}
-  pendingSwitchStaffId=staff.id;$("switchStaffName").textContent=staff.name;clearSwitchPin();$("staffSwitchModal").classList.remove("hidden");
+  pendingSwitchStaffId=staff.id;if($("staffQuickMenu"))$("staffQuickMenu").classList.add("hidden");$("switchStaffName").textContent=staff.name;clearSwitchPin();$("staffSwitchModal").classList.remove("hidden");
 }
 function closeStaffSwitch(){
   $("staffSwitchModal").classList.add("hidden");pendingSwitchStaffId=null;clearSwitchPin();
@@ -483,6 +487,9 @@ function confirmStaffSwitch(){
   $("staffSwitchModal").classList.add("hidden");pendingSwitchStaffId=null;clearSwitchPin();applyCurrentUser(staff);
 }
 $("staffQuickSwitch").onchange=e=>openStaffSwitch(e.target.value);
+$("staffQuickCard").onclick=()=>{$("staffQuickMenu").classList.toggle("hidden")};
+$("staffQuickMenu").onclick=e=>{const btn=e.target.closest("[data-quick-staff]");if(!btn)return;$("staffQuickMenu").classList.add("hidden");openStaffSwitch(btn.dataset.quickStaff)};
+document.addEventListener("click",e=>{const wrap=document.querySelector(".sidebar-staff");if(wrap&&!wrap.contains(e.target))$("staffQuickMenu").classList.add("hidden")});
 $("closeStaffSwitch").onclick=closeStaffSwitch;
 $("staffSwitchModal").addEventListener("click",e=>{if(e.target===$("staffSwitchModal"))closeStaffSwitch()});
 document.querySelectorAll("[data-switch-pin]").forEach(b=>b.onclick=()=>{if($("switchPinInput").value.length<4){$("switchPinInput").value+=b.dataset.switchPin;renderSwitchPinDots();if($("switchPinInput").value.length===4)setTimeout(confirmStaffSwitch,100)}});
@@ -507,8 +514,14 @@ function renderCategories(){
 }
 window.setCategory=c=>{currentCategory=c;renderCategories();renderProducts()};
 function productEmoji(c){return ""}
-function filteredProducts(){const q=$("menuSearch").value.trim().toLowerCase();return state.products.filter(p=>p.active&&(currentCategory==="ทั้งหมด"||p.category===currentCategory)&&p.name.toLowerCase().includes(q)).slice().sort((a,b)=>a.price-b.price||a.name.localeCompare(b.name,"th"))}
-function renderProducts(){$("products").innerHTML=filteredProducts().map(p=>`<button class="product ${p.stock<=5?"low":""}" data-cat="${p.category}" onclick="addItem(${p.id})" ${p.stock<=0?"disabled":""}><strong>${p.name}</strong><span class="price">${money(p.price)}</span>${p.stock<=0?'<small>สินค้าหมด</small>':""}</button>`).join("")||'<p class="empty">ไม่พบเมนู</p>'}
+function filteredProducts(){const q=$("menuSearch").value.trim().toLowerCase();return state.products.filter(p=>p.active&&(currentCategory==="ทั้งหมด"||p.category===currentCategory)&&(!q||p.name.toLowerCase().includes(q)||String(p.price).includes(q)||money(p.price).toLowerCase().includes(q))).slice().sort((a,b)=>a.price-b.price||a.name.localeCompare(b.name,"th"))}
+function renderProducts(){
+  $("products").innerHTML=filteredProducts().map(p=>{
+    const selected=cart.find(x=>x.id===p.id);
+    return `<button class="product ${p.stock<=5?"low":""} ${selected?"selected-product":""}" data-cat="${p.category}" onclick="toggleProductSelection(${p.id})" ${p.stock<=0?"disabled":""}>${selected?'<span class="product-check" aria-hidden="true">✓</span>':""}<strong>${p.name}</strong><span class="price">${money(p.price)}</span>${p.stock<=0?'<small>สินค้าหมด</small>':""}</button>`
+  }).join("")||'<p class="empty">ไม่พบเมนู</p>';
+  renderSelectedItemsCount();
+}
 $("menuSearch").addEventListener("input",renderProducts);
 $("menuSearchToggle").onclick=()=>{
   const wrap=$("menuSearchWrap");
@@ -522,23 +535,38 @@ document.addEventListener("click",e=>{
   const wrap=$("menuSearchWrap");
   if(wrap&&wrap.classList.contains("open")&&!wrap.contains(e.target)&&!$("menuSearch").value.trim())wrap.classList.remove("open");
 });
-window.addItem=id=>{const el=currentTapElement();tapFeedback(el);playTapSound();const p=state.products.find(x=>x.id===id);if(!p||p.stock<=0)return;const row=cart.find(x=>x.id===id),qty=row?row.qty+1:1;if(qty>p.stock){alert("สต๊อกไม่พอ");return}if(row)row.qty++;else cart.push({id:p.id,name:p.name,price:p.price,cost:p.cost,qty:1});renderCart()};
-window.changeQty=(id,d)=>{const el=currentTapElement();tapFeedback(el);playQtySound(d>0);const row=cart.find(x=>x.id===id);if(!row)return;const p=state.products.find(x=>x.id===id);row.qty+=d;if(row.qty<=0)cart=cart.filter(x=>x.id!==id);else{row.qty=Math.min(row.qty,p.stock,100)}renderCart()};
+function renderSelectedItemsCount(){
+  const el=$("selectedItemsCount");if(!el)return;
+  const totalQty=cart.reduce((s,x)=>s+Number(x.qty||0),0);
+  el.textContent=`เลือกแล้ว ${totalQty} รายการ`;
+  el.classList.toggle("has-items",totalQty>0);
+}
+window.toggleProductSelection=id=>{
+  const el=currentTapElement();tapFeedback(el);playTapSound();
+  const p=state.products.find(x=>x.id===id);if(!p||p.stock<=0)return;
+  const row=cart.find(x=>x.id===id);
+  if(row){cart=cart.filter(x=>x.id!==id);playQtySound(false)}
+  else{cart.push({id:p.id,name:p.name,price:p.price,cost:p.cost,qty:1})}
+  renderCart();renderProducts();
+};
+window.addItem=id=>toggleProductSelection(id);
+window.changeQty=(id,d)=>{const el=currentTapElement();tapFeedback(el);playQtySound(d>0);const row=cart.find(x=>x.id===id);if(!row)return;const p=state.products.find(x=>x.id===id);row.qty+=d;if(row.qty<=0)cart=cart.filter(x=>x.id!==id);else{row.qty=Math.min(row.qty,p.stock,100)}renderCart();renderProducts()};
 window.setCartQty=(id,value)=>{
   const row=cart.find(x=>x.id===id),p=state.products.find(x=>x.id===id);if(!row||!p)return;
   let qty=Math.min(100,Math.max(0,Number(String(value??"").replace(/\D/g,""))||0));
   if(qty<=0){cart=cart.filter(x=>x.id!==id)}
   else{qty=Math.min(qty,Number(p.stock)||0);row.qty=qty}
-  renderCart();
+  renderCart();renderProducts();
 };
 window.openCartQtyKeypad=id=>{
   const row=cart.find(x=>x.id===id),p=state.products.find(x=>x.id===id);if(!row||!p)return;
   openNumericKeypad({title:`จำนวน ${row.name}`,hint:"สูงสุด 100",value:row.qty,min:0,max:Math.min(100,Number(p.stock)||100),maxDigits:3,onConfirm:n=>setCartQty(id,n)});
 };
 const subtotal=()=>cart.reduce((s,x)=>s+x.price*x.qty,0),discount=()=>Math.max(0,Number($("discountInput").value||0)),total=()=>Math.max(0,subtotal()-discount());
-function renderCart(){$("cartItems").innerHTML=cart.length?cart.map(x=>`<div class="cart-item"><div><b>${x.name}</b><div class="hint">${money(x.price)} × ${x.qty}</div></div><div class="qty"><button onclick="changeQty(${x.id},-1)">−</button><button type="button" class="qty-number-input qty-number-button" onclick="openCartQtyKeypad(${x.id})" aria-label="จำนวน ${escapeHtml(x.name)}">${x.qty}</button><button onclick="changeQty(${x.id},1)">+</button></div></div>`).join(""):'<p class="empty">ยังไม่มีสินค้า</p>';$("subtotal").textContent=money(subtotal());$("discountDisplay").textContent=money(discount());$("total").textContent=money(total());$("payBtn").disabled=!cart.length;if($("holdOrderBtn"))$("holdOrderBtn").disabled=!cart.length;if($("heldOrderCount"))$("heldOrderCount").textContent=state.heldOrders?.length||0}
+function renderCart(){$("cartItems").innerHTML=cart.length?cart.map(x=>`<div class="cart-item"><div class="cart-item-info"><b>${x.name}</b><div class="hint">${money(x.price)} × ${x.qty}</div></div><div class="cart-item-controls"><div class="qty"><button onclick="changeQty(${x.id},-1)">−</button><button type="button" class="qty-number-input qty-number-button" onclick="openCartQtyKeypad(${x.id})" aria-label="จำนวน ${escapeHtml(x.name)}">${x.qty}</button><button onclick="changeQty(${x.id},1)">+</button></div><button class="cart-trash-btn" onclick="removeCartItem(${x.id})" title="ลบรายการ" aria-label="ลบ ${escapeHtml(x.name)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 11v5M14 11v5"/></svg></button></div></div>`).join(""):'<p class="empty">ยังไม่มีสินค้า</p>';$("subtotal").textContent=money(subtotal());$("discountDisplay").textContent=money(discount());$("total").textContent=money(total());$("payBtn").disabled=!cart.length;if($("holdOrderBtn"))$("holdOrderBtn").disabled=!cart.length;if($("heldOrderCount"))$("heldOrderCount").textContent=state.heldOrders?.length||0;renderSelectedItemsCount()}
 
-$("discountInput").addEventListener("input",renderCart);$("clearBtn").onclick=()=>{if(cart.length&&confirm("ล้างออเดอร์นี้ใช่ไหม?")){cart=[];$("discountInput").value=0;renderCart()}};
+window.removeCartItem=id=>{cart=cart.filter(x=>x.id!==id);renderCart();renderProducts();playQtySound(false)};
+$("discountInput").addEventListener("input",renderCart);$("clearBtn").onclick=()=>{if(cart.length&&confirm("ล้างออเดอร์นี้ใช่ไหม?")){cart=[];$("discountInput").value=0;renderCart();renderProducts()}};
 
 function renderHeldOrders(){
   if(!Array.isArray(state.heldOrders))state.heldOrders=[];
@@ -553,8 +581,8 @@ function renderHeldOrders(){
       </div>
       <p>${o.items.map(x=>`${escapeHtml(x.name)} ×${x.qty}`).join(" · ")}</p>
       <div class="held-order-actions">
-        <button class="primary" onclick="restoreHeldOrder(${o.id})">กลับมาขายต่อ</button>
-        <button class="text-danger" onclick="deleteHeldOrder(${o.id})">ลบ</button>
+        <button class="btn-secondary-orange" onclick="restoreHeldOrder(${o.id})">กลับมาขายต่อ</button>
+        <button class="btn-danger" onclick="deleteHeldOrder(${o.id})">ลบ</button>
       </div>
     </div>`).join("");
 }
@@ -778,7 +806,7 @@ $("confirmPay").onclick=()=>{
   $("successModal").classList.remove("hidden");playPaymentSuccessSound();announcePayment(order);renderAll();
 };
 $("newOrder").onclick=()=>{
-  $("successModal").classList.add("hidden");cart=[];$("discountInput").value=0;lastCashReceived=0;lastChange=0;renderCart();$("orderNo").textContent="#"+currentDailyOrderNumber();
+  $("successModal").classList.add("hidden");cart=[];$("discountInput").value=0;lastCashReceived=0;lastChange=0;renderCart();renderProducts();$("orderNo").textContent="#"+currentDailyOrderNumber();
 };
 $("printBtn").onclick=()=>{
   if(!lastOrder)return;
@@ -791,45 +819,105 @@ $("printBtn").onclick=()=>{
 
 // Orders + receipt
 function orderItemsText(o){return o.items.map(i=>`${i.name} ×${i.qty}`).join(", ")}
-function renderOrders(){const q=$("orderSearch").value.trim().toLowerCase(),list=state.orders.filter(o=>(o.number+" "+orderItemsText(o)+" "+(o.receiptNote||"")+" "+(o.staffName||"")).toLowerCase().includes(q));if(!list.length){$("ordersList").innerHTML='<p class="empty">ยังไม่มีออเดอร์ที่ตรงกับคำค้น</p>';return}$("ordersList").innerHTML=`<table><tr><th>เลข</th><th>เวลา</th><th>รายการ</th><th>ชื่อ/ข้อความ</th><th>ยอด</th><th>ชำระ</th><th>พนักงาน</th><th>สถานะ</th><th>จัดการ</th></tr>${list.map(o=>`<tr><td><b>#${o.number}</b></td><td>${new Date(o.time).toLocaleString("th-TH")}</td><td>${orderItemsText(o)}</td><td>${escapeHtml(o.receiptNote||"-")}</td><td>${money(o.total)}</td><td>${o.payment}</td><td>${o.staffName||"-"}</td><td><span class="status ${o.status}">${o.status==="paid"?"สำเร็จ":"ยกเลิก"}</span></td><td><button class="reprint-btn" onclick="printOrderById(${o.id})">พิมพ์ซ้ำ</button> ${o.status==="paid"&&currentUser?.role==="owner"?`<button class="danger" onclick="cancelOrder(${o.id})">ยกเลิก</button>`:""}</td></tr>`).join("")}</table>`}
+function renderOrders(){
+  const q=$("orderSearch").value.trim().toLowerCase();
+  let list=state.orders.filter(o=>(o.number+" "+orderItemsText(o)+" "+(o.receiptNote||"")+" "+(o.staffName||"")).toLowerCase().includes(q));
+  if(orderStatusFilter==="today"){
+    const today=localDateKey();
+    list=list.filter(o=>localDateKey(new Date(o.time))===today);
+  }else if(orderStatusFilter!=="all"){
+    list=list.filter(o=>o.status===orderStatusFilter);
+  }
+  if(!list.length){$("ordersList").innerHTML='<p class="empty">ยังไม่มีออเดอร์ที่ตรงกับตัวกรอง</p>';return}
+  $("ordersList").innerHTML=`<table class="orders-clean-table"><tr><th>เลข</th><th>เวลา</th><th>รายการ</th><th>ยอด</th><th>ชำระ</th><th>พนักงาน</th><th>สถานะ</th><th>จัดการ</th></tr>${list.map(o=>`<tr><td><b>#${String(o.number).padStart(3,"0")}</b></td><td>${new Date(o.time).toLocaleTimeString("th-TH",{hour:"2-digit",minute:"2-digit"})}</td><td>${orderItemsText(o)}</td><td class="order-amount">${money(o.total)}</td><td>${o.payment}</td><td>${o.staffName||"-"}</td><td><span class="status ${o.status}">${o.status==="paid"?"สำเร็จแล้ว":"ยกเลิก"}</span></td><td><div class="order-actions"><button class="btn-secondary-orange compact" onclick="printOrderById(${o.id})">พิมพ์ซ้ำ</button>${o.status==="paid"&&currentUser?.role==="owner"?`<button class="delete-icon-btn" title="ยกเลิกออเดอร์" aria-label="ยกเลิกออเดอร์" onclick="cancelOrder(${o.id})">×</button>`:""}</div></td></tr>`).join("")}</table>`;
+}
+document.querySelectorAll(".order-filter").forEach(btn=>btn.onclick=()=>{
+  orderStatusFilter=btn.dataset.orderFilter;
+  document.querySelectorAll(".order-filter").forEach(x=>x.classList.toggle("active",x===btn));
+  renderOrders();
+});
 $("orderSearch").addEventListener("input",renderOrders);window.cancelOrder=id=>{const o=state.orders.find(x=>x.id===id);if(!o||o.status!=="paid")return;if(!confirm(`ยกเลิกออเดอร์ #${o.number} และคืนสต๊อกใช่ไหม?`))return;o.status="cancelled";o.cancelledAt=nowIso();o.items.forEach(row=>{const p=state.products.find(x=>x.id===row.id);if(p)p.stock+=row.qty});saveState();renderAll()};window.printOrderById=id=>printOrder(state.orders.find(x=>x.id===id),true);
 function printOrder(o,isCopy=false){
-  const note=String(o.receiptNote||"").trim();
-  const noteRow=note?`<div class="customer-note">${escapeHtml(note)}</div>`:"";
   if(!o)return;
+  const note=String(o.receiptNote||"").trim();
   const receiptNumber=String(o.number).padStart(3,"0");
   const received=o.payment==="เงินสด"?Number(o.cashReceived??o.total):Number(o.total);
   const change=o.payment==="เงินสด"?Number(o.change??0):0;
-  const itemRows=o.items.slice().sort((a,b)=>b.price-a.price).map(i=>`
-    <tr><td class="item-name">${escapeHtml(i.name)}</td><td class="item-qty">×${Number(i.qty||0)}</td><td class="amount">${money(i.price*i.qty)}</td></tr>`).join("");
-  const discountRow=Number(o.discount||0)>0?`<tr><td class="label">ส่วนลด</td><td class="value">${money(o.discount)}</td></tr>`:"";
+  const itemRows=o.items.map(i=>`
+    <tr>
+      <td class="r-name">${escapeHtml(i.name)}</td>
+      <td class="r-qty">${Number(i.qty||0)} × ${money(i.price)}</td>
+      <td class="r-amount">${money(i.price*i.qty)}</td>
+    </tr>`).join("");
+  const discountRow=Number(o.discount||0)>0?`<div class="sum-row"><span>ส่วนลด</span><b>- ${money(o.discount)}</b></div>`:"";
   const cashRows=o.payment==="เงินสด"?`
-    <tr><td class="label">รับเงิน</td><td class="value">${money(received)}</td></tr>
-    <tr><td class="label">เงินทอน</td><td class="value"><b>${money(change)}</b></td></tr>`:"";
-
+    <div class="sum-row"><span>ลูกค้าจ่าย</span><b>${money(received)}</b></div>
+    <div class="sum-row"><span>เงินทอน</span><b>${money(change)}</b></div>`:"";
+  const noteBlock=note?`<div class="receipt-note"><b>${escapeHtml(note)}</b></div>`:"";
   const w=window.open("",`receipt-${receiptNumber}`,"width=520,height=820");
   if(!w){alert("กรุณาอนุญาต Pop-up เพื่อพิมพ์ใบเสร็จ");return}
   w.document.write(`<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Receipt #${receiptNumber}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-  @page{margin:7mm;size:auto}*{box-sizing:border-box}body{margin:0;background:#f8f5f0;color:#111;font-family:"Sarabun","TH Sarabun New","Noto Sans Thai",Tahoma,sans-serif}
-  .toolbar{position:sticky;top:0;z-index:5;display:flex;gap:10px;padding:12px;background:#fff;border-bottom:1px solid #eadfce}.toolbar button{flex:1;min-height:48px;border:0;border-radius:12px;font-size:16px;font-weight:800}.back-btn{background:#f2eadf;color:#6f5942}.print-btn{background:#e96512;color:#fff}
-  .receipt-wrap{width:360px;max-width:100%;margin:16px auto;background:#fff;box-shadow:0 8px 28px rgba(59,39,20,.10)}.receipt{width:100%;padding:14px 12px;font-size:16px;line-height:1.45}
-  .shop,.shop-address,.shop-phone{font-family:"Sarabun","TH Sarabun New","Noto Sans Thai",sans-serif}.shop{text-align:center;font-size:20px;font-weight:700}.shop-address{text-align:center;font-size:15px;margin-top:2px}.shop-phone{text-align:center;font-size:15px;margin-top:1px}.copy-mark{text-align:center;margin:5px auto 2px;width:max-content;padding:3px 8px;border:1px solid #111;border-radius:5px;font-size:12px;font-weight:800}.order{text-align:center;font-size:17px;font-weight:800;margin-top:5px;margin-bottom:9px}.rule{border-top:1.5px dashed #222;margin:8px 0}table{width:100%;border-collapse:collapse;table-layout:fixed}td{padding:3px 0;vertical-align:top}
-  .item-name{text-align:left;padding-right:8px;word-break:break-word}.item-qty{width:46px;text-align:center}.amount{width:82px;text-align:right;font-weight:650}.label{text-align:left;font-weight:600}.value{text-align:right;white-space:nowrap}.total-row td{font-size:18px;font-weight:800;padding-top:5px}.meta td{font-size:14px}.customer-note{border:1px solid #ddd0c0;border-radius:8px;padding:8px;margin:8px 0;font-size:14px}.customer-note b{display:block;margin-bottom:3px}.thanks{text-align:center;margin-top:14px;font-weight:600}
-  @media print{body{background:#fff}.toolbar{display:none!important}.receipt-wrap{width:100%;margin:0;box-shadow:none}.receipt{padding:0}}
+  @page{margin:7mm;size:auto}
+  *{box-sizing:border-box}
+  body{margin:0;background:#f5f5f5;color:#000;font-family:"Sarabun","TH Sarabun New","Noto Sans Thai",Tahoma,sans-serif}
+  .toolbar{position:sticky;top:0;z-index:5;display:flex;gap:8px;padding:10px;background:#fff;border-bottom:1px solid #ddd}
+  .toolbar button{flex:1;min-height:44px;border-radius:8px;font:inherit;font-weight:600;border:1px solid #ccc;background:#fff;color:#222}
+  .receipt-wrap{width:350px;max-width:100%;margin:18px auto;background:#fff;border:1px solid #ddd}
+  .receipt{padding:16px 14px;font-size:14px;line-height:1.45;color:#000}
+  .brand{text-align:center;padding-bottom:10px;border-bottom:1px solid #111}
+  .shop{font-size:20px;font-weight:700}
+  .shop-address,.shop-phone{font-size:13px;margin-top:1px}
+  .copy-mark{display:inline-block;margin-top:6px;padding:2px 7px;border:1px solid #000;border-radius:999px;font-size:10px;font-weight:600}
+  .meta-card{display:grid;grid-template-columns:1fr 1fr;gap:5px 12px;padding:9px 0;border-bottom:1px dashed #777;margin-bottom:8px}
+  .meta-card div{font-size:11px;color:#222}.meta-card b{display:block;color:#000;font-size:12px;margin-top:1px}
+  .section-title{font-size:11px;font-weight:600;margin:8px 0 3px}
+  table{width:100%;border-collapse:collapse}
+  td{padding:5px 0;border-bottom:1px dotted #aaa;vertical-align:top;color:#000}
+  .r-name{font-weight:500;padding-right:7px}.r-qty{width:92px;font-size:11px}.r-amount{width:70px;text-align:right;font-weight:600}
+  .summary{margin-top:7px;padding-top:2px}
+  .sum-row{display:flex;justify-content:space-between;gap:10px;padding:3px 0;color:#000}
+  .grand-total{display:flex;justify-content:space-between;align-items:flex-end;margin-top:6px;padding-top:7px;border-top:1.5px solid #000}
+  .grand-total span{font-size:14px;font-weight:600}.grand-total b{font-size:20px;color:#000}
+  .status-line{display:flex;justify-content:space-between;margin-top:6px;padding:5px 0;border-top:1px dotted #999;border-bottom:1px dotted #999;font-size:11px;font-weight:600;color:#000}
+  .receipt-note{margin-top:8px;padding:7px 0;border-top:1px dashed #777;border-bottom:1px dashed #777;color:#000}
+  .receipt-note span{display:block;font-size:10px}.receipt-note b{display:block;margin-top:2px;font-weight:500}
+  .thanks{text-align:center;margin-top:12px;font-size:11px;color:#000}
+  @media print{body{background:#fff}.toolbar{display:none!important}.receipt-wrap{width:100%;margin:0;border:0}.receipt{padding:0}}
   </style></head><body>
-  <div class="toolbar"><button class="back-btn" id="backToOrders">← กลับไปหน้าออเดอร์</button><button class="print-btn" id="printAgain">พิมพ์ใบเสร็จ</button></div>
-  <div class="receipt-wrap"><div class="receipt"><div class="shop">${escapeHtml(state.settings.shopName)}</div><div class="shop-address">บ้านดุง อุดรธานี 41190</div><div class="shop-phone">โทรศัพท์ 0897109954</div>${isCopy?'<div class="copy-mark">สำเนาใบเสร็จ</div>':""}<div class="order">ORDER #${receiptNumber}</div><div class="rule"></div>
-  <table><tbody>${itemRows}</tbody></table><div class="rule"></div>
-  <table><tbody>${discountRow}<tr class="total-row"><td class="label">ยอดรวม</td><td class="value">${money(o.total)}</td></tr><tr><td class="label">ชำระ</td><td class="value">${escapeHtml(o.payment||"-")}</td></tr>${cashRows}</tbody></table>
-  ${noteRow}<div class="rule"></div><table class="meta"><tbody><tr><td class="label">พนักงาน</td><td class="value">${escapeHtml(o.staffName||"-")}</td></tr><tr><td class="label">วันที่/เวลา</td><td class="value">${new Date(o.time).toLocaleString("th-TH")}</td></tr></tbody></table><div class="thanks">ขอบคุณค่ะ</div>
-  </div></div><script>
+  <div class="toolbar"><button class="back-btn" id="backToOrders">กลับ</button><button class="print-btn" id="printAgain">พิมพ์ใบเสร็จ</button></div>
+  <div class="receipt-wrap"><div class="receipt">
+    <div class="brand">
+      <div class="shop">${escapeHtml(state.settings.shopName)}</div>
+      <div class="shop-address">บ้านดุง อุดรธานี 41190</div>
+      <div class="shop-phone">โทรศัพท์ 0897109954</div>
+      ${isCopy?'<div class="copy-mark">สำเนาใบเสร็จ</div>':""}
+    </div>
+    <div class="meta-card">
+      <div>เลขออเดอร์<b>#${receiptNumber}</b></div>
+      <div>การชำระเงิน<b>${escapeHtml(o.payment||"-")}</b></div>
+      <div>พนักงาน<b>${escapeHtml(o.staffName||"-")}</b></div>
+      <div>วันที่/เวลา<b>${new Date(o.time).toLocaleString("th-TH")}</b></div>
+    </div>
+    <div class="section-title">รายการสินค้า</div>
+    <table><tbody>${itemRows}</tbody></table>
+    <div class="summary">
+      ${discountRow}
+      ${cashRows}
+      <div class="grand-total"><span>รวมสุทธิ</span><b>${money(o.total)}</b></div>
+      <div class="status-line"><span>สถานะ</span><span>ชำระเงินแล้ว</span></div>
+    </div>
+    ${noteBlock}
+    <div class="thanks">ขอบคุณที่อุดหนุนค่ะ</div>
+  </div></div>
+  <script>
   document.getElementById("backToOrders").onclick=function(){try{if(window.opener&&!window.opener.closed){const t=window.opener.document.querySelector('.tab[data-page="orders"]');if(t)t.click();window.opener.focus();window.close();return}}catch(e){}history.back()};
-  document.getElementById("printAgain").onclick=function(){window.print()};window.onload=function(){const go=()=>setTimeout(function(){window.print()},120);if(document.fonts&&document.fonts.ready){document.fonts.ready.then(go).catch(go)}else{go()}};
+  document.getElementById("printAgain").onclick=function(){window.print()};
+  window.onload=function(){const go=()=>setTimeout(function(){window.print()},120);if(document.fonts&&document.fonts.ready){document.fonts.ready.then(go).catch(go)}else{go()}};
   <\/script></body></html>`);
   w.document.close();
 }
@@ -853,11 +941,11 @@ function renderSalesHistoryStats(){
   box.innerHTML=`<div><span>ออเดอร์สำเร็จ</span><b>${paid.length} ออเดอร์</b></div><div><span>ยอดขาย</span><b>${money(sales)}</b></div><div><span>ยกเลิก</span><b>${cancelled.length} ออเดอร์</b></div><div><span>เลขออเดอร์ล่าสุด</span><b>${all.length?"#"+String(Math.max(...all.map(o=>Number(o.number)||0))).padStart(3,"0"):"-"}</b></div>`;
 }
 function renderDashboard(){
-  if(currentUser?.role!=="owner"){return}
+  if(!(currentUser?.role==="owner"&&currentUser?.name==="คุณทองสุข")){return}
   const os=todayPaidOrders();
   const cashOrders=os.filter(o=>o.payment==="เงินสด"),qrOrders=os.filter(o=>o.payment==="QR");
   const cash=cashOrders.reduce((s,o)=>s+Number(o.total||0),0),qr=qrOrders.reduce((s,o)=>s+Number(o.total||0),0);
-  $("paymentSummary").innerHTML=`<div class="pay-line"><span>💵 เงินสด</span><b>${money(cash)} · ${cashOrders.length} ครั้ง</b></div><div class="pay-line"><span>▦ QR</span><b>${money(qr)} · ${qrOrders.length} ครั้ง</b></div>`;
+  $("paymentSummary").innerHTML=`<div class="pay-line"><span class="pay-label"><svg class="pay-svg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M6 9h.01M18 15h.01"/></svg><span>เงินสด</span></span><b>${money(cash)} · ${cashOrders.length} ครั้ง</b></div><div class="pay-line"><span class="pay-label"><svg class="pay-svg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM15 14h2v2h-2zM19 14h1v3h-3v3h-3v-2h2v-2h3z"/></svg><span>QR</span></span><b>${money(qr)} · ${qrOrders.length} ครั้ง</b></div>`;
   const count={};os.forEach(o=>o.items.forEach(i=>count[i.name]=(count[i.name]||0)+i.qty));
   const top=Object.entries(count).sort((a,b)=>b[1]-a[1]).slice(0,5);
   $("topProducts").innerHTML=top.length?top.map((x,i)=>`<div class="top-line"><span>${i+1}. ${x[0]}</span><b>${x[1]} ชิ้น</b></div>`).join(""):"<p class='empty'>ยังไม่มีข้อมูลวันนี้</p>";
@@ -987,11 +1075,11 @@ function updatePreorderReminder(showBrowser=false){
   $("preorderReminderText").textContent=`รวม ${s.itemQty} ชิ้น • ${money(s.total)} • เริ่มรับ ${s.first}`;
   updateNotifyButton();
   if(showBrowser&&s.signature&&s.signature!==lastReminderSignature&&"Notification" in window&&Notification.permission==="granted"){
-    try{new Notification("🐟 พรุ่งนี้มีออเดอร์ปลาเผา",{body:`${s.orders.length} ออเดอร์ • ${s.itemQty} ชิ้น • เริ่มรับ ${s.first}`})}catch(e){}
+    try{new Notification("พรุ่งนี้มีออเดอร์ปลาเผา",{body:`${s.orders.length} ออเดอร์ • ${s.itemQty} ชิ้น • เริ่มรับ ${s.first}`})}catch(e){}
   }
   lastReminderSignature=s.signature;
 }
-$("openPreorderReminder").onclick=()=>{window.__preListExplicitDate=true;openPage("preorderListPage");$("preListDate").value=dateKey(tomorrowDate());renderPreorderList()};
+$("openPreorderReminder").onclick=()=>{window.__preListExplicitDate=true;openPage("preorder");$("preListDate").value=dateKey(tomorrowDate());renderPreorderList()};
 
 $("preorderBellBtn").onclick=()=>togglePreorderBell();
 $("closePreorderBell").onclick=()=>togglePreorderBell(false);
@@ -1023,29 +1111,102 @@ setInterval(()=>{if(currentUser)updatePreorderReminder(true)},60000);
 function tomorrowDate(){const d=new Date();d.setDate(d.getDate()+1);d.setHours(0,0,0,0);return d}
 function dateKey(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`}
 function localDateTimeValue(d){const pad=n=>String(n).padStart(2,"0");return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`}
-function initPreorderDateTime(){if(!$("preDateTime").value){const d=tomorrowDate();d.setHours(17,0,0,0);$("preDateTime").value=localDateTimeValue(d)}if(!$("preListDate").value)$("preListDate").value=dateKey(tomorrowDate())}
+function populatePreTimeSelects(){
+  const hour=$("preHour"),minute=$("preMinute");if(!hour||!minute)return;
+  if(!hour.options.length){
+    hour.innerHTML=Array.from({length:24},(_,i)=>`<option value="${String(i).padStart(2,"0")}">${String(i).padStart(2,"0")}</option>`).join("");
+  }
+  if(!minute.options.length){
+    minute.innerHTML=Array.from({length:12},(_,i)=>{const v=String(i*5).padStart(2,"0");return `<option value="${v}">${v}</option>`}).join("");
+  }
+}
+function syncPreTimeFromSelects(){
+  const h=$("preHour")?.value||"17",m=$("preMinute")?.value||"00";
+  if($("preTime"))$("preTime").value=`${h}:${m}`;
+  syncPreDateTime();
+}
+function setPreTimePickerValue(value="17:00"){
+  populatePreTimeSelects();
+  const parts=String(value||"17:00").split(":");
+  const hh=String(Math.max(0,Math.min(23,Number(parts[0])||0))).padStart(2,"0");
+  const rawMin=Math.max(0,Math.min(59,Number(parts[1])||0));
+  const rounded=Math.min(55,Math.round(rawMin/5)*5);
+  const mm=String(rounded).padStart(2,"0");
+  if($("preHour"))$("preHour").value=hh;
+  if($("preMinute"))$("preMinute").value=mm;
+  if($("preTime"))$("preTime").value=`${hh}:${mm}`;
+}
+function syncPreDateTime(){
+  const date=$("preDate")?.value||"",time=$("preTime")?.value||"";
+  if($("preDateTime"))$("preDateTime").value=date&&time?`${date}T${time}`:"";
+}
+function initPreorderDateTime(){
+  const d=tomorrowDate();d.setHours(17,0,0,0);
+  if($("preDate")&&!$("preDate").value)$("preDate").value=dateKey(d);
+  populatePreTimeSelects();
+  setPreTimePickerValue($("preTime")?.value||"17:00");
+  syncPreDateTime();
+  if($("preListDate")&&!$("preListDate").value)$("preListDate").value=dateKey(tomorrowDate());
+}
 function renderPreorder(){
   initPreorderDateTime();
-  const dt=new Date($("preDateTime").value||tomorrowDate());
+  syncPreDateTime();const dt=new Date($("preDateTime").value||tomorrowDate());
   $("tomorrowBadge").textContent="รับ "+dt.toLocaleString("th-TH",{weekday:"short",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"});
   const products=state.products.filter(p=>p.active).slice().sort((a,b)=>a.price-b.price||a.name.localeCompare(b.name,"th"));
   $("preProducts").innerHTML=products.map(p=>{const r=preorderCart.find(x=>x.id===p.id),q=r?.qty||0;return `<div class="pre-product"><b>${p.name}</b><span>${money(p.price)}</span><div class="pre-controls"><button onclick="changePreQty(${p.id},-1)">−</button><button type="button" class="pre-qty-input pre-qty-button" onclick="openPreQtyKeypad(${p.id})" aria-label="จำนวน ${escapeHtml(p.name)}">${q}</button><button onclick="changePreQty(${p.id},1)">+</button></div></div>`}).join("");
   $("preCartItems").innerHTML=preorderCart.length?preorderCart.slice().sort((a,b)=>b.price-a.price).map(r=>`<div class="pre-row"><span>${r.name} × ${r.qty}</span><b>${money(r.price*r.qty)}</b></div>`).join(""):'<p class="empty">ยังไม่ได้เลือกสินค้า</p>';
   $("preTotal").textContent=money(preorderCart.reduce((s,r)=>s+r.price*r.qty,0));
 }
+function normalizePreStatus(status){
+  if(status==="waiting")return "pending";
+  return status||"pending";
+}
+function preorderStatusLabel(status){
+  const s=normalizePreStatus(status);
+  return s==="pending"?"รอยืนยัน":s==="confirmed"?"ยืนยันแล้ว":s==="preparing"?"กำลังเตรียม":s==="ready"?"พร้อมรับ":"ยกเลิก";
+}
 function renderPreorderList(){
-  const selected=$("preListDate").value;
+  const selected=$("preListDate")?.value||"";
+  const search=($("preListSearch")?.value||"").trim().toLowerCase();
   let list=state.preorders.slice().sort((a,b)=>String(a.date).localeCompare(String(b.date))||String(a.pickup).localeCompare(String(b.pickup)));
   if(selected)list=list.filter(p=>p.date===selected);
+  if(preorderStatusFilter!=="all")list=list.filter(p=>normalizePreStatus(p.status)===preorderStatusFilter);
+  if(search)list=list.filter(o=>(`${o.customer||""} ${o.phone||""} ${o.note||""} ${(o.items||[]).map(i=>i.name).join(" ")}`).toLowerCase().includes(search));
+
   if(selected){
     const d=new Date(selected+"T12:00:00");
-    $("preListTitle").textContent="รายการวันที่ "+d.toLocaleDateString("th-TH",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+    $("preListTitle").textContent="รับ "+d.toLocaleDateString("th-TH",{weekday:"short",day:"numeric",month:"short",year:"numeric"});
   }else{
-    $("preListTitle").textContent="รายการสั่งล่วงหน้าทั้งหมด";
+    $("preListTitle").textContent="ทุกวันที่มีรายการ";
   }
-  const prep={};list.filter(x=>x.status!=="cancelled").forEach(o=>o.items.forEach(i=>prep[i.name]=(prep[i.name]||0)+i.qty));
-  $("preparationSummary").textContent=Object.keys(prep).length?"เตรียม: "+Object.entries(prep).map(([n,q])=>`${n} ${q}`).join(" • "):"ยังไม่มีรายการเตรียม";
-  $("preorderList").innerHTML=list.length?`<table><tr><th>วันที่</th><th>เวลา</th><th>ลูกค้า</th><th>โทร</th><th>รายการ</th><th>ยอด</th><th>หมายเหตุ</th><th>พนักงาน</th><th>สถานะ</th><th>จัดการ</th></tr>${list.map(o=>`<tr><td><b>${new Date(o.date+"T12:00:00").toLocaleDateString("th-TH",{day:"2-digit",month:"short",year:"2-digit"})}</b></td><td><b>${o.pickup}</b></td><td>${escapeHtml(o.customer)}</td><td>${escapeHtml(o.phone||"-")}</td><td>${o.items.slice().sort((a,b)=>b.price-a.price).map(i=>`${escapeHtml(i.name)} ×${i.qty}`).join(", ")}</td><td>${money(o.total)}</td><td>${escapeHtml(o.note||"-")}</td><td>${escapeHtml(o.staffName||"-")}</td><td><span class="status ${o.status}">${o.status==="waiting"?"รอรับ":o.status==="ready"?"รับแล้ว":"ยกเลิก"}</span></td><td>${o.status==="waiting"?`<button onclick="setPreStatus(${o.id},'ready')">รับแล้ว</button> <button class="danger" onclick="setPreStatus(${o.id},'cancelled')">ยกเลิก</button>`:""}</td></tr>`).join("")}</table>`:'<p class="empty">ยังไม่มีออเดอร์ล่วงหน้า</p>';
+
+  const prep={};
+  list.filter(x=>normalizePreStatus(x.status)!=="cancelled").forEach(o=>(o.items||[]).forEach(i=>prep[i.name]=(prep[i.name]||0)+i.qty));
+  $("preparationSummary").textContent=Object.keys(prep).length?"เตรียมรวม: "+Object.entries(prep).map(([n,q])=>`${n} ${q}`).join(" • "):"ยังไม่มีรายการเตรียม";
+
+  $("preorderList").innerHTML=list.length?`
+    <div class="preorder-list-cards">
+      ${list.map(o=>{
+        const s=normalizePreStatus(o.status);
+        const qty=(o.items||[]).reduce((sum,i)=>sum+Number(i.qty||0),0);
+        const items=(o.items||[]).map(i=>`${escapeHtml(i.name)} ×${i.qty}`).join(", ");
+        const nextAction=s==="pending"
+          ?`<button class="btn-secondary-orange compact" onclick="setPreStatus(${o.id},'confirmed')">ยืนยัน</button>`
+          :s==="confirmed"
+          ?`<button class="btn-secondary-orange compact" onclick="setPreStatus(${o.id},'preparing')">เริ่มเตรียม</button>`
+          :s==="preparing"
+          ?`<button class="btn-success compact" onclick="setPreStatus(${o.id},'ready')">พร้อมรับ</button>`
+          :"";
+        return `<article class="preorder-list-row">
+          <div class="preorder-date-cell"><b>${new Date(o.date+"T12:00:00").toLocaleDateString("th-TH",{day:"2-digit",month:"short",year:"2-digit"})}</b><span>${o.pickup||"-"}</span></div>
+          <div class="preorder-customer-cell"><b>${escapeHtml(o.customer||"-")}</b><span>${escapeHtml(o.phone||"-")}</span></div>
+          <div class="preorder-items-cell"><b>${qty} รายการ</b><span>${items||"-"}</span></div>
+          <div class="preorder-total-cell">${money(o.total)}</div>
+          <div class="preorder-status-cell"><span class="status ${s}">${preorderStatusLabel(s)}</span></div>
+          <div class="preorder-row-actions">${nextAction}${s!=="cancelled"?`<button class="delete-icon-btn" title="ยกเลิก" onclick="setPreStatus(${o.id},'cancelled')">×</button>`:""}</div>
+        </article>`;
+      }).join("")}
+    </div>`:'<p class="empty">ยังไม่มีออเดอร์ล่วงหน้าที่ตรงกับตัวกรอง</p>';
 }
 window.changePreQty=(id,d)=>{const el=currentTapElement();tapFeedback(el);playQtySound(d>0);const p=state.products.find(x=>x.id===id);let r=preorderCart.find(x=>x.id===id);if(!r&&d>0){r={id:p.id,name:p.name,price:p.price,qty:0};preorderCart.push(r)}if(!r)return;r.qty=Math.min(100,r.qty+d);if(r.qty<=0)preorderCart=preorderCart.filter(x=>x.id!==id);renderPreorder()};
 window.setPreQty=(id,value)=>{
@@ -1062,17 +1223,26 @@ window.openPreQtyKeypad=id=>{
 };
 $("clearPreorderBtn").onclick=()=>{preorderCart=[];renderPreorder()};
 $("preDateTime").addEventListener("change",renderPreorder);
+if($("preDate"))$("preDate").addEventListener("change",()=>{syncPreDateTime();renderPreorder()});
+if($("preHour"))$("preHour").addEventListener("change",()=>{syncPreTimeFromSelects();renderPreorder()});
+if($("preMinute"))$("preMinute").addEventListener("change",()=>{syncPreTimeFromSelects();renderPreorder()});
 $("savePreorderBtn").onclick=()=>{
   const customer=$("preCustomer").value.trim(),dtValue=$("preDateTime").value;
   if(!customer){alert("กรุณาใส่ชื่อลูกค้า");return}
   if(!dtValue){alert("กรุณาเลือกวันที่และเวลารับ");return}
   if(!preorderCart.length){alert("กรุณาเลือกสินค้า");return}
   const dt=new Date(dtValue);
-  const o={id:Date.now(),date:dateKey(dt),customer,phone:$("prePhone").value.trim(),pickup:dt.toTimeString().slice(0,5),note:$("preNote").value.trim(),items:preorderCart.map(x=>({...x})),total:preorderCart.reduce((s,x)=>s+x.price*x.qty,0),status:"waiting",createdAt:nowIso(),staffName:currentUser.name};
+  const o={id:Date.now(),date:dateKey(dt),customer,phone:$("prePhone").value.trim(),pickup:dt.toTimeString().slice(0,5),note:$("preNote").value.trim(),items:preorderCart.map(x=>({...x})),total:preorderCart.reduce((s,x)=>s+x.price*x.qty,0),status:"pending",createdAt:nowIso(),staffName:currentUser.name};
   state.preorders.push(o);saveState();preorderCart=[];["preCustomer","prePhone","preNote"].forEach(id=>$(id).value="");
-  $("preListDate").value=o.date;renderPreorder();updatePreorderReminder(true);window.__preListExplicitDate=true;openPage("preorderListPage");$("preListDate").value=o.date;renderPreorderList();
+  $("preListDate").value=o.date;renderPreorder();updatePreorderReminder(true);window.__preListExplicitDate=true;openPage("preorder");$("preListDate").value=o.date;renderPreorderList();
 };
 window.setPreStatus=(id,status)=>{const o=state.preorders.find(x=>x.id===id);if(!o)return;o.status=status;saveState();renderPreorderList();updatePreorderReminder()};
+if($("preListSearch"))$("preListSearch").addEventListener("input",renderPreorderList);
+document.querySelectorAll(".pre-status-filter").forEach(btn=>btn.onclick=()=>{
+  preorderStatusFilter=btn.dataset.preFilter;
+  document.querySelectorAll(".pre-status-filter").forEach(x=>x.classList.toggle("active",x===btn));
+  renderPreorderList();
+});
 $("preListDate").addEventListener("change",renderPreorderList);
 $("preListAllBtn").onclick=()=>{$("preListDate").value="";renderPreorderList()};
 $("preListTomorrowBtn").onclick=()=>{$("preListDate").value=dateKey(tomorrowDate());renderPreorderList()};
@@ -1134,7 +1304,7 @@ function renderAdmin(){
   if(editSel&&!editSel.options.length)editSel.innerHTML=cats.map(x=>`<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`).join("");
   renderCategoryManager();
 
-  $("adminProducts").innerHTML=`<table><tr><th>ชื่อ</th><th>หมวด</th><th>ราคา</th><th>ต้นทุน</th><th>สต๊อก</th><th>สถานะ</th><th>จัดการ</th></tr>${state.products.slice().sort((a,b)=>b.price-a.price).map(p=>`<tr><td>${escapeHtml(p.name)}</td><td>${escapeHtml(p.category)}</td><td>${money(p.price)}</td><td>${money(p.cost)}</td><td>${p.stock} ${escapeHtml(p.unit)}</td><td>${p.active?"เปิดขาย":"ปิดขาย"}</td><td><button onclick="editProduct(${p.id})">แก้ไข</button> <button onclick="toggleProduct(${p.id})">${p.active?"ปิดขาย":"เปิดขาย"}</button></td></tr>`).join("")}</table>`;
+  $("adminProducts").innerHTML=`<table><tr><th>ชื่อ</th><th>หมวด</th><th>ราคา</th><th>ต้นทุน</th><th>สต๊อก</th><th>สถานะ</th><th>จัดการ</th></tr>${state.products.slice().sort((a,b)=>b.price-a.price).map(p=>`<tr><td>${escapeHtml(p.name)}</td><td>${escapeHtml(p.category)}</td><td>${money(p.price)}</td><td>${money(p.cost)}</td><td>${p.stock} ${escapeHtml(p.unit)}</td><td>${p.active?"เปิดขาย":"ปิดขาย"}</td><td><button class="btn-secondary-orange compact" onclick="editProduct(${p.id})">แก้ไข</button> <button class="btn-neutral compact" onclick="toggleProduct(${p.id})">${p.active?"ปิดขาย":"เปิดขาย"}</button></td></tr>`).join("")}</table>`;
   updateAdminQrPreview();renderAdminDynamicQr();initExportDate();
 }
 $("saveShopBtn").onclick=()=>{state.settings.shopName=$("shopNameInput").value.trim()||"ร้านทิพย์เกษรเมี่ยงปลาเผา";ensureDailyOrderCounter();saveState();renderAll();alert("บันทึกแล้ว")};
@@ -1206,6 +1376,8 @@ $("resetBtn").onclick=()=>{if(confirm("รีเซ็ตข้อมูลท�
 
 // Navigation
 function openPage(pageId){
+  const isOwner=currentUser?.role==="owner"&&currentUser?.name==="คุณทองสุข";
+  if((pageId==="dashboard"||pageId==="admin")&&!isOwner)pageId="sale";
   document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x.dataset.page===pageId));
   document.querySelectorAll(".page").forEach(x=>x.classList.add("hidden"));
   const page=$(pageId);if(page)page.classList.remove("hidden");
@@ -1219,6 +1391,26 @@ function openPage(pageId){
   if(pageId==="admin")renderAdmin();
 }
 document.querySelectorAll(".tab").forEach(btn=>btn.onclick=()=>openPage(btn.dataset.page));
+
+const sidebar=$("appSidebar"),sidebarToggle=$("sidebarToggle");
+function setSidebarExpanded(expanded){
+  if(!sidebar)return;
+  sidebar.classList.toggle("collapsed",!expanded);
+  sidebar.classList.toggle("expanded",expanded);
+  if(sidebarToggle){
+    sidebarToggle.setAttribute("aria-label",expanded?"พับเมนู":"ขยายเมนู");
+    sidebarToggle.title=expanded?"พับเมนู":"ขยายเมนู";
+  }
+  localStorage.setItem("fish_pos_sidebar_expanded",expanded?"1":"0");
+}
+if(sidebar&&window.innerWidth>760)setSidebarExpanded(localStorage.getItem("fish_pos_sidebar_expanded")==="1");
+if(sidebarToggle)sidebarToggle.onclick=()=>setSidebarExpanded(sidebar.classList.contains("collapsed"));
+document.querySelectorAll("#mainTabs .tab").forEach(btn=>{
+  const label=btn.querySelector("span")?.textContent?.trim()||"เมนู";
+  btn.title=label;
+  btn.setAttribute("aria-label",label);
+});
+
 
 function salePageActive(){return currentUser&&!$("sale").classList.contains("hidden")}
 ["gesturestart","gesturechange","gestureend"].forEach(type=>document.addEventListener(type,e=>{if(salePageActive())e.preventDefault()},{passive:false}));
