@@ -129,6 +129,17 @@
   <main>
     <!-- SALE -->
     <section id="sale" class="page">
+      <div class="queue-ticket-bar-v35">
+        <div class="queue-ticket-copy-v35">
+          <span class="queue-ticket-label-v35">บัตรคิว</span>
+          <small>ใช้เลขออเดอร์ปัจจุบัน</small>
+        </div>
+        <button type="button" id="printQueueTicketBtn" class="queue-ticket-btn-v35">
+          <span aria-hidden="true">▣</span>
+          <span>พิมพ์บัตรคิว</span>
+        </button>
+      </div>
+
       <div class="sale-layout">
         <div class="menu-area">
           <div class="sale-menu-top">
@@ -356,12 +367,21 @@
     <section id="admin" class="page hidden">
       <div class="page-heading"><div><h2>จัดการร้าน</h2><p>สำหรับเจ้าของร้าน</p></div></div>
       <div class="admin-grid admin-settings-grid">
-  <div class="card admin-primary-card">
-    <div class="admin-card-head"><div><h3>ตั้งค่าร้าน</h3><p>ชื่อร้านและเลขออเดอร์ของวันนี้</p></div><span class="admin-head-icon"><svg class="admin-svg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10v10h16V10"/><path d="M3 10 5 4h14l2 6"/><path d="M8 20v-6h8v6"/></svg></span></div>
-    <label>ชื่อร้าน</label><input id="shopNameInput">
-    <label>เลขออเดอร์ถัดไปวันนี้</label><input id="nextOrderInput" type="number" readonly><small class="field-help">รีเซ็ตเป็น #001 อัตโนมัติทุกวัน</small>
-    <button id="saveShopBtn" class="primary full">บันทึก</button>
-  </div>
+  <details class="card admin-primary-card admin-store-details-v38" open>
+    <summary class="admin-card-head admin-store-summary-v38">
+      <div><h3>ตั้งค่าร้าน</h3><p>ชื่อร้านและเลขออเดอร์ของวันนี้</p></div>
+      <div class="admin-summary-right-v38">
+        <span class="admin-head-icon"><svg class="admin-svg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10v10h16V10"/><path d="M3 10 5 4h14l2 6"/><path d="M8 20v-6h8v6"/></svg></span>
+        <span class="admin-details-chevron-v38">⌄</span>
+      </div>
+    </summary>
+    <div class="admin-store-body-v38">
+      <label>ชื่อร้าน</label><input id="shopNameInput">
+      <label>เลขออเดอร์ถัดไปวันนี้</label><input id="nextOrderInput" type="number" readonly>
+      <small class="field-help">รีเซ็ตเป็น #001 อัตโนมัติทุกวัน</small>
+      <button id="saveShopBtn" class="primary full">บันทึก</button>
+    </div>
+  </details>
   <div class="card admin-primary-card">
     <div class="admin-card-head"><div><h3>QR PromptPay กำหนดยอดอัตโนมัติ</h3><p>ตั้งครั้งเดียว ระบบจะใส่ยอดให้ทุกออเดอร์</p></div><span class="admin-head-icon"><svg class="admin-svg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg></span></div>
     <p class="promptpay-help">รองรับเบอร์มือถือ 10 หลัก, เลขบัตร/ภาษี 13 หลัก และ e-Wallet 15 หลัก</p>
@@ -377,8 +397,13 @@
     </details>
   </div>
 </div>
-      <div class="admin-grid admin-tools-grid"><div class="card"><div class="admin-card-head"><div><h3>เพิ่มเมนู</h3><p>เพิ่มสินค้า ราคา ต้นทุน สต๊อก และหมวด</p></div><span class="admin-head-icon"><svg class="admin-svg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></span></div><div class="form-grid"><div><label>ชื่อสินค้า</label><input id="newName"></div><div><label>หมวด</label><select id="newCategory"></select>
-      <div class="category-add-row"><input id="newCategoryName" placeholder="ชื่อหมวดใหม่"><button id="addCategoryBtn" type="button" class="secondary">+ เพิ่มหมวด</button></div>
+      <div class="admin-grid admin-tools-grid"><div class="card"><div class="admin-card-head"><div><h3>เพิ่มเมนู</h3><p>เพิ่มสินค้า ราคา ต้นทุน สต๊อก และหมวด</p></div><span class="admin-head-icon"><svg class="admin-svg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></span></div><div class="form-grid admin-product-form-v38">
+  <div class="admin-product-name-field-v38"><label>ชื่อสินค้า</label><input id="newName"></div>
+  <div class="admin-product-category-field-v38"><label>หมวด</label><select id="newCategory"></select>
+      <div class="category-add-row category-add-row-v37 category-add-row-v39">
+  <input id="newCategoryName" placeholder="ชื่อหมวดใหม่">
+  <button id="addCategoryBtn" type="button" class="secondary">+ เพิ่มหมวด</button>
+</div>
     </div><div><label>ราคาขาย</label><input id="newPrice" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" readonly></div><div><label>ต้นทุน</label><input id="newCost" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" readonly></div><div><label>สต๊อก</label><input id="newStock" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" readonly></div><div><label>หน่วย</label><input id="newUnit" placeholder="ตัว / ชุด / ขวด"></div></div><button id="addProductBtn" class="primary full btn-strong">เพิ่มสินค้า</button></div><div class="card"><div class="admin-card-head"><div><h3>พนักงาน / PIN</h3><p>ข้อมูลสำหรับเข้าสู่ระบบ</p></div><span class="admin-head-icon"><svg class="admin-svg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20a6 6 0 0 1 12 0M14 20a5 5 0 0 1 7 0"/></svg></span></div><div id="staffInfo"></div></div></div>
       <div class="card category-manager-card">
         <div class="category-manager-head"><div><h3>จัดลำดับและแก้ชื่อหมวด</h3><p>แก้ชื่อหมวดได้โดยพิมพ์ใหม่ และใช้ลูกศรเพื่อเลื่อนแท็บซ้าย/ขวา</p></div></div>
