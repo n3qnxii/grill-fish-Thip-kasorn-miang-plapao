@@ -113,7 +113,7 @@
           <div class="cart-head"><div><small>ออเดอร์ปัจจุบัน</small><h2 id="orderNo">#001</h2></div><span class="status-live">● กำลังขาย</span></div>
           <div id="cartItems" class="cart-items"><p class="empty">ยังไม่มีสินค้า</p></div>
           <div class="cart-bottom">
-            <label>ส่วนลด (บาท)</label><input id="discountInput" type="number" min="0" value="0" inputmode="decimal">
+            <label>ส่วนลด (บาท)</label><input id="discountInput" type="number" min="0" value="0" inputmode="decimal" readonly>
             <div class="summary-row"><span>ยอดสินค้า</span><b id="subtotal">฿0</b></div>
             <div class="summary-row"><span>ส่วนลด</span><b id="discountDisplay">฿0</b></div>
             <div class="total-row"><span>รวมสุทธิ</span><strong id="total">฿0</strong></div>
@@ -145,7 +145,7 @@
             </div>
             <div>
               <label>เบอร์โทร</label>
-              <input id="prePhone" inputmode="tel" placeholder="08x-xxx-xxxx">
+              <input id="prePhone" inputmode="tel" placeholder="08x-xxx-xxxx" readonly>
             </div>
             <div class="pre-datetime-field">
               <label>วันที่และเวลารับ *</label>
@@ -251,18 +251,18 @@
     <!-- ADMIN -->
     <section id="admin" class="page hidden">
       <div class="page-heading"><div><h2>จัดการร้าน</h2><p>สำหรับเจ้าของร้าน</p></div></div>
-      <div class="admin-grid">
-  <div class="card">
-    <h3>ตั้งค่าร้าน</h3>
+      <div class="admin-grid admin-settings-grid">
+  <div class="card admin-primary-card">
+    <div class="admin-card-head"><div><h3>ตั้งค่าร้าน</h3><p>ชื่อร้านและเลขออเดอร์ของวันนี้</p></div><span>🏪</span></div>
     <label>ชื่อร้าน</label><input id="shopNameInput">
     <label>เลขออเดอร์ถัดไปวันนี้</label><input id="nextOrderInput" type="number" readonly><small class="field-help">รีเซ็ตเป็น #001 อัตโนมัติทุกวัน</small>
     <button id="saveShopBtn" class="primary full">บันทึก</button>
   </div>
-  <div class="card">
-    <h3>QR PromptPay กำหนดยอดอัตโนมัติ</h3>
-    <p class="promptpay-help">ใส่ PromptPay ID ของร้านเพียงครั้งเดียว แล้วระบบจะสร้าง QR ใหม่ตามยอดสุทธิของแต่ละออเดอร์</p>
+  <div class="card admin-primary-card">
+    <div class="admin-card-head"><div><h3>QR PromptPay กำหนดยอดอัตโนมัติ</h3><p>ตั้งครั้งเดียว ระบบจะใส่ยอดให้ทุกออเดอร์</p></div><span>📱</span></div>
+    <p class="promptpay-help">รองรับเบอร์มือถือ 10 หลัก, เลขบัตร/ภาษี 13 หลัก และ e-Wallet 15 หลัก</p>
     <label>PromptPay ID</label>
-    <input id="promptPayIdInput" inputmode="numeric" placeholder="เบอร์มือถือ 10 หลัก / เลขบัตรหรือเลขภาษี 13 หลัก / e-Wallet 15 หลัก">
+    <input id="promptPayIdInput" inputmode="numeric" placeholder="เบอร์มือถือ 10 หลัก / เลขบัตรหรือเลขภาษี 13 หลัก / e-Wallet 15 หลัก" readonly>
     <div id="adminDynamicQr" class="dynamic-qr-preview"><span>ยังไม่ได้ตั้ง PromptPay</span></div>
     <button id="savePromptPayBtn" class="primary full">บันทึก PromptPay</button>
     <details class="legacy-qr">
@@ -273,9 +273,9 @@
     </details>
   </div>
 </div>
-      <div class="admin-grid"><div class="card"><h3>เพิ่มเมนู</h3><div class="form-grid"><div><label>ชื่อสินค้า</label><input id="newName"></div><div><label>หมวด</label><select id="newCategory"></select>
+      <div class="admin-grid admin-tools-grid"><div class="card"><div class="admin-card-head"><div><h3>เพิ่มเมนู</h3><p>เพิ่มสินค้า ราคา ต้นทุน สต๊อก และหมวด</p></div><span>➕</span></div><div class="form-grid"><div><label>ชื่อสินค้า</label><input id="newName"></div><div><label>หมวด</label><select id="newCategory"></select>
       <div class="category-add-row"><input id="newCategoryName" placeholder="ชื่อหมวดใหม่"><button id="addCategoryBtn" type="button" class="secondary">+ เพิ่มหมวด</button></div>
-    </div><div><label>ราคาขาย</label><input id="newPrice" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off"></div><div><label>ต้นทุน</label><input id="newCost" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off"></div><div><label>สต๊อก</label><input id="newStock" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off"></div><div><label>หน่วย</label><input id="newUnit" placeholder="ตัว / ชุด / ขวด"></div></div><button id="addProductBtn" class="primary full">เพิ่มสินค้า</button></div><div class="card"><h3>พนักงาน / PIN</h3><div id="staffInfo"></div></div></div>
+    </div><div><label>ราคาขาย</label><input id="newPrice" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" readonly></div><div><label>ต้นทุน</label><input id="newCost" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" readonly></div><div><label>สต๊อก</label><input id="newStock" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" readonly></div><div><label>หน่วย</label><input id="newUnit" placeholder="ตัว / ชุด / ขวด"></div></div><button id="addProductBtn" class="primary full">เพิ่มสินค้า</button></div><div class="card"><div class="admin-card-head"><div><h3>พนักงาน / PIN</h3><p>ข้อมูลสำหรับเข้าสู่ระบบ</p></div><span>👥</span></div><div id="staffInfo"></div></div></div>
       <div class="card category-manager-card">
         <div class="category-manager-head"><div><h3>จัดลำดับและแก้ชื่อหมวด</h3><p>แก้ชื่อหมวดได้โดยพิมพ์ใหม่ และใช้ลูกศรเพื่อเลื่อนแท็บซ้าย/ขวา</p></div></div>
         <div id="categoryManager"></div>
@@ -313,6 +313,33 @@
     <button id="closeHeldOrdersBtn" class="close">×</button>
     <div class="held-head"><div><h2>ออเดอร์ที่พักไว้</h2><p>เลือกออเดอร์เพื่อกลับมาขายต่อ</p></div></div>
     <div id="heldOrdersList" class="held-orders-list"></div>
+  </div>
+</div>
+
+<!-- GENERIC NUMERIC KEYPAD -->
+<div id="numericKeypadModal" class="modal hidden">
+  <div class="modal-box numeric-keypad-modal">
+    <button id="closeNumericKeypad" class="close">×</button>
+    <div class="numeric-keypad-head">
+      <h2 id="numericKeypadTitle">กรอกตัวเลข</h2>
+      <small id="numericKeypadHint">ใช้เฉพาะตัวเลข</small>
+    </div>
+    <div id="numericKeypadValue" class="numeric-keypad-value">0</div>
+    <div class="numeric-keypad-grid">
+      <button type="button" data-num-key="1">1</button>
+      <button type="button" data-num-key="2">2</button>
+      <button type="button" data-num-key="3">3</button>
+      <button type="button" data-num-key="4">4</button>
+      <button type="button" data-num-key="5">5</button>
+      <button type="button" data-num-key="6">6</button>
+      <button type="button" data-num-key="7">7</button>
+      <button type="button" data-num-key="8">8</button>
+      <button type="button" data-num-key="9">9</button>
+      <button type="button" id="numericKeypadBack" class="key-muted">⌫</button>
+      <button type="button" data-num-key="0">0</button>
+      <button type="button" id="numericKeypadConfirm" class="key-enter">✓</button>
+    </div>
+    <button type="button" id="numericKeypadClear" class="numeric-clear-btn">ล้างค่า</button>
   </div>
 </div>
 
@@ -432,9 +459,9 @@
     <label>หมวด</label>
     <select id="editCategory"></select>
     <div class="form-grid">
-      <div><label>ราคาขาย</label><input id="editPrice" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off"></div>
-      <div><label>ต้นทุน</label><input id="editCost" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off"></div>
-      <div><label>สต๊อก</label><input id="editStock" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off"></div>
+      <div><label>ราคาขาย</label><input id="editPrice" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" readonly></div>
+      <div><label>ต้นทุน</label><input id="editCost" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" readonly></div>
+      <div><label>สต๊อก</label><input id="editStock" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" readonly></div>
       <div><label>หน่วย</label><input id="editUnit"></div>
     </div>
     <button id="saveEditProduct" class="primary full">บันทึกการแก้ไข</button>
