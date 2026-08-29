@@ -2918,3 +2918,68 @@ body.cash-keypad-open{
 #paymentModal .payment-box.method-selected-v34{
   max-width:620px!important;
 }
+
+/* =====================================================================
+   V35 — soft blue quick-cash buttons + queue ticket
+   ===================================================================== */
+.quick-bank button{
+  background:#EDF4FC!important;
+  border:1px solid #C9DDF3!important;
+  color:#32679F!important;
+  font-weight:700!important;
+}
+.quick-bank button:hover{
+  background:#E3EFFB!important;
+  border-color:#B9D2EE!important;
+  color:#2E5F93!important;
+}
+.quick-bank button:active{
+  background:#D8E9F9!important;
+  border-color:#A9C7E7!important;
+  color:#285783!important;
+}
+
+.queue-ticket-bar-v35{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-end!important;
+  gap:10px!important;
+  margin:0 0 12px!important;
+  min-height:40px!important;
+}
+.queue-ticket-copy-v35{
+  display:flex!important;
+  align-items:baseline!important;
+  gap:7px!important;
+}
+.queue-ticket-label-v35{
+  color:#2F2B28!important;
+  font-size:11px!important;
+  font-weight:700!important;
+}
+.queue-ticket-copy-v35 small{
+  color:#8B8178!important;
+  font-size:8.5px!important;
+}
+.queue-ticket-btn-v35{
+  min-height:34px!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:6px!important;
+  padding:6px 11px!important;
+  border:1px solid #F2B36F!important;
+  border-radius:9px!important;
+  background:#FFF1DF!important;
+  color:#D96F0B!important;
+  font-family:inherit!important;
+  font-size:10px!important;
+  font-weight:700!important;
+  white-space:nowrap!important;
+}
+.queue-ticket-btn-v35:hover{background:#FFE8CC!important}
+.queue-ticket-btn-v35:active{background:#FFDEB7!important}
+
+@media(max-width:800px){
+  .queue-ticket-copy-v35 small{display:none!important}
+}
