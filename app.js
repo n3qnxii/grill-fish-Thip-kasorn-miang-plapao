@@ -833,6 +833,7 @@ async function renderAdminDynamicQr(){
 // Payment
 function openPayment(){
   if(!cart.length)return;
+  $("paymentModal")?.querySelector(".payment-box")?.classList.remove("method-selected-v34");
   $("modalTotal").textContent=money(total());
   $("payOrderNo").textContent="#"+currentDailyOrderNumber();
   selectedMethod=null;lastCashReceived=0;lastChange=0;
@@ -845,6 +846,7 @@ $("payBtn").onclick=openPayment;
 $("closeModal").onclick=$("cancelPay").onclick=()=>{$("paymentModal").classList.add("hidden");closeCashKeypad()};
 document.querySelectorAll(".payment-methods button").forEach(b=>b.onclick=()=>{
   playTapSound();tapFeedback(b);selectedMethod=b.dataset.method;
+  $("paymentModal")?.querySelector(".payment-box")?.classList.add("method-selected-v34");
   document.querySelectorAll(".payment-methods button").forEach(x=>x.classList.remove("selected"));b.classList.add("selected");
   $("cashArea").classList.toggle("hidden",selectedMethod!=="เงินสด");
   $("qrArea").classList.toggle("hidden",selectedMethod!=="QR");
@@ -1345,9 +1347,10 @@ function renderPreorderList(){
   const query=String($("preListSearch")?.value||"").trim().toLowerCase();
 
   let list=state.preorders.slice().sort((a,b)=>{
-    const dateCmp=String(a.date).localeCompare(String(b.date));
-    if(dateCmp!==0)return dateCmp;
-    return String(a.pickup).localeCompare(String(b.pickup));
+    const aCreated=Date.parse(a.createdAt||"")||Number(a.id||0);
+    const bCreated=Date.parse(b.createdAt||"")||Number(b.id||0);
+    if(bCreated!==aCreated)return bCreated-aCreated;
+    return Number(b.id||0)-Number(a.id||0);
   });
 
   if(selected)list=list.filter(p=>p.date===selected);
@@ -1486,9 +1489,15 @@ $("savePreorderBtn").onclick=()=>{
   preorderCart=[];
   ["preCustomer","prePhone","preNote"].forEach(id=>$(id).value="");
 
-  $("preListDate").value=o.date;
+  // หลังบันทึก ให้กลับไปหน้ารายการสั่งล่วงหน้าทันที
+  preorderStatusFilter="all";
+  if($("preListDate"))$("preListDate").value="";
+  document.querySelectorAll("#preStatusTabs [data-pre-status]").forEach(btn=>{
+    btn.classList.toggle("active",btn.dataset.preStatus==="all");
+  });
   renderPreorder();
   updatePreorderReminder(true);
+  setPreorderPageV25("list");
   renderPreorderList();
 };
 
