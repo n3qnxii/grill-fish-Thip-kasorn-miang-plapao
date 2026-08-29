@@ -353,10 +353,37 @@ function advanceDailyOrderNumber(){
 function loadState(){try{const x=JSON.parse(localStorage.getItem(STORAGE_KEY)||"null")||clone(demoState);if(!x.settings)x.settings=clone(demoState.settings);if(typeof x.settings.qrImage!=="string")x.settings.qrImage="";if(typeof x.settings.promptPayId!=="string")x.settings.promptPayId="";
 if(!x.settings.dailyOrderCounters||typeof x.settings.dailyOrderCounters!=="object")x.settings.dailyOrderCounters={};
 if(!Array.isArray(x.settings.customCategories))x.settings.customCategories=[];if(!Array.isArray(x.settings.categoryOrder))x.settings.categoryOrder=[];if(!Array.isArray(x.products))x.products=clone(demoState.products);if(!Array.isArray(x.orders))x.orders=[];if(!Array.isArray(x.preorders))x.preorders=[];if(!Array.isArray(x.heldOrders))x.heldOrders=[];x.staff=clone(STAFF_LIST);return x}catch(e){return clone(demoState)}}
-let state=loadState(),currentUser=null,selectedStaffId=null,cart=[],selectedMethod=null,lastOrder=null,currentCategory="ปลาชุดใหญ่",dashboardRange="today",orderStatusFilter="today",preorderStatusFilter="all",lastCashReceived=0,lastChange=0,preorderCart=[];
+let state=loadState(),currentUser=null,selectedStaffId=null,cart=[],selectedMethod=null,lastOrder=null,currentCategory="ปลาชุดใหญ่",dashboardRange="today",orderStatusFilter="today",lastCashReceived=0,lastChange=0,preorderCart=[],preorderStatusFilter="all",preorderCategory="all";
+
+let preorderPageViewV25="list";
+
+// V24 consolidated migration
+(function migrateV24Consolidated(){
+  let changed=false;
+  if(state.settings && state.settings.shopName!=="ร้านทิพย์เกษรเมี่ยงปลาเผา"){
+    state.settings.shopName="ร้านทิพย์เกษรเมี่ยงปลาเผา";
+    changed=true;
+  }
+  if(Array.isArray(state.preorders)){
+    state.preorders.forEach(o=>{
+      if(o.status==="waiting"){o.status="pending";changed=true}
+      else if(!["pending","confirmed","preparing","ready","cancelled"].includes(o.status)){
+        o.status=o.status==="cancelled"?"cancelled":"pending";
+        changed=true;
+      }
+    });
+  }
+  if(changed)saveState();
+})();
+
 // V10.7 shop name migration for existing saved data
 if(state.settings&&state.settings.shopName===("ร้านทิพย์เกษรเมี่ยงปลาเผา"+"ทิพย์เกษร")){state.settings.shopName="ร้านทิพย์เกษรเมี่ยงปลาเผา";saveState();}
 function saveState(){state.staff=clone(STAFF_LIST);localStorage.setItem(STORAGE_KEY,JSON.stringify(state))}
+function enforceShopNameV24(){
+  if(state.settings)state.settings.shopName="ร้านทิพย์เกษรเมี่ยงปลาเผา";
+  if($("shopTitle"))$("shopTitle").textContent="ร้านทิพย์เกษรเมี่ยงปลาเผา";
+}
+enforceShopNameV24();
 function migrateV104(){
   let changed=false;
   state.products.forEach(p=>{if(p.name==="ปลาเผาตัว"){p.name="ปลาเผา(เอาแต่ปลา)";changed=true}});
@@ -449,12 +476,38 @@ function initLogin(){
 }
 function clearPin(){$("pinInput").value="";renderPinDots();$("loginHint").textContent="กรอก PIN 4 หลัก"}
 function renderPinDots(){[...$("pinDots").children].forEach((d,i)=>d.classList.toggle("filled",i<$("pinInput").value.length))}
+
+function renderStaffAccountSwitcherV29(){
+  const list=$("staffAccountListV29");
+  if(!list||!currentUser)return;
+
+  if($("staffAccountNameV29"))$("staffAccountNameV29").textContent=currentUser.name;
+  if($("staffAccountRoleV29"))$("staffAccountRoleV29").textContent=currentUser.role==="owner"?"ผู้ดูแลระบบ":"พนักงาน";
+
+  list.innerHTML=STAFF_LIST.map(s=>`
+    <button type="button" class="staff-account-option-v29 ${s.id===currentUser.id?"current":""}" data-staff-id-v29="${s.id}">
+      <span class="staff-account-option-name-v29">${escapeHtml(s.name)}</span>
+      <span class="staff-account-option-role-v29">${s.role==="owner"?"ผู้ดูแลระบบ":"พนักงาน"}</span>
+    </button>
+  `).join("");
+}
+
+function closeStaffAccountPopoverV29(){
+  if($("staffAccountPopoverV29"))$("staffAccountPopoverV29").classList.add("hidden");
+}
+
+function toggleStaffAccountPopoverV29(){
+  const pop=$("staffAccountPopoverV29");
+  if(!pop)return;
+  renderStaffAccountSwitcherV29();
+  pop.classList.toggle("hidden");
+}
+
 function applyCurrentUser(staff){
   currentUser=staff;
   $("loginScreen").classList.add("hidden");$("app").classList.remove("hidden");
   $("staffBadge").textContent=`${staff.name} · ${staff.role==="owner"?"เจ้าของ":"พนักงาน"}`;
-  const isOwner=staff.role==="owner"&&staff.name==="คุณทองสุข";
-  document.querySelectorAll(".owner-only").forEach(el=>el.classList.toggle("hidden",!isOwner));
+  document.querySelectorAll(".owner-only").forEach(el=>el.classList.toggle("hidden",staff.role!=="owner"));
   const quick=$("staffQuickSwitch");
   if(quick){
     quick.innerHTML=STAFF_LIST.map(s=>`<option value="${s.id}">${s.name}${s.role==="owner"?" · เจ้าของ":""}</option>`).join("");
@@ -465,6 +518,7 @@ function applyCurrentUser(staff){
   if($("staffQuickMenu"))$("staffQuickMenu").innerHTML=STAFF_LIST.map(s=>`<button type="button" class="${s.id===staff.id?"active":""}" data-quick-staff="${s.id}"><span>${s.name}</span><small>${s.role==="owner"?"ผู้ดูแลระบบ":"พนักงาน"}</small></button>`).join("");
   if(staff.role!=="owner"&&!$("dashboard").classList.contains("hidden"))openPage("sale");
   if(staff.role!=="owner"&&!$("admin").classList.contains("hidden"))openPage("sale");
+  renderStaffAccountSwitcherV29();
   renderAll();
 }
 function attemptLogin(){if(!selectedStaffId){$("loginHint").textContent="กรุณาเลือกพนักงานก่อน";return}const staff=STAFF_LIST.find(s=>s.id===selectedStaffId);if(!staff||staff.pin!==$("pinInput").value){$("loginHint").textContent="PIN ไม่ถูกต้อง กรุณาลองใหม่";clearPin();return}applyCurrentUser(staff)}
@@ -474,27 +528,51 @@ let pendingSwitchStaffId=null;
 function renderSwitchPinDots(){[...$("switchPinDots").children].forEach((d,i)=>d.classList.toggle("filled",i<$("switchPinInput").value.length))}
 function clearSwitchPin(message="กรอก PIN 4 หลัก"){$("switchPinInput").value="";renderSwitchPinDots();$("switchPinHint").textContent=message}
 function openStaffSwitch(id){
-  const staff=STAFF_LIST.find(s=>s.id===Number(id));if(!staff||staff.id===currentUser?.id){if($("staffQuickSwitch"))$("staffQuickSwitch").value=String(currentUser?.id||"");return}
-  pendingSwitchStaffId=staff.id;if($("staffQuickMenu"))$("staffQuickMenu").classList.add("hidden");$("switchStaffName").textContent=staff.name;clearSwitchPin();$("staffSwitchModal").classList.remove("hidden");
+  const staff=STAFF_LIST.find(s=>s.id===Number(id));
+  if(!staff)return;
+  if(staff.id===currentUser?.id){
+    return;
+  }
+  pendingSwitchStaffId=staff.id;
+  $("switchStaffName").textContent=staff.name;
+  clearSwitchPin("กรอก PIN 4 หลัก");
+  $("staffSwitchModal").classList.remove("hidden");
 }
 function closeStaffSwitch(){
-  $("staffSwitchModal").classList.add("hidden");pendingSwitchStaffId=null;clearSwitchPin();
-  if($("staffQuickSwitch")&&currentUser)$("staffQuickSwitch").value=String(currentUser.id);
+  $("staffSwitchModal").classList.add("hidden");
+  pendingSwitchStaffId=null;
+  clearSwitchPin();
 }
 function confirmStaffSwitch(){
   const staff=STAFF_LIST.find(s=>s.id===pendingSwitchStaffId);if(!staff)return;
   if($("switchPinInput").value!==staff.pin){clearSwitchPin("PIN ไม่ถูกต้อง กรุณาลองใหม่");return}
   $("staffSwitchModal").classList.add("hidden");pendingSwitchStaffId=null;clearSwitchPin();applyCurrentUser(staff);
 }
-$("staffQuickSwitch").onchange=e=>openStaffSwitch(e.target.value);
-$("staffQuickCard").onclick=()=>{$("staffQuickMenu").classList.toggle("hidden")};
-$("staffQuickMenu").onclick=e=>{const btn=e.target.closest("[data-quick-staff]");if(!btn)return;$("staffQuickMenu").classList.add("hidden");openStaffSwitch(btn.dataset.quickStaff)};
-document.addEventListener("click",e=>{const wrap=document.querySelector(".sidebar-staff");if(wrap&&!wrap.contains(e.target))$("staffQuickMenu").classList.add("hidden")});
 $("closeStaffSwitch").onclick=closeStaffSwitch;
 $("staffSwitchModal").addEventListener("click",e=>{if(e.target===$("staffSwitchModal"))closeStaffSwitch()});
 document.querySelectorAll("[data-switch-pin]").forEach(b=>b.onclick=()=>{if($("switchPinInput").value.length<4){$("switchPinInput").value+=b.dataset.switchPin;renderSwitchPinDots();if($("switchPinInput").value.length===4)setTimeout(confirmStaffSwitch,100)}});
 $("switchPinBack").onclick=()=>{$("switchPinInput").value=$("switchPinInput").value.slice(0,-1);renderSwitchPinDots()};
+
 $("switchPinEnter").onclick=confirmStaffSwitch;
+
+if($("staffAccountCardV29")){
+  $("staffAccountCardV29").onclick=e=>{
+    e.stopPropagation();
+    toggleStaffAccountPopoverV29();
+  };
+}
+if($("staffAccountListV29")){
+  $("staffAccountListV29").onclick=e=>{
+    const btn=e.target.closest("[data-staff-id-v29]");
+    if(!btn)return;
+    const id=Number(btn.dataset.staffIdV29);
+    closeStaffAccountPopoverV29();
+    openStaffSwitch(id);
+  };
+}
+document.addEventListener("click",e=>{
+  if(!e.target.closest(".staff-switch-v29"))closeStaffAccountPopoverV29();
+});
 
 
 function renderAll(){$("shopTitle").textContent=state.settings.shopName;$("orderNo").textContent="#"+currentDailyOrderNumber();renderCategories();renderProducts();renderCart();renderOrders();renderDashboard();renderStock();renderPreorder();renderPreorderList();renderAdmin();renderHeldOrders();renderLowStockAlert();renderDayCloseSummary();updateQrDisplay();updatePreorderReminder()}
@@ -636,13 +714,30 @@ function appendCashDigit(digit){
 }
 function backspaceCash(){setCashInputValue(String($("cashReceived")?.value||"").slice(0,-1));playQtySound(false)}
 function clearCash(){setCashInputValue("");playQtySound(false)}
-function openCashKeypad(){updateCashDisplays();$("cashKeypadPopup").classList.remove("hidden")}
-function closeCashKeypad(){$("cashKeypadPopup").classList.add("hidden")}
+function openCashKeypad(){
+  updateCashDisplays();
+  const popup=$("cashKeypadPopup");if(!popup)return;
+  if(popup.parentElement!==document.body)document.body.appendChild(popup);
+  if($("exactCashBtn"))$("exactCashBtn").textContent=`พอดี ${money(total())}`;
+  popup.classList.remove("hidden");
+  document.body.classList.add("cash-keypad-open");
+}
+function closeCashKeypad(){
+  const popup=$("cashKeypadPopup");
+  if(popup)popup.classList.add("hidden");
+  document.body.classList.remove("cash-keypad-open");
+}
 function initPaymentKeypad(){
   $("cashReceivedButton").onclick=()=>{playTapSound();openCashKeypad()};
   document.querySelectorAll("[data-popup-key]").forEach(btn=>btn.onclick=()=>{tapFeedback(btn);appendCashDigit(btn.dataset.popupKey)});
   $("popupCashBack").onclick=()=>{tapFeedback($("popupCashBack"));backspaceCash()};
   $("popupCashClear").onclick=()=>{tapFeedback($("popupCashClear"));clearCash()};
+  if($("exactCashBtn"))$("exactCashBtn").onclick=()=>{
+    tapFeedback($("exactCashBtn"));
+    setCashInputValue(String(Math.round(total())));
+    updateCashDisplays();
+    playTapSound();
+  };
   $("closeCashKeypad").onclick=closeCashKeypad;
   $("confirmCashKeypad").onclick=()=>{playTapSound();closeCashKeypad()};
   $("cashKeypadPopup").addEventListener("click",e=>{if(e.target===$("cashKeypadPopup"))closeCashKeypad()});
@@ -941,7 +1036,7 @@ function renderSalesHistoryStats(){
   box.innerHTML=`<div><span>ออเดอร์สำเร็จ</span><b>${paid.length} ออเดอร์</b></div><div><span>ยอดขาย</span><b>${money(sales)}</b></div><div><span>ยกเลิก</span><b>${cancelled.length} ออเดอร์</b></div><div><span>เลขออเดอร์ล่าสุด</span><b>${all.length?"#"+String(Math.max(...all.map(o=>Number(o.number)||0))).padStart(3,"0"):"-"}</b></div>`;
 }
 function renderDashboard(){
-  if(!(currentUser?.role==="owner"&&currentUser?.name==="คุณทองสุข")){return}
+  if(currentUser?.role!=="owner"){return}
   const os=todayPaidOrders();
   const cashOrders=os.filter(o=>o.payment==="เงินสด"),qrOrders=os.filter(o=>o.payment==="QR");
   const cash=cashOrders.reduce((s,o)=>s+Number(o.total||0),0),qr=qrOrders.reduce((s,o)=>s+Number(o.total||0),0);
@@ -1029,7 +1124,7 @@ function applyPreorderReminderCollapsed(){
 
 function tomorrowWaitingOrders(){
   const key=dateKey(tomorrowDate());
-  return state.preorders.filter(o=>o.date===key&&o.status==="waiting").sort((a,b)=>a.pickup.localeCompare(b.pickup));
+  return state.preorders.filter(o=>o.date===key&&o.status!=="cancelled").sort((a,b)=>String(a.pickup).localeCompare(String(b.pickup)));
 }
 function preorderReminderSummary(){
   const orders=tomorrowWaitingOrders();
@@ -1111,142 +1206,328 @@ setInterval(()=>{if(currentUser)updatePreorderReminder(true)},60000);
 function tomorrowDate(){const d=new Date();d.setDate(d.getDate()+1);d.setHours(0,0,0,0);return d}
 function dateKey(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`}
 function localDateTimeValue(d){const pad=n=>String(n).padStart(2,"0");return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`}
-function populatePreTimeSelects(){
-  const hour=$("preHour"),minute=$("preMinute");if(!hour||!minute)return;
+function populatePreorderTimeSelects(){
+  const hour=$("preHour"),minute=$("preMinute");
+  if(!hour||!minute)return;
+
   if(!hour.options.length){
-    hour.innerHTML=Array.from({length:24},(_,i)=>`<option value="${String(i).padStart(2,"0")}">${String(i).padStart(2,"0")}</option>`).join("");
+    hour.innerHTML=Array.from({length:24},(_,i)=>{
+      const v=String(i).padStart(2,"0");
+      return `<option value="${v}">${v}</option>`;
+    }).join("");
   }
   if(!minute.options.length){
-    minute.innerHTML=Array.from({length:12},(_,i)=>{const v=String(i*5).padStart(2,"0");return `<option value="${v}">${v}</option>`}).join("");
+    minute.innerHTML=Array.from({length:12},(_,i)=>{
+      const v=String(i*5).padStart(2,"0");
+      return `<option value="${v}">${v}</option>`;
+    }).join("");
   }
 }
-function syncPreTimeFromSelects(){
-  const h=$("preHour")?.value||"17",m=$("preMinute")?.value||"00";
-  if($("preTime"))$("preTime").value=`${h}:${m}`;
-  syncPreDateTime();
-}
-function setPreTimePickerValue(value="17:00"){
-  populatePreTimeSelects();
-  const parts=String(value||"17:00").split(":");
-  const hh=String(Math.max(0,Math.min(23,Number(parts[0])||0))).padStart(2,"0");
-  const rawMin=Math.max(0,Math.min(59,Number(parts[1])||0));
-  const rounded=Math.min(55,Math.round(rawMin/5)*5);
-  const mm=String(rounded).padStart(2,"0");
-  if($("preHour"))$("preHour").value=hh;
-  if($("preMinute"))$("preMinute").value=mm;
-  if($("preTime"))$("preTime").value=`${hh}:${mm}`;
-}
+
 function syncPreDateTime(){
-  const date=$("preDate")?.value||"",time=$("preTime")?.value||"";
-  if($("preDateTime"))$("preDateTime").value=date&&time?`${date}T${time}`:"";
+  populatePreorderTimeSelects();
+  const date=$("preDate")?.value||"";
+  const hour=$("preHour")?.value||"17";
+  const minute=$("preMinute")?.value||"00";
+  const time=`${hour}:${minute}`;
+  if($("preTime"))$("preTime").value=time;
+  if($("preDateTime"))$("preDateTime").value=date?`${date}T${time}`:"";
 }
+
 function initPreorderDateTime(){
+  populatePreorderTimeSelects();
   const d=tomorrowDate();d.setHours(17,0,0,0);
+
   if($("preDate")&&!$("preDate").value)$("preDate").value=dateKey(d);
-  populatePreTimeSelects();
-  setPreTimePickerValue($("preTime")?.value||"17:00");
+  if($("preHour")&&!$("preHour").value)$("preHour").value="17";
+  if($("preMinute")&&!$("preMinute").value)$("preMinute").value="00";
+
   syncPreDateTime();
-  if($("preListDate")&&!$("preListDate").value)$("preListDate").value=dateKey(tomorrowDate());
+  if($("preListDate")&&!$("preListDate").value)$("preListDate").value="";
 }
+function preorderStatusMeta(status){
+  return {
+    pending:{label:"รอยืนยัน",cls:"pending",next:"confirmed",action:"ยืนยันออเดอร์"},
+    confirmed:{label:"ยืนยันแล้ว",cls:"confirmed",next:"preparing",action:"เริ่มเตรียม"},
+    preparing:{label:"กำลังเตรียม",cls:"preparing",next:"ready",action:"พร้อมรับ"},
+    ready:{label:"พร้อมรับ",cls:"ready",next:null,action:null},
+    cancelled:{label:"ยกเลิก",cls:"cancelled",next:null,action:null}
+  }[status]||{label:"รอยืนยัน",cls:"pending",next:"confirmed",action:"ยืนยันออเดอร์"};
+}
+
+function getPreorderCategories(){
+  const seen=[];
+  state.products.filter(p=>p.active).forEach(p=>{
+    if(!seen.includes(p.category))seen.push(p.category);
+  });
+  return seen;
+}
+
+function renderPreCategoryTabs(){
+  const box=$("preCategoryTabs");if(!box)return;
+  const cats=getPreorderCategories();
+  const valid=preorderCategory==="all"||cats.includes(preorderCategory);
+  if(!valid)preorderCategory="all";
+  box.innerHTML=[
+    `<button type="button" class="${preorderCategory==="all"?"active":""}" data-pre-cat="all">ทั้งหมด</button>`,
+    ...cats.map(cat=>`<button type="button" class="${preorderCategory===cat?"active":""}" data-pre-cat="${escapeHtml(cat)}">${escapeHtml(cat)}</button>`)
+  ].join("");
+  box.querySelectorAll("[data-pre-cat]").forEach(btn=>{
+    btn.onclick=()=>{
+      preorderCategory=btn.dataset.preCat;
+      renderPreorder();
+    };
+  });
+}
+
+
+function setPreorderPageV25(view){
+  preorderPageViewV25=view==="create"?"create":"list";
+  document.querySelectorAll("[data-pre-page-tab]").forEach(btn=>{
+    btn.classList.toggle("active",btn.dataset.prePageTab===preorderPageViewV25);
+  });
+  document.querySelectorAll("[data-pre-page-panel]").forEach(panel=>{
+    panel.classList.toggle("active",panel.dataset.prePagePanel===preorderPageViewV25);
+  });
+  if(preorderPageViewV25==="list")renderPreorderList();
+  else renderPreorder();
+}
+
 function renderPreorder(){
   initPreorderDateTime();
-  syncPreDateTime();const dt=new Date($("preDateTime").value||tomorrowDate());
-  $("tomorrowBadge").textContent="รับ "+dt.toLocaleString("th-TH",{weekday:"short",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"});
-  const products=state.products.filter(p=>p.active).slice().sort((a,b)=>a.price-b.price||a.name.localeCompare(b.name,"th"));
-  $("preProducts").innerHTML=products.map(p=>{const r=preorderCart.find(x=>x.id===p.id),q=r?.qty||0;return `<div class="pre-product"><b>${p.name}</b><span>${money(p.price)}</span><div class="pre-controls"><button onclick="changePreQty(${p.id},-1)">−</button><button type="button" class="pre-qty-input pre-qty-button" onclick="openPreQtyKeypad(${p.id})" aria-label="จำนวน ${escapeHtml(p.name)}">${q}</button><button onclick="changePreQty(${p.id},1)">+</button></div></div>`}).join("");
-  $("preCartItems").innerHTML=preorderCart.length?preorderCart.slice().sort((a,b)=>b.price-a.price).map(r=>`<div class="pre-row"><span>${r.name} × ${r.qty}</span><b>${money(r.price*r.qty)}</b></div>`).join(""):'<p class="empty">ยังไม่ได้เลือกสินค้า</p>';
+  syncPreDateTime();
+
+  const dtValue=$("preDateTime")?.value;
+  const dt=dtValue?new Date(dtValue):tomorrowDate();
+  if($("tomorrowBadge"))$("tomorrowBadge").textContent="รับ "+dt.toLocaleString("th-TH",{weekday:"short",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"});
+
+  renderPreCategoryTabs();
+
+  let products=state.products.filter(p=>p.active);
+  if(preorderCategory!=="all")products=products.filter(p=>p.category===preorderCategory);
+  products=products.slice().sort((a,b)=>a.price-b.price||a.name.localeCompare(b.name,"th"));
+
+  $("preProducts").innerHTML=products.length?products.map(p=>{
+    const r=preorderCart.find(x=>x.id===p.id),q=r?.qty||0;
+    return `<div class="pre-product pre-product-v24 ${q>0?"selected":""}">
+      <div class="pre-product-copy">
+        <small>${escapeHtml(p.category)}</small>
+        <b>${escapeHtml(p.name)}</b>
+        <span>${money(p.price)}</span>
+      </div>
+      <div class="pre-controls">
+        <button type="button" onclick="changePreQty(${p.id},-1)">−</button>
+        <button type="button" class="pre-qty-input pre-qty-button" onclick="openPreQtyKeypad(${p.id})" aria-label="จำนวน ${escapeHtml(p.name)}">${q}</button>
+        <button type="button" onclick="changePreQty(${p.id},1)">+</button>
+      </div>
+    </div>`;
+  }).join(""):'<p class="empty">ไม่มีสินค้าในหมวดนี้</p>';
+
+  $("preCartItems").innerHTML=preorderCart.length
+    ?preorderCart.slice().sort((a,b)=>b.price-a.price).map(r=>`<div class="pre-row pre-row-v24"><span>${escapeHtml(r.name)} × ${r.qty}</span><b>${money(r.price*r.qty)}</b></div>`).join("")
+    :'<p class="empty">ยังไม่ได้เลือกสินค้า</p>';
+
   $("preTotal").textContent=money(preorderCart.reduce((s,r)=>s+r.price*r.qty,0));
 }
-function normalizePreStatus(status){
-  if(status==="waiting")return "pending";
-  return status||"pending";
+
+function preorderSearchText(o){
+  return [
+    o.customer,
+    o.phone,
+    o.note,
+    o.staffName,
+    ...(o.items||[]).flatMap(i=>[i.name,i.price,i.qty])
+  ].join(" ").toLowerCase();
 }
-function preorderStatusLabel(status){
-  const s=normalizePreStatus(status);
-  return s==="pending"?"รอยืนยัน":s==="confirmed"?"ยืนยันแล้ว":s==="preparing"?"กำลังเตรียม":s==="ready"?"พร้อมรับ":"ยกเลิก";
-}
+
 function renderPreorderList(){
   const selected=$("preListDate")?.value||"";
-  const search=($("preListSearch")?.value||"").trim().toLowerCase();
-  let list=state.preorders.slice().sort((a,b)=>String(a.date).localeCompare(String(b.date))||String(a.pickup).localeCompare(String(b.pickup)));
+  const query=String($("preListSearch")?.value||"").trim().toLowerCase();
+
+  let list=state.preorders.slice().sort((a,b)=>{
+    const dateCmp=String(a.date).localeCompare(String(b.date));
+    if(dateCmp!==0)return dateCmp;
+    return String(a.pickup).localeCompare(String(b.pickup));
+  });
+
   if(selected)list=list.filter(p=>p.date===selected);
-  if(preorderStatusFilter!=="all")list=list.filter(p=>normalizePreStatus(p.status)===preorderStatusFilter);
-  if(search)list=list.filter(o=>(`${o.customer||""} ${o.phone||""} ${o.note||""} ${(o.items||[]).map(i=>i.name).join(" ")}`).toLowerCase().includes(search));
+  if(preorderStatusFilter!=="all")list=list.filter(p=>(p.status||"pending")===preorderStatusFilter);
+  if(query)list=list.filter(o=>preorderSearchText(o).includes(query));
 
   if(selected){
     const d=new Date(selected+"T12:00:00");
-    $("preListTitle").textContent="รับ "+d.toLocaleDateString("th-TH",{weekday:"short",day:"numeric",month:"short",year:"numeric"});
+    $("preListTitle").textContent="วันที่ "+d.toLocaleDateString("th-TH",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
   }else{
-    $("preListTitle").textContent="ทุกวันที่มีรายการ";
+    $("preListTitle").textContent="รายการสั่งล่วงหน้าทั้งหมด";
   }
 
   const prep={};
-  list.filter(x=>normalizePreStatus(x.status)!=="cancelled").forEach(o=>(o.items||[]).forEach(i=>prep[i.name]=(prep[i.name]||0)+i.qty));
-  $("preparationSummary").textContent=Object.keys(prep).length?"เตรียมรวม: "+Object.entries(prep).map(([n,q])=>`${n} ${q}`).join(" • "):"ยังไม่มีรายการเตรียม";
+  list.filter(x=>x.status!=="cancelled").forEach(o=>(o.items||[]).forEach(i=>prep[i.name]=(prep[i.name]||0)+i.qty));
+  $("preparationSummary").textContent=Object.keys(prep).length
+    ?"สรุปของที่ต้องเตรียม: "+Object.entries(prep).map(([n,q])=>`${n} ${q}`).join(" • ")
+    :"ยังไม่มีรายการที่ต้องเตรียม";
 
-  $("preorderList").innerHTML=list.length?`
-    <div class="preorder-list-cards">
-      ${list.map(o=>{
-        const s=normalizePreStatus(o.status);
-        const qty=(o.items||[]).reduce((sum,i)=>sum+Number(i.qty||0),0);
-        const items=(o.items||[]).map(i=>`${escapeHtml(i.name)} ×${i.qty}`).join(", ");
-        const nextAction=s==="pending"
-          ?`<button class="btn-secondary-orange compact" onclick="setPreStatus(${o.id},'confirmed')">ยืนยัน</button>`
-          :s==="confirmed"
-          ?`<button class="btn-secondary-orange compact" onclick="setPreStatus(${o.id},'preparing')">เริ่มเตรียม</button>`
-          :s==="preparing"
-          ?`<button class="btn-success compact" onclick="setPreStatus(${o.id},'ready')">พร้อมรับ</button>`
-          :"";
-        return `<article class="preorder-list-row">
-          <div class="preorder-date-cell"><b>${new Date(o.date+"T12:00:00").toLocaleDateString("th-TH",{day:"2-digit",month:"short",year:"2-digit"})}</b><span>${o.pickup||"-"}</span></div>
-          <div class="preorder-customer-cell"><b>${escapeHtml(o.customer||"-")}</b><span>${escapeHtml(o.phone||"-")}</span></div>
-          <div class="preorder-items-cell"><b>${qty} รายการ</b><span>${items||"-"}</span></div>
-          <div class="preorder-total-cell">${money(o.total)}</div>
-          <div class="preorder-status-cell"><span class="status ${s}">${preorderStatusLabel(s)}</span></div>
-          <div class="preorder-row-actions">${nextAction}${s!=="cancelled"?`<button class="delete-icon-btn" title="ยกเลิก" onclick="setPreStatus(${o.id},'cancelled')">×</button>`:""}</div>
-        </article>`;
-      }).join("")}
-    </div>`:'<p class="empty">ยังไม่มีออเดอร์ล่วงหน้าที่ตรงกับตัวกรอง</p>';
+  const box=$("preorderList");
+  if(!list.length){
+    box.innerHTML='<div class="empty preorder-empty-card">ไม่พบออเดอร์สั่งล่วงหน้า</div>';
+    return;
+  }
+
+  box.innerHTML=list.map(o=>{
+    const meta=preorderStatusMeta(o.status||"pending");
+    const pickupDate=new Date(o.date+"T12:00:00").toLocaleDateString("th-TH",{day:"2-digit",month:"short",year:"2-digit"});
+    const itemText=(o.items||[]).map(i=>`${escapeHtml(i.name)} ×${i.qty}`).join(" · ");
+    const nextBtn=meta.next
+      ?`<button type="button" class="pre-next-status" onclick="advancePreStatus(${o.id})">${meta.action}</button>`
+      :"";
+    const cancelBtn=o.status!=="cancelled"
+      ?`<button type="button" class="pre-cancel-status" onclick="setPreStatus(${o.id},'cancelled')" aria-label="ยกเลิกออเดอร์">ยกเลิก</button>`
+      :"";
+
+    return `<article class="preorder-card-row">
+      <div class="preorder-card-date">
+        <b>${pickupDate}</b>
+        <strong>${escapeHtml(o.pickup||"-")}</strong>
+      </div>
+
+      <div class="preorder-card-customer">
+        <div class="preorder-card-title">
+          <b>${escapeHtml(o.customer||"-")}</b>
+          <span class="pre-status-badge ${meta.cls}">${meta.label}</span>
+        </div>
+        <small>${escapeHtml(o.phone||"ไม่มีเบอร์โทร")}</small>
+        ${o.note?`<small class="pre-note">หมายเหตุ: ${escapeHtml(o.note)}</small>`:""}
+      </div>
+
+      <div class="preorder-card-items">
+        <b>${(o.items||[]).reduce((s,i)=>s+Number(i.qty||0),0)} รายการ</b>
+        <span>${itemText||"-"}</span>
+      </div>
+
+      <div class="preorder-card-total">
+        <strong>${money(o.total)}</strong>
+        <small>${escapeHtml(o.staffName||"-")}</small>
+      </div>
+
+      <div class="preorder-card-actions">
+        ${nextBtn}
+        ${cancelBtn}
+      </div>
+    </article>`;
+  }).join("");
 }
-window.changePreQty=(id,d)=>{const el=currentTapElement();tapFeedback(el);playQtySound(d>0);const p=state.products.find(x=>x.id===id);let r=preorderCart.find(x=>x.id===id);if(!r&&d>0){r={id:p.id,name:p.name,price:p.price,qty:0};preorderCart.push(r)}if(!r)return;r.qty=Math.min(100,r.qty+d);if(r.qty<=0)preorderCart=preorderCart.filter(x=>x.id!==id);renderPreorder()};
-window.setPreQty=(id,value)=>{
+
+window.changePreQty=(id,d)=>{
+  const el=currentTapElement();tapFeedback(el);playQtySound(d>0);
   const p=state.products.find(x=>x.id===id);if(!p)return;
-  let qty=Math.min(100,Math.max(0,Number(String(value??"").replace(/\D/g,""))||0)),r=preorderCart.find(x=>x.id===id);
-  if(qty<=0){preorderCart=preorderCart.filter(x=>x.id!==id)}
-  else if(r){r.qty=qty}else{preorderCart.push({id:p.id,name:p.name,price:p.price,qty})}
+  let r=preorderCart.find(x=>x.id===id);
+  if(!r&&d>0){r={id:p.id,name:p.name,price:p.price,qty:0};preorderCart.push(r)}
+  if(!r)return;
+  r.qty=Math.min(100,r.qty+d);
+  if(r.qty<=0)preorderCart=preorderCart.filter(x=>x.id!==id);
   renderPreorder();
 };
+
+window.setPreQty=(id,value)=>{
+  const p=state.products.find(x=>x.id===id);if(!p)return;
+  let qty=Math.min(100,Math.max(0,Number(String(value??"").replace(/\D/g,""))||0));
+  let r=preorderCart.find(x=>x.id===id);
+  if(qty<=0)preorderCart=preorderCart.filter(x=>x.id!==id);
+  else if(r)r.qty=qty;
+  else preorderCart.push({id:p.id,name:p.name,price:p.price,qty});
+  renderPreorder();
+};
+
 window.openPreQtyKeypad=id=>{
   const p=state.products.find(x=>x.id===id);if(!p)return;
   const r=preorderCart.find(x=>x.id===id);
-  openNumericKeypad({title:`จำนวน ${p.name}`,hint:"สูงสุด 100",value:r?.qty||0,min:0,max:100,maxDigits:3,onConfirm:n=>setPreQty(id,n)});
+  openNumericKeypad({
+    title:`จำนวน ${p.name}`,
+    hint:"สูงสุด 100",
+    value:r?.qty||0,
+    min:0,max:100,maxDigits:3,
+    onConfirm:n=>setPreQty(id,n)
+  });
 };
+
 $("clearPreorderBtn").onclick=()=>{preorderCart=[];renderPreorder()};
-$("preDateTime").addEventListener("change",renderPreorder);
+
 if($("preDate"))$("preDate").addEventListener("change",()=>{syncPreDateTime();renderPreorder()});
-if($("preHour"))$("preHour").addEventListener("change",()=>{syncPreTimeFromSelects();renderPreorder()});
-if($("preMinute"))$("preMinute").addEventListener("change",()=>{syncPreTimeFromSelects();renderPreorder()});
+if($("preHour"))$("preHour").addEventListener("change",()=>{syncPreDateTime();renderPreorder()});
+if($("preMinute"))$("preMinute").addEventListener("change",()=>{syncPreDateTime();renderPreorder()});
+
 $("savePreorderBtn").onclick=()=>{
-  const customer=$("preCustomer").value.trim(),dtValue=$("preDateTime").value;
+  syncPreDateTime();
+  const customer=$("preCustomer").value.trim();
+  const dtValue=$("preDateTime").value;
+
   if(!customer){alert("กรุณาใส่ชื่อลูกค้า");return}
   if(!dtValue){alert("กรุณาเลือกวันที่และเวลารับ");return}
   if(!preorderCart.length){alert("กรุณาเลือกสินค้า");return}
+
   const dt=new Date(dtValue);
-  const o={id:Date.now(),date:dateKey(dt),customer,phone:$("prePhone").value.trim(),pickup:dt.toTimeString().slice(0,5),note:$("preNote").value.trim(),items:preorderCart.map(x=>({...x})),total:preorderCart.reduce((s,x)=>s+x.price*x.qty,0),status:"pending",createdAt:nowIso(),staffName:currentUser.name};
-  state.preorders.push(o);saveState();preorderCart=[];["preCustomer","prePhone","preNote"].forEach(id=>$(id).value="");
-  $("preListDate").value=o.date;renderPreorder();updatePreorderReminder(true);window.__preListExplicitDate=true;openPage("preorder");$("preListDate").value=o.date;renderPreorderList();
-};
-window.setPreStatus=(id,status)=>{const o=state.preorders.find(x=>x.id===id);if(!o)return;o.status=status;saveState();renderPreorderList();updatePreorderReminder()};
-if($("preListSearch"))$("preListSearch").addEventListener("input",renderPreorderList);
-document.querySelectorAll(".pre-status-filter").forEach(btn=>btn.onclick=()=>{
-  preorderStatusFilter=btn.dataset.preFilter;
-  document.querySelectorAll(".pre-status-filter").forEach(x=>x.classList.toggle("active",x===btn));
+  const o={
+    id:Date.now(),
+    date:dateKey(dt),
+    customer,
+    phone:$("prePhone").value.trim(),
+    pickup:`${$("preHour").value}:${$("preMinute").value}`,
+    note:$("preNote").value.trim(),
+    items:preorderCart.map(x=>({...x})),
+    total:preorderCart.reduce((s,x)=>s+x.price*x.qty,0),
+    status:"pending",
+    createdAt:nowIso(),
+    staffName:currentUser.name
+  };
+
+  state.preorders.push(o);
+  saveState();
+
+  preorderCart=[];
+  ["preCustomer","prePhone","preNote"].forEach(id=>$(id).value="");
+
+  $("preListDate").value=o.date;
+  renderPreorder();
+  updatePreorderReminder(true);
   renderPreorderList();
-});
-$("preListDate").addEventListener("change",renderPreorderList);
+};
+
+window.setPreStatus=(id,status)=>{
+  const allowed=["pending","confirmed","preparing","ready","cancelled"];
+  if(!allowed.includes(status))return;
+  const o=state.preorders.find(x=>x.id===id);if(!o)return;
+  o.status=status;
+  o.statusUpdatedAt=nowIso();
+  saveState();
+  renderPreorderList();
+  updatePreorderReminder();
+};
+
+window.advancePreStatus=id=>{
+  const o=state.preorders.find(x=>x.id===id);if(!o)return;
+  const next={pending:"confirmed",confirmed:"preparing",preparing:"ready"}[o.status||"pending"];
+  if(next)setPreStatus(id,next);
+};
+
+if($("preListDate"))$("preListDate").addEventListener("change",renderPreorderList);
+if($("preListSearch"))$("preListSearch").addEventListener("input",renderPreorderList);
+
 $("preListAllBtn").onclick=()=>{$("preListDate").value="";renderPreorderList()};
 $("preListTomorrowBtn").onclick=()=>{$("preListDate").value=dateKey(tomorrowDate());renderPreorderList()};
-$("newPreorderFromListBtn").onclick=()=>openPage("preorder");
+
+
+document.querySelectorAll("[data-pre-page-tab]").forEach(btn=>{
+  btn.onclick=()=>setPreorderPageV25(btn.dataset.prePageTab);
+});
+
+document.querySelectorAll("#preStatusTabs [data-pre-status]").forEach(btn=>{
+  btn.onclick=()=>{
+    preorderStatusFilter=btn.dataset.preStatus;
+    document.querySelectorAll("#preStatusTabs [data-pre-status]").forEach(x=>x.classList.toggle("active",x===btn));
+    renderPreorderList();
+  };
+});
+
 
 // Export sales CSV by selected date or all
 function csvCell(v){const s=String(v??"").replaceAll('"','""');return `"${s}"`}
@@ -1293,6 +1574,22 @@ window.renameCategory=index=>{
   if(currentCategory===oldName)currentCategory=newName;
   saveState();renderAll();
 };
+
+function preserveAdminScrollV27(fn){
+  const adminVisible=$("admin") && !$("admin").classList.contains("hidden");
+  const y=adminVisible?(window.scrollY||0):0;
+  const result=fn();
+  if(adminVisible){
+    requestAnimationFrame(()=>{
+      window.scrollTo({top:y,left:0,behavior:"auto"});
+      requestAnimationFrame(()=>window.scrollTo({top:y,left:0,behavior:"auto"}));
+    });
+  }
+  return result;
+}
+
+
+
 function renderAdmin(){
   if(currentUser?.role!=="owner")return;
   $("shopNameInput").value=state.settings.shopName;$("nextOrderInput").value=ensureDailyOrderCounter();if($("promptPayIdInput"))$("promptPayIdInput").value=state.settings.promptPayId||"";
@@ -1307,7 +1604,13 @@ function renderAdmin(){
   $("adminProducts").innerHTML=`<table><tr><th>ชื่อ</th><th>หมวด</th><th>ราคา</th><th>ต้นทุน</th><th>สต๊อก</th><th>สถานะ</th><th>จัดการ</th></tr>${state.products.slice().sort((a,b)=>b.price-a.price).map(p=>`<tr><td>${escapeHtml(p.name)}</td><td>${escapeHtml(p.category)}</td><td>${money(p.price)}</td><td>${money(p.cost)}</td><td>${p.stock} ${escapeHtml(p.unit)}</td><td>${p.active?"เปิดขาย":"ปิดขาย"}</td><td><button class="btn-secondary-orange compact" onclick="editProduct(${p.id})">แก้ไข</button> <button class="btn-neutral compact" onclick="toggleProduct(${p.id})">${p.active?"ปิดขาย":"เปิดขาย"}</button></td></tr>`).join("")}</table>`;
   updateAdminQrPreview();renderAdminDynamicQr();initExportDate();
 }
-$("saveShopBtn").onclick=()=>{state.settings.shopName=$("shopNameInput").value.trim()||"ร้านทิพย์เกษรเมี่ยงปลาเผา";ensureDailyOrderCounter();saveState();renderAll();alert("บันทึกแล้ว")};
+$("saveShopBtn").onclick=()=>preserveAdminScrollV27(()=>{
+  state.settings.shopName=$("shopNameInput").value.trim()||"ร้านทิพย์เกษรเมี่ยงปลาเผา";
+  ensureDailyOrderCounter();
+  saveState();
+  if($("shopTitle"))$("shopTitle").textContent=state.settings.shopName;
+  alert("บันทึกแล้ว");
+});
 
 $("addCategoryBtn").onclick=()=>{
   const name=$("newCategoryName").value.trim();
@@ -1354,7 +1657,7 @@ window.toggleProduct=id=>{const p=state.products.find(x=>x.id===id);p.active=!p.
 function updateQrDisplay(){const src=state.settings.qrImage||"";if(src){$("paymentQrImage").src=src;$("paymentQrImage").style.display="block";$("qrFullscreenImage").src=src;$("qrPlaceholder").style.display="none"}else{$("paymentQrImage").style.display="none";$("qrPlaceholder").style.display="block"}}
 function updateAdminQrPreview(){if(currentUser?.role!=="owner")return;const src=state.settings.qrImage||"";if(src){$("adminQrPreview").src=src;$("adminQrPreview").style.display="block";$("adminQrEmpty").style.display="none"}else{$("adminQrPreview").style.display="none";$("adminQrEmpty").style.display="block"}}
 
-$("savePromptPayBtn").onclick=()=>{
+$("savePromptPayBtn").onclick=()=>preserveAdminScrollV27(()=>{
   const value=$("promptPayIdInput").value.trim();
   if(value){
     try{normalizePromptPayTarget(value)}
@@ -1364,7 +1667,7 @@ $("savePromptPayBtn").onclick=()=>{
   saveState();
   renderAdminDynamicQr();
   alert(value?"บันทึก PromptPay แล้ว":"ลบ PromptPay แล้ว");
-};
+});
 
 $("qrFile").onchange=e=>{const f=e.target.files?.[0];if(!f)return;const r=new FileReader();r.onload=()=>{state.settings.qrImage=String(r.result);saveState();updateQrDisplay();updateAdminQrPreview()};r.readAsDataURL(f)};
 $("removeQrBtn").onclick=()=>{state.settings.qrImage="";saveState();updateQrDisplay();updateAdminQrPreview()};
@@ -1374,23 +1677,42 @@ $("importBtn").onclick=()=>$("importFile").click();
 $("importFile").onchange=e=>{const f=e.target.files?.[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{state=JSON.parse(r.result);state.staff=clone(STAFF_LIST);if(!Array.isArray(state.preorders))state.preorders=[];if(!state.settings)state.settings=clone(demoState.settings);if(!state.settings.dailyOrderCounters)state.settings.dailyOrderCounters={};if(!Array.isArray(state.settings.customCategories))state.settings.customCategories=[];ensureDailyOrderCounter();saveState();renderAll();alert("นำเข้าข้อมูลสำเร็จ")}catch(err){alert("ไฟล์ไม่ถูกต้อง")}};r.readAsText(f)};
 $("resetBtn").onclick=()=>{if(confirm("รีเซ็ตข้อมูลทั้งหมดใช่ไหม?")){state=clone(demoState);saveState();location.reload()}};
 
+
+
 // Navigation
 function openPage(pageId){
-  const isOwner=currentUser?.role==="owner"&&currentUser?.name==="คุณทองสุข";
-  if((pageId==="dashboard"||pageId==="admin")&&!isOwner)pageId="sale";
+  if(["dashboard","admin"].includes(pageId) && currentUser?.role!=="owner"){
+    pageId="sale";
+  }
+
   document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x.dataset.page===pageId));
   document.querySelectorAll(".page").forEach(x=>x.classList.add("hidden"));
-  const page=$(pageId);if(page)page.classList.remove("hidden");
+
+  const page=$(pageId);
+  if(page)page.classList.remove("hidden");
+
   if(pageId==="dashboard")setTimeout(()=>{renderDashboard();renderSalesCharts();initExportDate()},40);
-  if(pageId==="preorder")renderPreorder();
-  if(pageId==="preorderListPage"){
-    if(!window.__preListExplicitDate)$("preListDate").value="";
-    window.__preListExplicitDate=false;
+  if(pageId==="preorder"){
+    setPreorderPageV25("list");
+    renderPreorder();
     renderPreorderList();
   }
-  if(pageId==="admin")renderAdmin();
+  if(pageId==="admin"){
+    renderAdmin();
+      window.scrollTo({top:0,left:0,behavior:"auto"});
+    requestAnimationFrame(()=>window.scrollTo({top:0,left:0,behavior:"auto"}));
+  }
 }
-document.querySelectorAll(".tab").forEach(btn=>btn.onclick=()=>openPage(btn.dataset.page));
+document.querySelectorAll(".tab").forEach(btn=>{
+  btn.onclick=()=>{
+    const target=btn.dataset.page;
+    if(btn.classList.contains("active")){
+      // Do not re-render or move the page when clicking the active sidebar tab again.
+      return;
+    }
+    openPage(target);
+  };
+});
 
 const sidebar=$("appSidebar"),sidebarToggle=$("sidebarToggle");
 function setSidebarExpanded(expanded){
@@ -1419,3 +1741,4 @@ document.addEventListener("wheel",e=>{if(salePageActive()&&e.ctrlKey)e.preventDe
 document.addEventListener("keydown",e=>{if(salePageActive()&&(e.ctrlKey||e.metaKey)&&["=","+","-","0"].includes(e.key))e.preventDefault()});
 
 ensurePosUiPatch();initPaymentKeypad();initPreorderDateTime();initExportDate();initLogin();
+
