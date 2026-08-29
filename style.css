@@ -2642,3 +2642,280 @@ body.cash-keypad-open{
   color:#2B2724!important;
   font-weight:700!important;
 }
+
+/* =====================================================================
+   V32 — Quick ฿10 + preorder newest first + clean report summary
+   ===================================================================== */
+
+/* Quick cash buttons */
+.quick-bank{
+  display:grid!important;
+  grid-template-columns:repeat(6,minmax(0,1fr))!important;
+  gap:7px!important;
+}
+.quick-bank button{
+  color:#111111!important;
+  background:#FFFFFF!important;
+  border:1px solid #E4E4E1!important;
+  font-weight:700!important;
+}
+.quick-bank button:hover{
+  background:#FAF8F5!important;
+}
+.quick-bank button:active{
+  background:#F3EEE8!important;
+  color:#111111!important;
+}
+
+/* Report: remove special tinted backgrounds from total sales + gross profit */
+#dayCloseSummary.day-close-grid > div:first-child,
+#dayCloseSummary.day-close-grid > div:last-child{
+  background:#FFFFFF!important;
+  background-color:#FFFFFF!important;
+}
+
+/* Keep the same neutral border as the other summary cards */
+#dayCloseSummary.day-close-grid > div:first-child,
+#dayCloseSummary.day-close-grid > div:last-child{
+  border-color:#E4E4E1!important;
+}
+
+/* Responsive quick-money layout */
+@media(max-width:900px){
+  .quick-bank{
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  }
+}
+
+/* =====================================================================
+   V33 — Payment method cards inspired by supplied reference
+   Keeps original POS structure and payment logic.
+   ===================================================================== */
+
+/* Larger but balanced payment shell */
+#paymentModal .payment-box{
+  width:min(760px,94vw)!important;
+  max-width:760px!important;
+  padding:28px 30px 26px!important;
+  border-radius:26px!important;
+  background:#FFFFFF!important;
+  box-shadow:0 24px 60px rgba(40,31,22,.22)!important;
+}
+
+/* Payment heading */
+#paymentModal .payment-head{
+  align-items:flex-start!important;
+  padding:0 4px 20px!important;
+  border-bottom:1px solid #E9E3DC!important;
+}
+#paymentModal .payment-title-block h2{
+  margin:0!important;
+  color:#252321!important;
+  font-size:30px!important;
+  font-weight:800!important;
+  line-height:1.15!important;
+}
+#paymentModal .payment-title-block small{
+  display:block!important;
+  margin-top:5px!important;
+  color:#8B837C!important;
+  font-size:15px!important;
+}
+#paymentModal .payment-total-block{
+  text-align:right!important;
+}
+#paymentModal .payment-total-block small{
+  color:#8B837C!important;
+  font-size:14px!important;
+}
+#paymentModal .payment-total-block strong{
+  color:#E97818!important;
+  font-size:44px!important;
+  line-height:1!important;
+}
+
+/* Close button */
+#paymentModal .close{
+  width:52px!important;
+  height:52px!important;
+  border-radius:16px!important;
+  background:#FFFFFF!important;
+  border:1px solid #DEDAD5!important;
+  color:#3C3936!important;
+  font-size:28px!important;
+}
+
+/* Two large payment cards */
+#paymentModal .payment-methods.payment-method-cards-v33{
+  display:grid!important;
+  grid-template-columns:1fr 1fr!important;
+  gap:18px!important;
+  margin:24px 0 22px!important;
+}
+
+#paymentModal .payment-method-card-v33{
+  min-height:190px!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:14px!important;
+  padding:22px 18px!important;
+  border-radius:22px!important;
+  background:#FFFFFF!important;
+  color:#22201E!important;
+  border:1.5px solid #DEDAD5!important;
+  transition:transform .12s ease, box-shadow .12s ease, background .12s ease!important;
+}
+
+#paymentModal .payment-method-card-v33:hover{
+  transform:translateY(-1px)!important;
+  box-shadow:0 10px 24px rgba(39,31,24,.08)!important;
+}
+
+#paymentModal .payment-method-card-v33.selected{
+  color:#22201E!important;
+}
+
+/* Cash = soft success green */
+#paymentModal .cash-card-v33{
+  background:#F7FBF5!important;
+  border-color:#CFE3C8!important;
+}
+#paymentModal .cash-card-v33.selected{
+  background:#EEF8EA!important;
+  border-color:#91BF80!important;
+  box-shadow:0 0 0 2px rgba(107,161,84,.08)!important;
+}
+#paymentModal .cash-icon-v33{
+  color:#76AE59!important;
+}
+
+/* QR = soft blue */
+#paymentModal .qr-card-v33{
+  background:#F4F8FD!important;
+  border-color:#CAD8EA!important;
+}
+#paymentModal .qr-card-v33.selected{
+  background:#ECF3FB!important;
+  border-color:#7FA5D2!important;
+  box-shadow:0 0 0 2px rgba(80,128,182,.08)!important;
+}
+#paymentModal .qr-icon-v33{
+  color:#315F92!important;
+}
+
+#paymentModal .payment-method-icon-v33{
+  width:92px!important;
+  height:72px!important;
+  display:grid!important;
+  place-items:center!important;
+}
+#paymentModal .payment-method-icon-v33 svg{
+  width:84px!important;
+  height:64px!important;
+}
+
+#paymentModal .payment-method-copy-v33{
+  display:grid!important;
+  gap:4px!important;
+  text-align:center!important;
+}
+#paymentModal .payment-method-copy-v33 strong{
+  color:#22201E!important;
+  font-size:24px!important;
+  font-weight:800!important;
+  line-height:1.15!important;
+}
+#paymentModal .payment-method-copy-v33 small{
+  color:#817A74!important;
+  font-size:15px!important;
+  font-weight:500!important;
+  line-height:1.3!important;
+}
+
+/* Inner cash/QR sections stay from original layout, just cleaner */
+#paymentModal #cashArea,
+#paymentModal #qrArea{
+  margin-top:4px!important;
+}
+
+/* Footer buttons */
+#paymentModal .modal-actions{
+  display:grid!important;
+  grid-template-columns:190px 1fr!important;
+  gap:14px!important;
+  margin-top:18px!important;
+}
+#paymentModal .modal-actions button{
+  min-height:58px!important;
+  border-radius:16px!important;
+  font-size:18px!important;
+  font-weight:700!important;
+}
+#paymentModal #cancelPay{
+  background:#FFFFFF!important;
+  color:#4A4642!important;
+  border:1px solid #DDD8D2!important;
+}
+#paymentModal #confirmPay{
+  background:#F28C28!important;
+  color:#FFFFFF!important;
+  border:1px solid #E67A18!important;
+}
+#paymentModal #confirmPay:disabled{
+  background:#F7C49F!important;
+  color:#FFFFFF!important;
+  border-color:#F7C49F!important;
+}
+
+/* Responsive: keep original functionality on iPad/smaller displays */
+@media(max-width:720px){
+  #paymentModal .payment-box{
+    width:min(94vw,620px)!important;
+    padding:22px!important;
+  }
+  #paymentModal .payment-methods.payment-method-cards-v33{
+    grid-template-columns:1fr 1fr!important;
+    gap:12px!important;
+  }
+  #paymentModal .payment-method-card-v33{
+    min-height:160px!important;
+  }
+  #paymentModal .payment-method-icon-v33{
+    width:72px!important;
+    height:58px!important;
+  }
+  #paymentModal .payment-method-icon-v33 svg{
+    width:66px!important;
+    height:52px!important;
+  }
+  #paymentModal .payment-method-copy-v33 strong{
+    font-size:20px!important;
+  }
+  #paymentModal .payment-method-copy-v33 small{
+    font-size:13px!important;
+  }
+  #paymentModal .modal-actions{
+    grid-template-columns:150px 1fr!important;
+  }
+}
+
+/* =====================================================================
+   V34 — Large payment cards only on the first payment screen
+   ===================================================================== */
+#paymentModal .payment-box.method-selected-v34 .payment-methods.payment-method-cards-v33{
+  display:none!important;
+}
+
+/* When inside Cash/QR, tighten the space left by the removed cards */
+#paymentModal .payment-box.method-selected-v34 #cashArea,
+#paymentModal .payment-box.method-selected-v34 #qrArea{
+  margin-top:22px!important;
+}
+
+/* Keep the selected payment detail centered and uncluttered */
+#paymentModal .payment-box.method-selected-v34{
+  max-width:620px!important;
+}
+
