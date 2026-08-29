@@ -331,3 +331,49 @@ th,td{font-size:12px!important}.status{font-size:10px!important}.stock-row{font-
 .staff-switch-modal #switchPinInput{display:none!important}
 .staff-switch-modal #switchPinDots{margin:14px 0 16px!important;justify-content:center!important}
 .staff-switch-modal .switch-pin-pad{margin-top:0!important}
+
+/* ===== V15 unified POS numeric keypad ===== */
+.numeric-keypad-modal{width:min(410px,94vw)}
+.numeric-keypad-head{text-align:center;padding:5px 28px 8px}
+.numeric-keypad-head h2{margin:0;font-size:21px}
+.numeric-keypad-head small{display:block;margin-top:4px;color:var(--muted);font-size:12px}
+.numeric-keypad-value{
+  margin:8px 0 12px;min-height:58px;border:1px solid #eadfce;border-radius:13px;
+  background:#fbf8f4;display:flex;align-items:center;justify-content:center;
+  font-size:32px;font-weight:900;color:#2d231b
+}
+.numeric-keypad-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.numeric-keypad-grid button{min-height:54px;border:1px solid #eadfce;background:#fff;font-size:21px;font-weight:850}
+.numeric-keypad-grid .key-muted{background:#f3ece3}
+.numeric-keypad-grid .key-enter{background:var(--orange);color:#fff;border-color:var(--orange)}
+.numeric-clear-btn{width:100%;margin-top:8px;background:#fff1f1;color:#b91c1c;border:1px solid #f1cccc}
+
+.qty-number-button,.pre-qty-button{
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  cursor:pointer!important;-webkit-user-select:none!important;user-select:none!important;
+  appearance:none!important;-webkit-appearance:none!important
+}
+.qty-number-button{min-width:52px!important}
+.pre-qty-button{min-width:52px!important}
+input[readonly][inputmode="none"]{cursor:pointer}
+
+/* ===== V15.1 PromptPay leading-zero + admin layout polish ===== */
+.admin-settings-grid,.admin-tools-grid{align-items:start}
+.admin-primary-card{min-height:100%}
+.admin-card-head{
+  display:flex;align-items:flex-start;justify-content:space-between;gap:12px;
+  padding-bottom:10px;margin-bottom:6px;border-bottom:1px solid var(--line)
+}
+.admin-card-head h3{margin:0!important}
+.admin-card-head p{margin:3px 0 0!important;color:var(--muted);font-size:11px!important}
+.admin-card-head>span{font-size:22px;line-height:1}
+.promptpay-help{margin:8px 0 10px!important;line-height:1.45}
+#promptPayIdInput[readonly]{background:#fff;cursor:pointer}
+.dynamic-qr-preview{margin-top:10px}
+#staffInfo{margin-top:4px}
+.staff-admin-row{padding:9px 0!important}
+.category-manager-card{margin-top:2px}
+@media(max-width:900px){
+  .admin-settings-grid,.admin-tools-grid{grid-template-columns:1fr!important}
+}
+
