@@ -11,14 +11,19 @@
 <title>ร้านทิพย์เกษรเมี่ยงปลาเผา</title>
 <link rel="stylesheet" href="style.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#f97316">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
 <!-- LOGIN -->
 <section id="loginScreen" class="login-screen">
   <div class="brand-side">
-    <div class="brand-pattern">🐟　🔥　🐟<br>　🔥　🐟　🔥<br>🐟　🔥　🐟</div>
+    <div class="brand-pattern" aria-hidden="true"></div>
     <div class="brand-center">
-      <div class="fish-logo">🐟</div>
+      <div class="fish-logo fish-logo-svg"><svg class="brand-fish-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12c3.8-5 9.5-6.8 14-3l3-2v10l-3-2c-4.5 3.8-10.2 2-14-3Z"/><circle cx="16" cy="11" r="1" fill="currentColor" stroke="none"/><path d="M5 12H2"/></svg></div>
       <h1>ร้านทิพย์เกษรเมี่ยงปลาเผา</h1>
       <p>ปลาเผาบ้านดุงซิตี้ • สด • ใหม่ทุกวัน</p>
       <span class="version">● ระบบ POS by n3qnxii</span>
@@ -27,7 +32,7 @@
   <div class="login-side">
     <div class="login-box">
       <h2>เข้าสู่ระบบ</h2>
-      <div class="login-person-icon" aria-hidden="true">👤</div>
+      <div class="login-person-icon" aria-hidden="true"><svg class="login-user-svg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></div>
       <label class="staff-select-label" for="staffSelect">เลือกพนักงาน</label>
       <div class="staff-select-wrap">
         <select id="staffSelect" class="staff-select" aria-label="เลือกพนักงาน">
@@ -51,26 +56,47 @@
 
 <!-- APP -->
 <div id="app" class="hidden app-shell">
-  <header class="topbar">
-    <div class="brand-mini"><span>🐟</span><div><b id="shopTitle">ร้านทิพย์เกษรเมี่ยงปลาเผา</b><small id="todayText"></small></div></div>
-    <nav id="mainTabs" class="tabs">
-      <button class="tab active" data-page="sale">🛒 <span>ขาย</span></button>
-      <button class="tab" data-page="orders">📋 <span>ออเดอร์</span></button>
-      <button class="tab" data-page="preorder">🗓️ <span>สั่งล่วงหน้า</span></button>
-      <button class="tab" data-page="preorderListPage">📅 <span>รายการล่วงหน้า</span></button>
-      <button class="tab owner-only" data-page="dashboard">📊 <span>รายงาน</span></button>
-      <button class="tab" data-page="stock">📦 <span>สต๊อก</span></button>
-      <button class="tab owner-only" data-page="admin">⚙️ <span>จัดการร้าน</span></button>
+  
+
+<aside id="appSidebar" class="app-sidebar collapsed" aria-label="เมนูหลัก">
+  <div class="sidebar-brand"><div class="brand-mini"><span><svg class="brand-mini-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12c3.8-5 9.5-6.8 14-3l3-2v10l-3-2c-4.5 3.8-10.2 2-14-3Z"/><circle cx="16" cy="11" r="1" fill="currentColor" stroke="none"/><path d="M5 12H2"/></svg></span><div><b id="shopTitle">ร้านทิพย์เกษรเมี่ยงปลาเผา</b><small id="todayText"></small></div></div></div>
+  <button id="sidebarToggle" class="sidebar-toggle" type="button" aria-label="ขยายเมนู" title="ขยาย/พับเมนู">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>
+    <span>เมนู</span>
+  </button>
+  <nav id="mainTabs" class="tabs">
+      <button class="tab active" data-page="sale"><svg class="nav-svg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="19" r="1.5"/><circle cx="18" cy="19" r="1.5"/><path d="M3 4h2l2.2 10.2a2 2 0 0 0 2 1.6h8.7a2 2 0 0 0 2-1.6L21 8H7"/></svg> <span>รายการสินค้า</span></button>
+      <button class="tab" data-page="orders"><svg class="nav-svg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-2-1.3-2 1.3-2-1.3-2 1.3-2-1.3L6 21V3Z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg> <span>ออเดอร์</span></button>
+      <button class="tab" data-page="preorder"><svg class="nav-svg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/><path d="M8 14h2M14 14h2M8 18h2"/></svg> <span>สั่งล่วงหน้า</span></button>
+      <button class="tab owner-only" data-page="dashboard"><svg class="nav-svg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg> <span>รายงาน</span></button>
+      <button class="tab" data-page="stock"><svg class="nav-svg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 7 9-4 9 4-9 4-9-4Z"/><path d="M3 7v10l9 4 9-4V7M12 11v10"/></svg> <span>สต๊อก</span></button>
+      <button class="tab owner-only" data-page="admin"><svg class="nav-svg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19 13.5v-3l-2-.7-.8-1.9.9-1.9-2.1-2.1-1.9.9-1.9-.8-.7-2h-3l-.7 2-1.9.8-1.9-.9L.9 6l.9 1.9-.8 1.9-2 .7v3l2 .7.8 1.9-.9 1.9L3 20.1l1.9-.9 1.9.8.7 2h3l.7-2 1.9-.8 1.9.9 2.1-2.1-.9-1.9.8-1.9 2-.7Z" transform="translate(2 0) scale(.83)"/></svg> <span>จัดการร้าน</span></button>
     </nav>
-    <div class="top-right"><div id="bellTopHost"></div><div class="clock"><b id="clockTime">--:--:--</b><small>เวลาปัจจุบัน</small></div><div class="staff-switch-wrap">
-  <select id="staffQuickSwitch" class="staff-quick-switch" aria-label="เปลี่ยนพนักงาน"></select>
-</div>
-<span class="staff-pill hidden" id="staffBadge"></span><button id="logoutBtn" class="icon-btn" title="ออกจากระบบ">↪</button></div>
-  </header>
+  <div class="sidebar-utility">
+    <div class="sidebar-utility-bell"><div id="bellTopHost"></div><span class="sidebar-utility-label">แจ้งเตือน</span></div>
+    <div class="sidebar-clock clock"><b id="clockTime">--:--:--</b><small>เวลาปัจจุบัน</small></div>
+    <div class="sidebar-staff staff-switch-wrap">
+      <button id="staffQuickCard" class="staff-quick-card" type="button" aria-label="เปลี่ยนพนักงาน">
+        <span class="staff-avatar-icon">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+        </span>
+        <span class="staff-card-copy"><b id="staffQuickName">พนักงาน</b><small id="staffQuickRole">ผู้ดูแลระบบ</small></span>
+      </button>
+      <select id="staffQuickSwitch" class="staff-quick-switch visually-hidden-select" aria-label="เปลี่ยนพนักงาน"></select>
+      <div id="staffQuickMenu" class="staff-quick-menu hidden"></div>
+    </div>
+    <span class="staff-pill hidden" id="staffBadge"></span>
+    <button id="logoutBtn" class="sidebar-logout icon-btn" title="ออกจากระบบ" aria-label="ออกจากระบบ">
+      <svg class="logout-svg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 5H5v14h5"/><path d="m14 8 4 4-4 4M18 12H8"/></svg>
+      <span>ออกจากระบบ</span>
+    </button>
+  </div>
+</aside>
+
 
   <div class="preorder-bell-wrap" id="preorderBellWrap">
     <button id="preorderBellBtn" class="preorder-bell-btn" type="button" aria-label="แจ้งเตือนออเดอร์ล่วงหน้า" title="แจ้งเตือนออเดอร์ล่วงหน้า">
-      <span>🔔</span><i id="preorderBellDot" class="bell-dot hidden"></i>
+      <span><svg class="bell-svg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg></span><i id="preorderBellDot" class="bell-dot hidden"></i>
     </button>
     <div id="preorderBellPopover" class="preorder-popover hidden">
       <div class="popover-head">
@@ -100,17 +126,17 @@
       <div class="sale-layout">
         <div class="menu-area">
           <div class="sale-menu-top">
-  <div class="sale-menu-title"><h2>เลือกเมนู</h2><p>แตะสินค้าเพื่อเพิ่มลงออเดอร์</p></div>
+  <div class="sale-menu-title"><h2>เลือกเมนู</h2></div>
   <div id="menuSearchWrap" class="menu-search-wrap">
-    <input id="menuSearch" aria-label="ค้นหาเมนู" placeholder="พิมพ์ชื่อเมนู">
-    <button id="menuSearchToggle" class="menu-search-toggle" type="button" aria-label="ค้นหาเมนู">⌕</button>
+    <input id="menuSearch" aria-label="ค้นหาเมนู" placeholder="ค้นหาชื่อเมนู / ราคา">
+    <button id="menuSearchToggle" class="menu-search-toggle" type="button" aria-label="ค้นหาเมนู"><svg class="search-svg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg></button>
   </div>
 </div>
           <div id="categoryTabs" class="category-tabs"></div>
           <div id="products" class="products"></div>
         </div>
         <aside class="cart-panel">
-          <div class="cart-head"><div><small>ออเดอร์ปัจจุบัน</small><h2 id="orderNo">#001</h2></div><span class="status-live">● กำลังขาย</span></div>
+          <div class="cart-head"><div><small>ออเดอร์ปัจจุบัน</small><h2 id="orderNo">#001</h2></div><div class="cart-head-status"><span class="status-live">● กำลังขาย</span><span id="selectedItemsCount" class="selected-items-count">เลือกแล้ว 0 รายการ</span></div></div>
           <div id="cartItems" class="cart-items"><p class="empty">ยังไม่มีสินค้า</p></div>
           <div class="cart-bottom">
             <label>ส่วนลด (บาท)</label><input id="discountInput" type="number" min="0" value="0" inputmode="decimal" readonly>
@@ -119,8 +145,8 @@
             <div class="total-row"><span>รวมสุทธิ</span><strong id="total">฿0</strong></div>
             <button id="payBtn" class="primary pay-big" disabled>ชำระเงิน</button>
             <div class="cart-secondary-actions">
-              <button id="holdOrderBtn" class="secondary" disabled>พักออเดอร์</button>
-              <button id="openHeldOrdersBtn" class="secondary">ออเดอร์พัก <span id="heldOrderCount">0</span></button>
+              <button id="holdOrderBtn" class="btn-secondary-orange" disabled>พักออเดอร์</button>
+              <button id="openHeldOrdersBtn" class="btn-secondary-orange">ออเดอร์พัก <span id="heldOrderCount">0</span></button>
             </div>
             <button id="clearBtn" class="text-danger">ล้างออเดอร์</button>
           </div>
@@ -128,78 +154,122 @@
       </div>
     </section>
 
-    <!-- PREORDER -->
+    <!-- PREORDER UNIFIED -->
     <section id="preorder" class="page hidden">
-      <div class="page-heading">
-        <div><h2>สั่งปลาเผาล่วงหน้า</h2><p>เลือกวันที่และเวลารับ พร้อมข้อมูลลูกค้าให้ครบในหน้าเดียว</p></div>
-        <div id="tomorrowBadge" class="date-badge"></div>
+      <div class="page-heading preorder-page-heading">
+        <div><h2>สั่งล่วงหน้า</h2><p>ดูรายการที่นัดรับและสร้างออเดอร์ใหม่ในหน้าเดียว</p></div>
       </div>
 
-      <div class="preorder-layout">
-        <div class="card preorder-customer-card">
-          <h3>ข้อมูลลูกค้า</h3>
-          <div class="preorder-customer-grid">
+      <div class="preorder-unified-layout">
+        <section class="card preorder-list-pane">
+          <div class="preorder-pane-head preorder-pane-head-clean">
+            <div>
+              <h3>รายการสั่งล่วงหน้า</h3>
+              <p id="preListTitle">รายการสั่งล่วงหน้า</p>
+            </div>
+          </div>
+
+          <div class="preorder-list-toolbar">
+            <div class="preorder-search-wrap">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+              <input id="preListSearch" placeholder="ค้นหาชื่อลูกค้า / เบอร์โทร / รายการ">
+            </div>
+            <div class="preorder-date-filter">
+              <span>วันที่รับ</span>
+              <input id="preListDate" type="date" aria-label="เลือกวันที่รับ">
+            </div>
+          </div>
+
+          <div class="preorder-status-tabs" id="preorderStatusTabs">
+            <button class="pre-status-filter active" data-pre-filter="all">ทั้งหมด</button>
+            <button class="pre-status-filter" data-pre-filter="pending">รอยืนยัน</button>
+            <button class="pre-status-filter" data-pre-filter="confirmed">ยืนยันแล้ว</button>
+            <button class="pre-status-filter" data-pre-filter="preparing">กำลังเตรียม</button>
+            <button class="pre-status-filter" data-pre-filter="ready">พร้อมรับ</button>
+            <button class="pre-status-filter" data-pre-filter="cancelled">ยกเลิก</button>
+          </div>
+
+          <div class="pre-list-quick-actions">
+            <button id="preListTomorrowBtn" class="btn-neutral">พรุ่งนี้</button>
+            <button id="preListAllBtn" class="btn-neutral">ทุกวัน</button>
+            <button id="newPreorderFromListBtn" class="primary btn-strong hidden">สร้างรายการ</button>
+          </div>
+          <div id="preparationSummary" class="prep-summary"></div>
+          <div id="preorderList" class="table-wrap preorder-list-table"></div>
+        </section>
+
+        <section class="card preorder-create-pane">
+          <details class="preorder-customer-details" open>
+            <summary>
+              <div>
+                <h3>ข้อมูลลูกค้าและเวลารับ</h3>
+                <p>กดเพื่อพับ/กางข้อมูลลูกค้า</p>
+              </div>
+              <span class="details-chevron">⌄</span>
+            </summary>
+            <div class="preorder-customer-grid preorder-customer-grid-v23">
             <div>
               <label>ชื่อลูกค้า *</label>
-              <input id="preCustomer" placeholder="เช่น คุณเอ">
+              <input id="preCustomer" placeholder="กรอกชื่อลูกค้า">
+            </div>
+            <div>
+              <label>วันที่รับ *</label>
+              <input id="preDate" type="date">
             </div>
             <div>
               <label>เบอร์โทร</label>
               <input id="prePhone" inputmode="tel" placeholder="08x-xxx-xxxx" readonly>
             </div>
-            <div class="pre-datetime-field">
-              <label>วันที่และเวลารับ *</label>
-              <input id="preDateTime" type="datetime-local">
+            <div>
+              <label>เวลารับ *</label>
+              <div class="pre-time-picker">
+                <select id="preHour" aria-label="ชั่วโมง"></select>
+                <span>:</span>
+                <select id="preMinute" aria-label="นาที"></select>
+              </div>
+              <input id="preTime" type="hidden">
             </div>
             <div class="pre-note-field">
               <label>หมายเหตุ</label>
-              <textarea id="preNote" rows="2" placeholder="เช่น ไม่เอาผัก / ขอปลาเกรียม / ชื่อลูกค้าเพิ่มเติม"></textarea>
+              <input id="preNote" placeholder="เพิ่มหมายเหตุ (ถ้ามี)">
             </div>
+            <input id="preDateTime" type="hidden">
           </div>
+          </details>
 
-          <div class="pre-menu-head">
-            <div><h3>เลือกเมนู</h3><p>เรียงราคาจากมากไปน้อย</p></div>
+          
+
+          <div class="preorder-items-head">
+            <div><h3>รายการสั่งล่วงหน้า</h3><p>จำนวนใช้ Numeric Keypad เดิม สูงสุด 100</p></div>
           </div>
-          <div id="preProducts" class="pre-products"></div>
-        </div>
-
-        <aside class="card pre-summary">
-          <h3>สรุปออเดอร์ล่วงหน้า</h3>
-          <div id="preCartItems"><p class="empty">ยังไม่ได้เลือกสินค้า</p></div>
-          <div class="total-row"><span>รวม</span><strong id="preTotal">฿0</strong></div>
-          <button id="savePreorderBtn" class="primary full">บันทึกออเดอร์ล่วงหน้า</button>
-          <button id="clearPreorderBtn" class="secondary full">ล้างรายการ</button>
-        </aside>
-      </div>
-    </section>
-
-    <!-- PREORDER LIST -->
-    <section id="preorderListPage" class="page hidden">
-      <div class="page-heading">
-        <div>
-          <h2>รายการสั่งล่วงหน้า</h2>
-          <p>เก็บรายการทุกวันที่สั่งไว้ เลือกดูทั้งหมดหรือเลือกวันที่ได้</p>
-        </div>
-        <div class="pre-list-tools">
-          <label>เลือกวันที่</label>
-          <input id="preListDate" type="date">
-          <button id="preListAllBtn" class="secondary">ทั้งหมด</button><button id="preListTomorrowBtn" class="secondary">พรุ่งนี้</button>
-          <button id="newPreorderFromListBtn" class="primary">+ สร้างออเดอร์ล่วงหน้า</button>
-        </div>
-      </div>
-      <div class="card">
-        <div class="section-head">
-          <div><h3 id="preListTitle">รายการสั่งล่วงหน้า</h3><p>เรียงตามเวลารับ</p></div>
-          <div id="preparationSummary" class="prep-summary"></div>
-        </div>
-        <div id="preorderList" class="table-wrap"></div>
+          <div class="preorder-create-body">
+            <div class="preorder-products-column">
+              <div id="preProducts" class="pre-products"></div>
+            </div>
+            <aside class="pre-summary pre-summary-inline">
+              <h3>รายการที่เลือก</h3>
+              <div id="preCartItems"><p class="empty">ยังไม่ได้เลือกสินค้า</p></div>
+              <div class="total-row"><span>รวมทั้งหมด</span><strong id="preTotal">฿0</strong></div>
+              <div class="preorder-action-row">
+                <button id="clearPreorderBtn" class="btn-neutral">ยกเลิก</button>
+                <button id="savePreorderBtn" class="primary btn-strong">บันทึกรายการสั่งล่วงหน้า</button>
+              </div>
+            </aside>
+          </div>
+        </section>
       </div>
     </section>
 
     <!-- ORDERS -->
     <section id="orders" class="page hidden">
-      <div class="page-heading"><div><h2>ออเดอร์</h2><p>ค้นหา ดูใบเสร็จ และยกเลิกออเดอร์</p></div><input id="orderSearch" class="search-input" placeholder="🔎 ค้นหาเลขออเดอร์ / รายการ / ชื่อลูกค้า"></div>
-      <div class="card"><div id="ordersList" class="table-wrap"></div></div>
+      <div class="page-heading"><div><h2>ออเดอร์</h2><p>ค้นหา ดูสถานะ พิมพ์ใบเสร็จ และยกเลิกออเดอร์</p></div><input id="orderSearch" class="search-input" placeholder="ค้นหาเลขออเดอร์ / รายการ / ชื่อลูกค้า"></div>
+      <div class="order-status-tabs" id="orderStatusTabs">
+        <button class="order-filter active" data-order-filter="today">ออเดอร์วันนี้</button>
+        <button class="order-filter" data-order-filter="all">ทั้งหมด</button>
+        <button class="order-filter" data-order-filter="paid">สำเร็จแล้ว</button>
+        <button class="order-filter" data-order-filter="cancelled">ยกเลิก</button>
+      </div>
+      <div class="card order-list-card"><div id="ordersList" class="table-wrap"></div></div>
     </section>
 
     <!-- DASHBOARD -->
@@ -210,14 +280,14 @@
         <div class="export-date-tools">
           <input id="exportSalesDate" type="date" aria-label="วันที่สำหรับ Export">
           <button id="exportSelectedCsvBtn" class="export-csv-btn">⬇ Export วันที่เลือก</button>
-          <button id="exportAllCsvBtn" class="secondary">Export ทั้งหมด</button>
+          <button id="exportAllCsvBtn" class="btn-neutral">Export ทั้งหมด</button>
         </div>
       </div>
     </div>
       <div class="card day-close-card">
         <div class="day-close-head">
           <div><h3>สรุปปิดยอดวันนี้</h3><p>ยอดขาย เงินสด QR ส่วนลด ออเดอร์ยกเลิก และกำไรโดยประมาณ</p></div>
-          <button id="printDayCloseBtn" class="primary">พิมพ์สรุปปิดยอด</button>
+          <button id="printDayCloseBtn" class="btn-neutral">พิมพ์สรุปปิดยอด</button>
         </div>
         <div id="dayCloseSummary" class="day-close-grid"></div>
       </div>
@@ -235,7 +305,7 @@
         </div>
         <div class="side-report">
           <div class="card"><h3>ช่องทางชำระ</h3><div id="paymentSummary"></div></div>
-          <div class="card"><h3>สินค้าขายดี 🏆</h3><div id="topProducts"></div></div>
+          <div class="card"><h3 class="heading-with-icon"><svg class="section-svg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h8v5a4 4 0 0 1-8 0V4Z"/><path d="M8 6H4v2a4 4 0 0 0 4 4M16 6h4v2a4 4 0 0 1-4 4M12 13v4M8 21h8M10 17h4"/></svg><span>สินค้าขายดี</span></h3><div id="topProducts"></div></div>
         </div>
       </div>
       <div class="report-grid report-history">
@@ -253,13 +323,13 @@
       <div class="page-heading"><div><h2>จัดการร้าน</h2><p>สำหรับเจ้าของร้าน</p></div></div>
       <div class="admin-grid admin-settings-grid">
   <div class="card admin-primary-card">
-    <div class="admin-card-head"><div><h3>ตั้งค่าร้าน</h3><p>ชื่อร้านและเลขออเดอร์ของวันนี้</p></div><span>🏪</span></div>
+    <div class="admin-card-head"><div><h3>ตั้งค่าร้าน</h3><p>ชื่อร้านและเลขออเดอร์ของวันนี้</p></div><span class="admin-head-icon"><svg class="admin-svg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10v10h16V10"/><path d="M3 10 5 4h14l2 6"/><path d="M8 20v-6h8v6"/></svg></span></div>
     <label>ชื่อร้าน</label><input id="shopNameInput">
     <label>เลขออเดอร์ถัดไปวันนี้</label><input id="nextOrderInput" type="number" readonly><small class="field-help">รีเซ็ตเป็น #001 อัตโนมัติทุกวัน</small>
     <button id="saveShopBtn" class="primary full">บันทึก</button>
   </div>
   <div class="card admin-primary-card">
-    <div class="admin-card-head"><div><h3>QR PromptPay กำหนดยอดอัตโนมัติ</h3><p>ตั้งครั้งเดียว ระบบจะใส่ยอดให้ทุกออเดอร์</p></div><span>📱</span></div>
+    <div class="admin-card-head"><div><h3>QR PromptPay กำหนดยอดอัตโนมัติ</h3><p>ตั้งครั้งเดียว ระบบจะใส่ยอดให้ทุกออเดอร์</p></div><span class="admin-head-icon"><svg class="admin-svg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg></span></div>
     <p class="promptpay-help">รองรับเบอร์มือถือ 10 หลัก, เลขบัตร/ภาษี 13 หลัก และ e-Wallet 15 หลัก</p>
     <label>PromptPay ID</label>
     <input id="promptPayIdInput" inputmode="numeric" placeholder="เบอร์มือถือ 10 หลัก / เลขบัตรหรือเลขภาษี 13 หลัก / e-Wallet 15 หลัก" readonly>
@@ -273,9 +343,9 @@
     </details>
   </div>
 </div>
-      <div class="admin-grid admin-tools-grid"><div class="card"><div class="admin-card-head"><div><h3>เพิ่มเมนู</h3><p>เพิ่มสินค้า ราคา ต้นทุน สต๊อก และหมวด</p></div><span>➕</span></div><div class="form-grid"><div><label>ชื่อสินค้า</label><input id="newName"></div><div><label>หมวด</label><select id="newCategory"></select>
+      <div class="admin-grid admin-tools-grid"><div class="card"><div class="admin-card-head"><div><h3>เพิ่มเมนู</h3><p>เพิ่มสินค้า ราคา ต้นทุน สต๊อก และหมวด</p></div><span class="admin-head-icon"><svg class="admin-svg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></span></div><div class="form-grid"><div><label>ชื่อสินค้า</label><input id="newName"></div><div><label>หมวด</label><select id="newCategory"></select>
       <div class="category-add-row"><input id="newCategoryName" placeholder="ชื่อหมวดใหม่"><button id="addCategoryBtn" type="button" class="secondary">+ เพิ่มหมวด</button></div>
-    </div><div><label>ราคาขาย</label><input id="newPrice" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" readonly></div><div><label>ต้นทุน</label><input id="newCost" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" readonly></div><div><label>สต๊อก</label><input id="newStock" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" readonly></div><div><label>หน่วย</label><input id="newUnit" placeholder="ตัว / ชุด / ขวด"></div></div><button id="addProductBtn" class="primary full">เพิ่มสินค้า</button></div><div class="card"><div class="admin-card-head"><div><h3>พนักงาน / PIN</h3><p>ข้อมูลสำหรับเข้าสู่ระบบ</p></div><span>👥</span></div><div id="staffInfo"></div></div></div>
+    </div><div><label>ราคาขาย</label><input id="newPrice" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" readonly></div><div><label>ต้นทุน</label><input id="newCost" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" readonly></div><div><label>สต๊อก</label><input id="newStock" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" readonly></div><div><label>หน่วย</label><input id="newUnit" placeholder="ตัว / ชุด / ขวด"></div></div><button id="addProductBtn" class="primary full btn-strong">เพิ่มสินค้า</button></div><div class="card"><div class="admin-card-head"><div><h3>พนักงาน / PIN</h3><p>ข้อมูลสำหรับเข้าสู่ระบบ</p></div><span class="admin-head-icon"><svg class="admin-svg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20a6 6 0 0 1 12 0M14 20a5 5 0 0 1 7 0"/></svg></span></div><div id="staffInfo"></div></div></div>
       <div class="card category-manager-card">
         <div class="category-manager-head"><div><h3>จัดลำดับและแก้ชื่อหมวด</h3><p>แก้ชื่อหมวดได้โดยพิมพ์ใหม่ และใช้ลูกศรเพื่อเลื่อนแท็บซ้าย/ขวา</p></div></div>
         <div id="categoryManager"></div>
@@ -291,7 +361,7 @@
   <div class="modal-box staff-switch-modal">
     <button id="closeStaffSwitch" class="close">×</button>
     <div class="staff-switch-modal-head">
-      <div class="switch-avatar">👤</div>
+      <div class="switch-avatar"><svg class="switch-user-svg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></div>
       <h2 id="switchStaffName">เปลี่ยนพนักงาน</h2>
       <p>กรอก PIN 4 หลักเพื่อเข้าสู่บัญชีนี้</p>
     </div>
@@ -392,8 +462,8 @@
     </div>
 
     <div class="modal-actions">
-      <button id="cancelPay" class="secondary">ยกเลิก</button>
-      <button id="confirmPay" class="primary" disabled>ยืนยันการชำระเงิน</button>
+      <button id="cancelPay" class="btn-neutral">ยกเลิก</button>
+      <button id="confirmPay" class="primary btn-strong" disabled>ยืนยันการชำระเงิน</button>
     </div>
   </div>
 </div>
@@ -427,24 +497,22 @@
 
 <!-- SUCCESS -->
 <div id="successModal" class="modal hidden">
-  <div class="success-box success-box-v9">
-    <div class="success-top">
-      <div class="check-circle">✓</div>
+  <div class="success-box success-box-v9 success-box-clean payment-success-card">
+    <div class="payment-success-content">
+      <div class="success-check-icon" aria-hidden="true">✓</div>
       <h2>ชำระเงินสำเร็จ</h2>
       <small id="successOrderNo">ออเดอร์ #001</small>
-    </div>
-    <div class="success-body">
       <strong id="successTotal">฿0</strong>
       <div id="successCashSummary" class="success-cash-summary">
         <div id="successReceivedRow"><span>ลูกค้าจ่าย</span><b id="successReceived">฿0</b></div>
         <div id="successChangeRow"><span>เงินทอน</span><b id="successChange">฿0</b></div>
       </div>
       <div class="receipt-note-box">
-  <label for="receiptNoteInput">ข้อความเพิ่มเติมบนใบเสร็จ (ไม่บังคับ)</label>
-  <input id="receiptNoteInput" type="text" maxlength="80" placeholder="เช่น คุณเอ / โต๊ะ 3 / ไม่เอาผัก">
-</div>
-<button id="printBtn" class="secondary full">พิมพ์ใบออเดอร์</button>
-      <button id="newOrder" class="primary full">เริ่มออเดอร์ใหม่</button>
+        <label for="receiptNoteInput">ข้อความเพิ่มเติมบนใบเสร็จ (ไม่บังคับ)</label>
+        <input id="receiptNoteInput" type="text" maxlength="80" placeholder="เช่น คุณเอ / โต๊ะ 3 / ไม่เอาผัก">
+      </div>
+      <button id="printBtn" class="btn-secondary-orange full">พิมพ์ใบเสร็จ</button>
+      <button id="newOrder" class="primary full btn-strong">เริ่มออเดอร์ใหม่</button>
     </div>
   </div>
 </div>
@@ -464,7 +532,7 @@
       <div><label>สต๊อก</label><input id="editStock" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" readonly></div>
       <div><label>หน่วย</label><input id="editUnit"></div>
     </div>
-    <button id="saveEditProduct" class="primary full">บันทึกการแก้ไข</button>
+    <button id="saveEditProduct" class="primary full btn-strong">บันทึกการแก้ไข</button>
   </div>
 </div>
 
