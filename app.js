@@ -232,6 +232,103 @@ function currentTapElement(){
 function escapeHtml(value){
   return String(value??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[ch]));
 }
+
+let genericNumericContext=null;
+function numericDigitsOnly(value,maxDigits=8){
+  return String(value??"").replace(/\D/g,"").slice(0,maxDigits);
+}
+function openNumericKeypad(options={}){
+  const current=numericDigitsOnly(options.value??"",options.maxDigits||8);
+  genericNumericContext={
+    title:options.title||"กรอกตัวเลข",
+    hint:options.hint||"ใช้เฉพาะตัวเลข",
+    value:current,
+    max:options.max??null,
+    min:options.min??0,
+    maxDigits:options.maxDigits||8,
+    allowZero:options.allowZero!==false,
+    allowLeadingZeros:options.allowLeadingZeros===true,
+    returnAsString:options.returnAsString===true,
+    onConfirm:typeof options.onConfirm==="function"?options.onConfirm:()=>{}
+  };
+  $("numericKeypadTitle").textContent=genericNumericContext.title;
+  $("numericKeypadHint").textContent=genericNumericContext.hint;
+  renderNumericKeypadValue();
+  $("numericKeypadModal").classList.remove("hidden");
+}
+function renderNumericKeypadValue(){
+  if(!genericNumericContext)return;
+  $("numericKeypadValue").textContent=genericNumericContext.value||"0";
+}
+function appendNumericKey(digit){
+  if(!genericNumericContext)return;
+  let s=genericNumericContext.value||"";
+  if(s.length>=genericNumericContext.maxDigits)return;
+  if(s==="0"&&!genericNumericContext.allowLeadingZeros)s="";
+  s+=String(digit);
+  genericNumericContext.value=numericDigitsOnly(s,genericNumericContext.maxDigits);
+  renderNumericKeypadValue();playTapSound();
+}
+function numericBackspace(){
+  if(!genericNumericContext)return;
+  genericNumericContext.value=(genericNumericContext.value||"").slice(0,-1);
+  renderNumericKeypadValue();playQtySound(false);
+}
+function numericClear(){
+  if(!genericNumericContext)return;
+  genericNumericContext.value="";
+  renderNumericKeypadValue();playQtySound(false);
+}
+function closeNumericKeypad(){
+  $("numericKeypadModal").classList.add("hidden");
+  genericNumericContext=null;
+}
+function confirmNumericKeypad(){
+  if(!genericNumericContext)return;
+  const ctx=genericNumericContext;
+  const cb=ctx.onConfirm;
+  if(ctx.returnAsString){
+    const s=ctx.value||"";
+    closeNumericKeypad();
+    cb(s);
+    return;
+  }
+  let n=Number(ctx.value||0);
+  if(Number.isFinite(ctx.min))n=Math.max(Number(ctx.min),n);
+  if(Number.isFinite(ctx.max))n=Math.min(Number(ctx.max),n);
+  closeNumericKeypad();
+  cb(n);
+}
+document.querySelectorAll("[data-num-key]").forEach(btn=>btn.onclick=()=>appendNumericKey(btn.dataset.numKey));
+$("numericKeypadBack").onclick=numericBackspace;
+$("numericKeypadClear").onclick=numericClear;
+$("numericKeypadConfirm").onclick=confirmNumericKeypad;
+$("closeNumericKeypad").onclick=closeNumericKeypad;
+$("numericKeypadModal").addEventListener("click",e=>{if(e.target===$("numericKeypadModal"))closeNumericKeypad()});
+
+function bindNumericInput(id,options={}){
+  const el=$(id);if(!el)return;
+  el.readOnly=true;
+  el.setAttribute("inputmode","none");
+  el.addEventListener("click",()=>{
+    openNumericKeypad({
+      title:options.title||"กรอกตัวเลข",
+      hint:options.hint||"",
+      value:el.value,
+      max:options.max,
+      min:options.min??0,
+      maxDigits:options.maxDigits||8,
+      allowLeadingZeros:options.allowLeadingZeros===true,
+      returnAsString:options.returnAsString===true,
+      onConfirm:n=>{
+        el.value=String(n);
+        el.dispatchEvent(new Event("input",{bubbles:true}));
+        el.dispatchEvent(new Event("change",{bubbles:true}));
+      }
+    })
+  });
+}
+
 const nowIso=()=>new Date().toISOString();
 
 const localDateKey=(d=new Date())=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
@@ -321,6 +418,20 @@ function migrateV130(){
 }
 migrateV130();
 
+
+
+function initGenericNumericBindings(){
+  bindNumericInput("discountInput",{title:"ส่วนลด (บาท)",hint:"ใส่จำนวนส่วนลด",max:999999,maxDigits:6});
+  bindNumericInput("newPrice",{title:"ราคาขาย",hint:"ใส่ราคาขาย",max:999999,maxDigits:6});
+  bindNumericInput("newCost",{title:"ต้นทุน",hint:"ใส่ต้นทุน",max:999999,maxDigits:6});
+  bindNumericInput("newStock",{title:"สต๊อก",hint:"ใส่สต๊อกได้มากกว่า 200",max:999999,maxDigits:6});
+  bindNumericInput("editPrice",{title:"ราคาขาย",hint:"ใส่ราคาขาย",max:999999,maxDigits:6});
+  bindNumericInput("editCost",{title:"ต้นทุน",hint:"ใส่ต้นทุน",max:999999,maxDigits:6});
+  bindNumericInput("editStock",{title:"สต๊อก",hint:"ใส่สต๊อกได้มากกว่า 200",max:999999,maxDigits:6});
+  bindNumericInput("prePhone",{title:"เบอร์โทรลูกค้า",hint:"ใส่เฉพาะตัวเลข เช่น 0812345678",maxDigits:10,allowLeadingZeros:true,returnAsString:true});
+  bindNumericInput("promptPayIdInput",{title:"PromptPay ID",hint:"เบอร์มือถือเริ่ม 0 ได้ เช่น 0812345678",maxDigits:15,allowLeadingZeros:true,returnAsString:true});
+}
+initGenericNumericBindings();
 
 // Clock
 let lastClockDate=localDateKey();
@@ -415,14 +526,17 @@ window.addItem=id=>{const el=currentTapElement();tapFeedback(el);playTapSound();
 window.changeQty=(id,d)=>{const el=currentTapElement();tapFeedback(el);playQtySound(d>0);const row=cart.find(x=>x.id===id);if(!row)return;const p=state.products.find(x=>x.id===id);row.qty+=d;if(row.qty<=0)cart=cart.filter(x=>x.id!==id);else{row.qty=Math.min(row.qty,p.stock,100)}renderCart()};
 window.setCartQty=(id,value)=>{
   const row=cart.find(x=>x.id===id),p=state.products.find(x=>x.id===id);if(!row||!p)return;
-  const clean=String(value??"").replace(/\D/g,"");
-  let qty=Math.min(100,Number(clean||0));
+  let qty=Math.min(100,Math.max(0,Number(String(value??"").replace(/\D/g,""))||0));
   if(qty<=0){cart=cart.filter(x=>x.id!==id)}
   else{qty=Math.min(qty,Number(p.stock)||0);row.qty=qty}
   renderCart();
 };
+window.openCartQtyKeypad=id=>{
+  const row=cart.find(x=>x.id===id),p=state.products.find(x=>x.id===id);if(!row||!p)return;
+  openNumericKeypad({title:`จำนวน ${row.name}`,hint:"สูงสุด 100",value:row.qty,min:0,max:Math.min(100,Number(p.stock)||100),maxDigits:3,onConfirm:n=>setCartQty(id,n)});
+};
 const subtotal=()=>cart.reduce((s,x)=>s+x.price*x.qty,0),discount=()=>Math.max(0,Number($("discountInput").value||0)),total=()=>Math.max(0,subtotal()-discount());
-function renderCart(){$("cartItems").innerHTML=cart.length?cart.map(x=>`<div class="cart-item"><div><b>${x.name}</b><div class="hint">${money(x.price)} × ${x.qty}</div></div><div class="qty"><button onclick="changeQty(${x.id},-1)">−</button><input class="qty-number-input" type="text" inputmode="numeric" pattern="[0-9]*" value="${x.qty}" aria-label="จำนวน ${escapeHtml(x.name)}" onfocus="this.select()" onchange="setCartQty(${x.id},this.value)"><button onclick="changeQty(${x.id},1)">+</button></div></div>`).join(""):'<p class="empty">ยังไม่มีสินค้า</p>';$("subtotal").textContent=money(subtotal());$("discountDisplay").textContent=money(discount());$("total").textContent=money(total());$("payBtn").disabled=!cart.length;if($("holdOrderBtn"))$("holdOrderBtn").disabled=!cart.length;if($("heldOrderCount"))$("heldOrderCount").textContent=state.heldOrders?.length||0}
+function renderCart(){$("cartItems").innerHTML=cart.length?cart.map(x=>`<div class="cart-item"><div><b>${x.name}</b><div class="hint">${money(x.price)} × ${x.qty}</div></div><div class="qty"><button onclick="changeQty(${x.id},-1)">−</button><button type="button" class="qty-number-input qty-number-button" onclick="openCartQtyKeypad(${x.id})" aria-label="จำนวน ${escapeHtml(x.name)}">${x.qty}</button><button onclick="changeQty(${x.id},1)">+</button></div></div>`).join(""):'<p class="empty">ยังไม่มีสินค้า</p>';$("subtotal").textContent=money(subtotal());$("discountDisplay").textContent=money(discount());$("total").textContent=money(total());$("payBtn").disabled=!cart.length;if($("holdOrderBtn"))$("holdOrderBtn").disabled=!cart.length;if($("heldOrderCount"))$("heldOrderCount").textContent=state.heldOrders?.length||0}
 
 $("discountInput").addEventListener("input",renderCart);$("clearBtn").onclick=()=>{if(cart.length&&confirm("ล้างออเดอร์นี้ใช่ไหม?")){cart=[];$("discountInput").value=0;renderCart()}};
 
@@ -806,7 +920,10 @@ function renderStock(){
   $("stockList").innerHTML=state.products.filter(p=>p.active).sort((a,b)=>a.stock-b.stock||a.name.localeCompare(b.name,"th")).map(p=>`<div class="stock-row ${p.stock<=5?"stock-low-row":""}"><div><b>${p.name}</b><div style="color:#8a735e;font-size:9px">${p.category} · ${money(p.price)} / ${p.unit}</div></div><div class="stock-qty-display"><b>${p.stock}</b> ${p.unit}${p.stock<=5?'<small>ใกล้หมด</small>':""}</div><div class="stock-actions"><button onclick="adjustStock(${p.id},-1)">−1</button><button onclick="adjustStock(${p.id},1)">+1</button><button onclick="setStock(${p.id})">ตั้งค่า</button></div></div>`).join("")
 }
 window.adjustStock=(id,d)=>{const p=state.products.find(x=>x.id===id);p.stock=Math.max(0,p.stock+d);saveState();renderAll()};
-window.setStock=id=>{const p=state.products.find(x=>x.id===id),n=prompt(`สต๊อกใหม่ของ ${p.name} (ใส่ได้มากกว่า 200)`,p.stock);if(n===null)return;const clean=String(n).replace(/\D/g,"");if(!clean){alert("กรุณาใส่ตัวเลข");return}p.stock=Math.max(0,Math.min(999999,Number(clean)));saveState();renderAll()};
+window.setStock=id=>{
+  const p=state.products.find(x=>x.id===id);if(!p)return;
+  openNumericKeypad({title:`ตั้งค่าสต๊อก ${p.name}`,hint:"ใส่ได้มากกว่า 200",value:p.stock,min:0,max:999999,maxDigits:6,onConfirm:n=>{p.stock=n;saveState();renderAll()}});
+};
 
 // Preorder reminder / notifications
 let lastReminderSignature="";
@@ -912,7 +1029,7 @@ function renderPreorder(){
   const dt=new Date($("preDateTime").value||tomorrowDate());
   $("tomorrowBadge").textContent="รับ "+dt.toLocaleString("th-TH",{weekday:"short",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"});
   const products=state.products.filter(p=>p.active).slice().sort((a,b)=>a.price-b.price||a.name.localeCompare(b.name,"th"));
-  $("preProducts").innerHTML=products.map(p=>{const r=preorderCart.find(x=>x.id===p.id),q=r?.qty||0;return `<div class="pre-product"><b>${p.name}</b><span>${money(p.price)}</span><div class="pre-controls"><button onclick="changePreQty(${p.id},-1)">−</button><input class="pre-qty-input" type="text" inputmode="numeric" pattern="[0-9]*" value="${q}" aria-label="จำนวน ${escapeHtml(p.name)}" onfocus="this.select()" onchange="setPreQty(${p.id},this.value)"><button onclick="changePreQty(${p.id},1)">+</button></div></div>`}).join("");
+  $("preProducts").innerHTML=products.map(p=>{const r=preorderCart.find(x=>x.id===p.id),q=r?.qty||0;return `<div class="pre-product"><b>${p.name}</b><span>${money(p.price)}</span><div class="pre-controls"><button onclick="changePreQty(${p.id},-1)">−</button><button type="button" class="pre-qty-input pre-qty-button" onclick="openPreQtyKeypad(${p.id})" aria-label="จำนวน ${escapeHtml(p.name)}">${q}</button><button onclick="changePreQty(${p.id},1)">+</button></div></div>`}).join("");
   $("preCartItems").innerHTML=preorderCart.length?preorderCart.slice().sort((a,b)=>b.price-a.price).map(r=>`<div class="pre-row"><span>${r.name} × ${r.qty}</span><b>${money(r.price*r.qty)}</b></div>`).join(""):'<p class="empty">ยังไม่ได้เลือกสินค้า</p>';
   $("preTotal").textContent=money(preorderCart.reduce((s,r)=>s+r.price*r.qty,0));
 }
@@ -931,7 +1048,18 @@ function renderPreorderList(){
   $("preorderList").innerHTML=list.length?`<table><tr><th>วันที่</th><th>เวลา</th><th>ลูกค้า</th><th>โทร</th><th>รายการ</th><th>ยอด</th><th>หมายเหตุ</th><th>พนักงาน</th><th>สถานะ</th><th>จัดการ</th></tr>${list.map(o=>`<tr><td><b>${new Date(o.date+"T12:00:00").toLocaleDateString("th-TH",{day:"2-digit",month:"short",year:"2-digit"})}</b></td><td><b>${o.pickup}</b></td><td>${escapeHtml(o.customer)}</td><td>${escapeHtml(o.phone||"-")}</td><td>${o.items.slice().sort((a,b)=>b.price-a.price).map(i=>`${escapeHtml(i.name)} ×${i.qty}`).join(", ")}</td><td>${money(o.total)}</td><td>${escapeHtml(o.note||"-")}</td><td>${escapeHtml(o.staffName||"-")}</td><td><span class="status ${o.status}">${o.status==="waiting"?"รอรับ":o.status==="ready"?"รับแล้ว":"ยกเลิก"}</span></td><td>${o.status==="waiting"?`<button onclick="setPreStatus(${o.id},'ready')">รับแล้ว</button> <button class="danger" onclick="setPreStatus(${o.id},'cancelled')">ยกเลิก</button>`:""}</td></tr>`).join("")}</table>`:'<p class="empty">ยังไม่มีออเดอร์ล่วงหน้า</p>';
 }
 window.changePreQty=(id,d)=>{const el=currentTapElement();tapFeedback(el);playQtySound(d>0);const p=state.products.find(x=>x.id===id);let r=preorderCart.find(x=>x.id===id);if(!r&&d>0){r={id:p.id,name:p.name,price:p.price,qty:0};preorderCart.push(r)}if(!r)return;r.qty=Math.min(100,r.qty+d);if(r.qty<=0)preorderCart=preorderCart.filter(x=>x.id!==id);renderPreorder()};
-window.setPreQty=(id,value)=>{const p=state.products.find(x=>x.id===id);if(!p)return;let qty=Math.min(100,Math.max(0,Number(String(value??"").replace(/\D/g,""))||0)),r=preorderCart.find(x=>x.id===id);if(qty<=0){preorderCart=preorderCart.filter(x=>x.id!==id)}else if(r){r.qty=qty}else{preorderCart.push({id:p.id,name:p.name,price:p.price,qty})}renderPreorder()};
+window.setPreQty=(id,value)=>{
+  const p=state.products.find(x=>x.id===id);if(!p)return;
+  let qty=Math.min(100,Math.max(0,Number(String(value??"").replace(/\D/g,""))||0)),r=preorderCart.find(x=>x.id===id);
+  if(qty<=0){preorderCart=preorderCart.filter(x=>x.id!==id)}
+  else if(r){r.qty=qty}else{preorderCart.push({id:p.id,name:p.name,price:p.price,qty})}
+  renderPreorder();
+};
+window.openPreQtyKeypad=id=>{
+  const p=state.products.find(x=>x.id===id);if(!p)return;
+  const r=preorderCart.find(x=>x.id===id);
+  openNumericKeypad({title:`จำนวน ${p.name}`,hint:"สูงสุด 100",value:r?.qty||0,min:0,max:100,maxDigits:3,onConfirm:n=>setPreQty(id,n)});
+};
 $("clearPreorderBtn").onclick=()=>{preorderCart=[];renderPreorder()};
 $("preDateTime").addEventListener("change",renderPreorder);
 $("savePreorderBtn").onclick=()=>{
