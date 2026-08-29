@@ -1741,4 +1741,3 @@ document.addEventListener("wheel",e=>{if(salePageActive()&&e.ctrlKey)e.preventDe
 document.addEventListener("keydown",e=>{if(salePageActive()&&(e.ctrlKey||e.metaKey)&&["=","+","-","0"].includes(e.key))e.preventDefault()});
 
 ensurePosUiPatch();initPaymentKeypad();initPreorderDateTime();initExportDate();initLogin();
-
