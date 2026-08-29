@@ -214,7 +214,7 @@ function announcePayment(order){
   if(!order)return;
   const totalAmount=Math.round(Number(order.total||0));
   if(order.payment==="QR"){
-    speakThai(`รับเงินคิวอาร์ ${totalAmount} บาทค่ะ`);
+    speakThai(`รับเงินโอน ${totalAmount} บาทค่ะ`);
     return;
   }
   const received=Math.round(Number(order.cashReceived||0));
@@ -596,7 +596,7 @@ function filteredProducts(){const q=$("menuSearch").value.trim().toLowerCase();r
 function renderProducts(){
   $("products").innerHTML=filteredProducts().map(p=>{
     const selected=cart.find(x=>x.id===p.id);
-    return `<button class="product ${p.stock<=5?"low":""} ${selected?"selected-product":""}" data-cat="${p.category}" onclick="toggleProductSelection(${p.id})" ${p.stock<=0?"disabled":""}>${selected?'<span class="product-check" aria-hidden="true">✓</span>':""}<strong>${p.name}</strong><span class="price">${money(p.price)}</span>${p.stock<=0?'<small>สินค้าหมด</small>':""}</button>`
+    return `<button class="product ${p.stock<=5?"low":""} ${p.stock<=0?"sold-out-v37":""} ${selected?"selected-product":""}" data-cat="${p.category}" onclick="toggleProductSelection(${p.id})">${selected?'<span class="product-check" aria-hidden="true">✓</span>':""}<strong>${p.name}</strong><span class="price">${money(p.price)}</span>${p.stock<=0?'<small>สินค้าหมด · แตะเพื่อดูสต๊อก</small>':""}</button>`
   }).join("")||'<p class="empty">ไม่พบเมนู</p>';
   renderSelectedItemsCount();
 }
@@ -621,7 +621,13 @@ function renderSelectedItemsCount(){
 }
 window.toggleProductSelection=id=>{
   const el=currentTapElement();tapFeedback(el);playTapSound();
-  const p=state.products.find(x=>x.id===id);if(!p||p.stock<=0)return;
+  const p=state.products.find(x=>x.id===id);
+  if(!p)return;
+  if(p.stock<=0){
+    alert(`${p.name} สต๊อกหมด กำลังเปิดหน้าสต๊อก`);
+    openPage("stock");
+    return;
+  }
   const row=cart.find(x=>x.id===id);
   if(row){cart=cart.filter(x=>x.id!==id);playQtySound(false)}
   else{cart.push({id:p.id,name:p.name,price:p.price,cost:p.cost,qty:1})}
@@ -830,6 +836,66 @@ async function renderAdminDynamicQr(){
   }catch(e){el.innerHTML="<span>"+escapeHtml(e.message)+"</span>"}
 }
 
+
+function printQueueTicket(){
+  const orderNo=currentDailyOrderNumber();
+  const now=new Date();
+  const orderLabel="#"+String(orderNo).padStart(3,"0");
+  const dateText=now.toLocaleDateString("th-TH",{day:"2-digit",month:"2-digit",year:"numeric"});
+  const timeText=now.toLocaleTimeString("th-TH",{hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false});
+  const staffName=currentUser?.name||"-";
+  const shopName=String(state.settings.shopName||"ร้านทิพย์เกษรเมี่ยงปลาเผา");
+
+  const w=window.open("","_blank","width=420,height=520");
+  if(!w){
+    alert("เบราว์เซอร์บล็อกหน้าต่างพิมพ์ กรุณาอนุญาต Pop-up แล้วลองใหม่");
+    return;
+  }
+
+  w.document.write(`<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>Queue ${orderLabel}</title>
+<style>
+@page{size:80mm auto;margin:6mm}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Sarabun","Anuphan",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#111;background:#fff}
+.screen-actions{display:flex;gap:8px;margin-bottom:12px}
+.screen-actions button{flex:1;padding:10px;border-radius:8px;font:inherit;font-weight:700}
+.screen-actions button:first-child{border:1px solid #F2B36F;background:#FFF1DF;color:#D96F0B}
+.screen-actions button:last-child{border:1px solid #E67A18;background:#F28C28;color:#fff}
+.ticket{text-align:center}
+.shop{font-size:18px;font-weight:700;line-height:1.3}
+.label{margin-top:12px;font-size:13px}
+.queue{margin:4px 0 8px;font-size:58px;line-height:1;font-weight:800}
+.meta{border-top:1px dashed #777;border-bottom:1px dashed #777;padding:8px 0;margin-top:8px;font-size:12px;line-height:1.55}
+.thanks{margin-top:10px;font-size:12px}
+@media print{.screen-actions{display:none!important}}
+</style>
+</head>
+<body>
+<div class="screen-actions">
+<button onclick="window.close()">กลับ</button>
+<button onclick="window.print()">พิมพ์บัตรคิว</button>
+</div>
+<div class="ticket">
+<div class="shop">${escapeHtml(shopName)}</div>
+<div class="label">หมายเลขคิว</div>
+<div class="queue">${orderLabel}</div>
+<div class="meta">
+<div>${dateText} · ${timeText}</div>
+<div>พนักงาน: ${escapeHtml(staffName)}</div>
+</div>
+<div class="thanks">กรุณารอเรียกคิว ขอบคุณค่ะ</div>
+</div>
+</body>
+</html>`);
+  w.document.close();
+}
+
+if($("printQueueTicketBtn"))$("printQueueTicketBtn").onclick=printQueueTicket;
+
 // Payment
 function openPayment(){
   if(!cart.length)return;
@@ -926,7 +992,7 @@ function renderOrders(){
     list=list.filter(o=>o.status===orderStatusFilter);
   }
   if(!list.length){$("ordersList").innerHTML='<p class="empty">ยังไม่มีออเดอร์ที่ตรงกับตัวกรอง</p>';return}
-  $("ordersList").innerHTML=`<table class="orders-clean-table"><tr><th>เลข</th><th>เวลา</th><th>รายการ</th><th>ยอด</th><th>ชำระ</th><th>พนักงาน</th><th>สถานะ</th><th>จัดการ</th></tr>${list.map(o=>`<tr><td><b>#${String(o.number).padStart(3,"0")}</b></td><td>${new Date(o.time).toLocaleTimeString("th-TH",{hour:"2-digit",minute:"2-digit"})}</td><td>${orderItemsText(o)}</td><td class="order-amount">${money(o.total)}</td><td>${o.payment}</td><td>${o.staffName||"-"}</td><td><span class="status ${o.status}">${o.status==="paid"?"สำเร็จแล้ว":"ยกเลิก"}</span></td><td><div class="order-actions"><button class="btn-secondary-orange compact" onclick="printOrderById(${o.id})">พิมพ์ซ้ำ</button>${o.status==="paid"&&currentUser?.role==="owner"?`<button class="delete-icon-btn" title="ยกเลิกออเดอร์" aria-label="ยกเลิกออเดอร์" onclick="cancelOrder(${o.id})">×</button>`:""}</div></td></tr>`).join("")}</table>`;
+  $("ordersList").innerHTML=`<table class="orders-clean-table"><tr><th>เลข</th><th>วันที่</th><th>เวลา</th><th>รายการ</th><th>ยอด</th><th>ชำระ</th><th>พนักงาน</th><th>สถานะ</th><th>จัดการ</th></tr>${list.map(o=>{const d=new Date(o.time);return `<tr><td><b>#${String(o.number).padStart(3,"0")}</b></td><td class="order-date">${d.toLocaleDateString("th-TH",{day:"2-digit",month:"short",year:"2-digit"})}</td><td>${d.toLocaleTimeString("th-TH",{hour:"2-digit",minute:"2-digit"})}</td><td>${orderItemsText(o)}</td><td class="order-amount">${money(o.total)}</td><td>${o.payment}</td><td>${o.staffName||"-"}</td><td><span class="status ${o.status}">${o.status==="paid"?"สำเร็จแล้ว":"ยกเลิก"}</span></td><td><div class="order-actions"><button class="btn-secondary-orange compact" onclick="printOrderById(${o.id})">พิมพ์ซ้ำ</button>${o.status==="paid"&&currentUser?.role==="owner"?`<button class="delete-icon-btn" title="ยกเลิกออเดอร์" aria-label="ยกเลิกออเดอร์" onclick="cancelOrder(${o.id})">×</button>`:""}</div></td></tr>`}).join("")}</table>`;
 }
 document.querySelectorAll(".order-filter").forEach(btn=>btn.onclick=()=>{
   orderStatusFilter=btn.dataset.orderFilter;
@@ -963,7 +1029,9 @@ function printOrder(o,isCopy=false){
   *{box-sizing:border-box}
   body{margin:0;background:#f5f5f5;color:#000;font-family:"Sarabun","TH Sarabun New","Noto Sans Thai",Tahoma,sans-serif}
   .toolbar{position:sticky;top:0;z-index:5;display:flex;gap:8px;padding:10px;background:#fff;border-bottom:1px solid #ddd}
-  .toolbar button{flex:1;min-height:44px;border-radius:8px;font:inherit;font-weight:600;border:1px solid #ccc;background:#fff;color:#222}
+  .toolbar button{flex:1;min-height:44px;border-radius:8px;font:inherit;font-weight:700}
+  .toolbar .back-btn{border:1px solid #F2B36F;background:#FFF1DF;color:#D96F0B}
+  .toolbar .print-btn{border:1px solid #E67A18;background:#F28C28;color:#fff}
   .receipt-wrap{width:350px;max-width:100%;margin:18px auto;background:#fff;border:1px solid #ddd}
   .receipt{padding:16px 14px;font-size:14px;line-height:1.45;color:#000}
   .brand{text-align:center;padding-bottom:10px;border-bottom:1px solid #111}
@@ -1025,8 +1093,38 @@ function ordersForRange(){const valid=paidOrders();if(dashboardRange==="all")ret
 function secondSeries(){const now=new Date(),labels=[],values=[],orders=paidOrders();for(let off=59;off>=0;off--){const t=new Date(now.getTime()-off*1000);t.setMilliseconds(0);const next=new Date(t.getTime()+1000);labels.push(t.toLocaleTimeString("th-TH",{hour12:false,hour:"2-digit",minute:"2-digit",second:"2-digit"}));values.push(orders.filter(o=>{const d=new Date(o.time);return d>=t&&d<next}).reduce((s,o)=>s+o.total,0))}return{labels,values}}
 function todayHourly(){const now=new Date(),labels=[],values=[];for(let h=8;h<=22;h++){labels.push(String(h).padStart(2,"0")+":00");values.push(paidOrders().filter(o=>{const d=new Date(o.time);return d.toDateString()===now.toDateString()&&d.getHours()===h}).reduce((s,o)=>s+o.total,0))}return{labels,values}}
 function dailySeries(days){const labels=[],values=[],orders=paidOrders();for(let off=days-1;off>=0;off--){const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-off);const next=new Date(d);next.setDate(next.getDate()+1);labels.push(d.toLocaleDateString("th-TH",{day:"2-digit",month:"2-digit"}));values.push(orders.filter(o=>{const t=new Date(o.time);return t>=d&&t<next}).reduce((s,o)=>s+o.total,0))}return{labels,values}}
-function drawBarChart(canvasId,labels,values,height=230,showEvery=1){const canvas=$(canvasId);if(!canvas||!canvas.parentElement)return;const width=Math.max(280,canvas.parentElement.clientWidth-30),dpr=window.devicePixelRatio||1;canvas.width=width*dpr;canvas.height=height*dpr;canvas.style.width=width+"px";canvas.style.height=height+"px";const ctx=canvas.getContext("2d");ctx.scale(dpr,dpr);ctx.clearRect(0,0,width,height);const pad={l:46,r:12,t:12,b:34},W=width-pad.l-pad.r,H=height-pad.t-pad.b,max=Math.max(...values,1),nice=Math.max(100,Math.ceil(max/100)*100);ctx.font="9px -apple-system,Segoe UI,sans-serif";ctx.strokeStyle="#eee4d8";ctx.fillStyle="#8a735e";for(let i=0;i<=4;i++){const y=pad.t+H-H*i/4;ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(width-pad.r,y);ctx.stroke();ctx.fillText("฿"+Math.round(nice*i/4),2,y+3)}const slot=W/Math.max(values.length,1),barW=Math.max(2,Math.min(24,slot*.62));values.forEach((v,i)=>{const bh=H*(v/nice),x=pad.l+i*slot+(slot-barW)/2,y=pad.t+H-bh;ctx.fillStyle="#df5f0d";ctx.beginPath();ctx.roundRect(x,y,barW,Math.max(1,bh),Math.min(4,barW/2));ctx.fill();if(i%showEvery===0||i===values.length-1){ctx.fillStyle="#8a735e";ctx.textAlign="center";ctx.fillText(labels[i],x+barW/2,pad.t+H+15)}})}
-function renderSalesCharts(){const a=secondSeries(),b=todayHourly(),c=dailySeries(7),d=dailySeries(30);requestAnimationFrame(()=>{drawBarChart("secondChart",a.labels,a.values,235,10);drawBarChart("todayChart",b.labels,b.values,210,2);drawBarChart("weekChart",c.labels,c.values,210,1);drawBarChart("monthChart",d.labels,d.values,210,5)})}
+function drawLineChart(canvasId,labels,values,height=230,showEvery=1){
+  const canvas=$(canvasId);if(!canvas||!canvas.parentElement)return;
+  const width=Math.max(280,canvas.parentElement.clientWidth-30),dpr=window.devicePixelRatio||1;
+  canvas.width=width*dpr;canvas.height=height*dpr;canvas.style.width=width+"px";canvas.style.height=height+"px";
+  const ctx=canvas.getContext("2d");ctx.scale(dpr,dpr);ctx.clearRect(0,0,width,height);
+  const pad={l:46,r:14,t:18,b:34},W=width-pad.l-pad.r,H=height-pad.t-pad.b;
+  const max=Math.max(...values,1),nice=Math.max(100,Math.ceil(max/100)*100);
+  ctx.font="9px -apple-system,Segoe UI,sans-serif";
+  ctx.strokeStyle="#eee4d8";ctx.fillStyle="#8a735e";ctx.lineWidth=1;
+  for(let k=0;k<=4;k++){
+    const y=pad.t+H-H*k/4;
+    ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(width-pad.r,y);ctx.stroke();
+    ctx.textAlign="left";ctx.fillText("฿"+Math.round(nice*k/4),2,y+3);
+  }
+  const n=Math.max(values.length,1),step=n>1?W/(n-1):W;
+  const pts=values.map((v,i)=>({
+    x:n>1?pad.l+i*step:pad.l+W/2,
+    y:pad.t+H-H*(Number(v||0)/nice)
+  }));
+  if(pts.length){
+    ctx.strokeStyle="#E76613";ctx.lineWidth=2.5;ctx.lineJoin="round";ctx.lineCap="round";
+    ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.stroke();
+    pts.forEach((p,i)=>{
+      ctx.fillStyle="#FFFFFF";ctx.strokeStyle="#E76613";ctx.lineWidth=2;
+      ctx.beginPath();ctx.arc(p.x,p.y,3.5,0,Math.PI*2);ctx.fill();ctx.stroke();
+      if(i%showEvery===0||i===pts.length-1){
+        ctx.fillStyle="#8a735e";ctx.textAlign="center";ctx.fillText(labels[i],p.x,pad.t+H+15);
+      }
+    });
+  }
+}
+function renderSalesCharts(){const a=secondSeries(),b=todayHourly(),c=dailySeries(7),d=dailySeries(30);requestAnimationFrame(()=>{drawLineChart("secondChart",a.labels,a.values,235,10);drawLineChart("todayChart",b.labels,b.values,210,2);drawLineChart("weekChart",c.labels,c.values,210,1);drawLineChart("monthChart",d.labels,d.values,210,5)})}
 
 function renderSalesHistoryStats(){
   const select=$("salesHistoryDate"),box=$("salesHistorySummary");if(!select||!box)return;
@@ -1126,7 +1224,7 @@ function applyPreorderReminderCollapsed(){
 
 function tomorrowWaitingOrders(){
   const key=dateKey(tomorrowDate());
-  return state.preorders.filter(o=>o.date===key&&o.status!=="cancelled").sort((a,b)=>String(a.pickup).localeCompare(String(b.pickup)));
+  return state.preorders.filter(o=>o.date===key&&!["ready","cancelled"].includes(o.status)).sort((a,b)=>String(a.pickup).localeCompare(String(b.pickup)));
 }
 function preorderReminderSummary(){
   const orders=tomorrowWaitingOrders();
@@ -1145,6 +1243,12 @@ function updateNotifyButton(){
 
 function renderPreorderBell(){
   const s=preorderReminderSummary(),dot=$("preorderBellDot"),btn=$("preorderBellBtn"),sub=$("preorderBellSubtitle"),body=$("preorderBellBody");
+  clearDismissedIfStatusChangedV37();
+  const dismissed=dismissedPreorderIdsV37();
+  s.orders=s.orders.filter(o=>!dismissed.has(String(o.id)));
+  s.itemQty=s.orders.reduce((sum,o)=>sum+(o.items||[]).reduce((a,i)=>a+Number(i.qty||0),0),0);
+  s.total=s.orders.reduce((sum,o)=>sum+Number(o.total||0),0);
+  s.first=s.orders[0]?.pickup||"-";
   if(!dot||!btn||!sub||!body)return;
   const has=s.orders.length>0;
   dot.classList.toggle("hidden",!has);
@@ -1154,14 +1258,51 @@ function renderPreorderBell(){
   body.innerHTML=s.orders.slice(0,4).map(o=>{
     const title=o.customer||o.note||"ไม่ระบุชื่อ";
     const items=(o.items||[]).map(i=>`${i.name} x${i.qty}`).join(", ");
-    return `<div class="bell-order"><div><b>${o.pickup||"--:--"} · ${title}</b><small>${items}</small></div><strong>${money(o.total||0)}</strong></div>`;
+    return `<div class="bell-order bell-order-v37" data-preorder-id="${o.id}" title="ปัดซ้ายหรือขวาเพื่อซ่อน">
+      <div><b>${o.pickup||"--:--"} · ${title}</b><small>${items}</small></div>
+      <strong>${money(o.total||0)}</strong>
+      <button type="button" class="bell-dismiss-v37" data-dismiss-preorder="${o.id}" aria-label="ซ่อนการแจ้งเตือน">×</button>
+    </div>`;
   }).join("")+(s.orders.length>4?`<div class="bell-more">และอีก ${s.orders.length-4} รายการ</div>`:"");
+  bindBellSwipeV37();
 }
 function togglePreorderBell(force){
   const pop=$("preorderBellPopover");if(!pop)return;
   const show=typeof force==="boolean"?force:pop.classList.contains("hidden");
   pop.classList.toggle("hidden",!show);
 }
+const DISMISSED_PREORDER_KEY="fish_pos_dismissed_preorder_notifications_v37";
+function dismissedPreorderIdsV37(){
+  try{return new Set(JSON.parse(localStorage.getItem(DISMISSED_PREORDER_KEY)||"[]").map(String))}catch(e){return new Set()}
+}
+function dismissPreorderNotificationV37(id){
+  const set=dismissedPreorderIdsV37();set.add(String(id));
+  localStorage.setItem(DISMISSED_PREORDER_KEY,JSON.stringify([...set]));
+  renderPreorderBell();
+}
+function clearDismissedIfStatusChangedV37(){
+  const current=new Set(state.preorders.filter(o=>!["ready","cancelled"].includes(o.status)).map(o=>String(o.id)));
+  const kept=[...dismissedPreorderIdsV37()].filter(id=>current.has(id));
+  localStorage.setItem(DISMISSED_PREORDER_KEY,JSON.stringify(kept));
+}
+function bindBellSwipeV37(){
+  const body=$("preorderBellBody");if(!body)return;
+  body.querySelectorAll(".bell-order-v37").forEach(row=>{
+    let startX=0,startY=0;
+    row.addEventListener("touchstart",e=>{
+      const t=e.touches?.[0];if(!t)return;startX=t.clientX;startY=t.clientY;
+    },{passive:true});
+    row.addEventListener("touchend",e=>{
+      const t=e.changedTouches?.[0];if(!t)return;
+      const dx=t.clientX-startX,dy=t.clientY-startY;
+      if(Math.abs(dx)>55&&Math.abs(dx)>Math.abs(dy)){
+        row.classList.add("swiped-away-v37");
+        setTimeout(()=>dismissPreorderNotificationV37(row.dataset.preorderId),160);
+      }
+    },{passive:true});
+  });
+}
+
 function updatePreorderReminder(showBrowser=false){
   const box=$("preorderReminder");if(!box)return;
   const s=preorderReminderSummary();
@@ -1179,6 +1320,12 @@ function updatePreorderReminder(showBrowser=false){
 $("openPreorderReminder").onclick=()=>{window.__preListExplicitDate=true;openPage("preorder");$("preListDate").value=dateKey(tomorrowDate());renderPreorderList()};
 
 $("preorderBellBtn").onclick=()=>togglePreorderBell();
+$("preorderBellBody").addEventListener("click",e=>{
+  const btn=e.target.closest("[data-dismiss-preorder]");
+  if(!btn)return;
+  e.stopPropagation();
+  dismissPreorderNotificationV37(btn.dataset.dismissPreorder);
+});
 $("closePreorderBell").onclick=()=>togglePreorderBell(false);
 document.addEventListener("click",e=>{
   const wrap=$("preorderBellWrap");
@@ -1510,6 +1657,7 @@ window.setPreStatus=(id,status)=>{
   saveState();
   renderPreorderList();
   updatePreorderReminder();
+  renderPreorderBell();
 };
 
 window.advancePreStatus=id=>{
@@ -1562,11 +1710,14 @@ $("exportAllCsvBtn").onclick=()=>exportSalesCsv("all");
 function renderCategoryManager(){
   const box=$("categoryManager");if(!box)return;
   const cats=getCategoryList();
-  box.innerHTML=cats.length?cats.map((cat,i)=>`<div class="category-manager-row">
+  box.innerHTML=cats.length?cats.map((cat,i)=>`<div class="category-manager-row category-manager-row-v37">
     <input id="catName_${i}" value="${escapeHtml(cat)}" aria-label="ชื่อหมวด ${escapeHtml(cat)}">
-    <button class="secondary" onclick="moveCategory(${i},-1)" ${i===0?"disabled":""}>←</button>
-    <button class="secondary" onclick="moveCategory(${i},1)" ${i===cats.length-1?"disabled":""}>→</button>
-    <button class="primary" onclick="renameCategory(${i})">บันทึกชื่อ</button>
+    <div class="category-manager-actions-v37">
+      <button class="secondary category-arrow-v37" onclick="moveCategory(${i},-1)" ${i===0?"disabled":""} title="เลื่อนไปซ้าย">←</button>
+      <button class="secondary category-arrow-v37" onclick="moveCategory(${i},1)" ${i===cats.length-1?"disabled":""} title="เลื่อนไปขวา">→</button>
+      <button class="primary category-save-v37" onclick="renameCategory(${i})">บันทึกชื่อ</button>
+      <button class="category-trash-v37" onclick="deleteCategoryByIndex(${i})" title="ลบหมวด" aria-label="ลบหมวด ${escapeHtml(cat)}">ลบ</button>
+    </div>
   </div>`).join(""):'<p class="empty">ยังไม่มีหมวด</p>';
 }
 window.moveCategory=(index,dir)=>{
@@ -1583,6 +1734,25 @@ window.renameCategory=index=>{
   if(currentCategory===oldName)currentCategory=newName;
   saveState();renderAll();
 };
+window.deleteCategoryByIndex=index=>{
+  const arr=getCategoryList(),name=arr[index];
+  if(!name)return;
+  const used=state.products.filter(p=>p.category===name);
+  const detail=used.length?`\nสินค้า ${used.length} รายการในหมวดนี้จะถูกย้ายไปหมวด “อื่นๆ”`:"";
+  if(!confirm(`ลบหมวด “${name}” ใช่ไหม?${detail}`))return;
+
+  if(used.length){
+    used.forEach(p=>p.category="อื่นๆ");
+    if(!Array.isArray(state.settings.customCategories))state.settings.customCategories=[];
+    if(!state.settings.customCategories.includes("อื่นๆ"))state.settings.customCategories.push("อื่นๆ");
+  }
+  state.settings.customCategories=(state.settings.customCategories||[]).filter(x=>x!==name);
+  state.settings.categoryOrder=(state.settings.categoryOrder||[]).filter(x=>x!==name);
+  if(currentCategory===name)currentCategory="ทั้งหมด";
+  saveState();renderAll();
+};
+
+
 
 function preserveAdminScrollV27(fn){
   const adminVisible=$("admin") && !$("admin").classList.contains("hidden");
