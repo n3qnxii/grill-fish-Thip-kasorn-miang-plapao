@@ -122,8 +122,11 @@
   </div>
 
   <div id="lowStockBanner" class="low-stock-banner hidden">
-    <div><b>สต๊อกใกล้หมด</b><span id="lowStockText"></span></div>
-    <button id="openLowStockBtn" class="secondary">ดูสต๊อก</button>
+    <div class="low-stock-message-v43"><b>สต๊อกใกล้หมด</b><span id="lowStockText"></span></div>
+    <div class="low-stock-actions-v43">
+      <button id="openLowStockBtn" class="secondary">ดูสต๊อก</button>
+      <button id="closeLowStockBtn" class="low-stock-close-v43" type="button" aria-label="ปิดแจ้งเตือนสต๊อก">×</button>
+    </div>
   </div>
 
   <main>
@@ -134,10 +137,15 @@
           <span class="queue-ticket-label-v35">บัตรคิว</span>
           <small>ใช้เลขออเดอร์ปัจจุบัน</small>
         </div>
-        <button type="button" id="printQueueTicketBtn" class="queue-ticket-btn-v35">
-          <span aria-hidden="true">▣</span>
-          <span>พิมพ์บัตรคิว</span>
-        </button>
+        <div class="queue-ticket-actions-v41">
+          <button type="button" id="cancelCurrentOrderBtn" class="queue-cancel-btn-v41">
+            <span>ยกเลิกออเดอร์</span>
+          </button>
+          <button type="button" id="printQueueTicketBtn" class="queue-ticket-btn-v35">
+            <span aria-hidden="true">▣</span>
+            <span>พิมพ์บัตรคิว</span>
+          </button>
+        </div>
       </div>
 
       <div class="sale-layout">
@@ -160,7 +168,16 @@
             <div class="summary-row"><span>ยอดสินค้า</span><b id="subtotal">฿0</b></div>
             <div class="summary-row"><span>ส่วนลด</span><b id="discountDisplay">฿0</b></div>
             <div class="total-row"><span>รวมสุทธิ</span><strong id="total">฿0</strong></div>
-            <button id="payBtn" class="primary pay-big" disabled>ชำระเงิน</button>
+            <div class="direct-payment-actions-v41">
+              <button id="payCashBtn" type="button" class="direct-pay-btn-v41 direct-cash-v41" disabled>
+                <svg viewBox="0 0 48 34" aria-hidden="true" fill="none"><rect x="5" y="8" width="31" height="19" rx="3" stroke="currentColor" stroke-width="2.4"/><rect x="10" y="4" width="31" height="19" rx="3" stroke="currentColor" stroke-width="2.4" opacity=".65"/><circle cx="25" cy="17" r="5" stroke="currentColor" stroke-width="2.4"/></svg>
+                <span><b>เงินสด</b><small>รับชำระเงินสด</small></span>
+              </button>
+              <button id="payQrBtn" type="button" class="direct-pay-btn-v41 direct-qr-v41" disabled>
+                <svg viewBox="0 0 48 48" aria-hidden="true" fill="none"><path d="M6 17V8a2 2 0 0 1 2-2h9M31 6h9a2 2 0 0 1 2 2v9M42 31v9a2 2 0 0 1-2 2h-9M17 42H8a2 2 0 0 1-2-2v-9" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><rect x="15" y="15" width="7" height="7" stroke="currentColor" stroke-width="2.4"/><rect x="27" y="15" width="7" height="7" stroke="currentColor" stroke-width="2.4"/><rect x="15" y="27" width="7" height="7" stroke="currentColor" stroke-width="2.4"/><path d="M27 27h4v4h-4zM33 27h3v7h-3zM27 33h6v3h-6z" fill="currentColor"/></svg>
+                <span><b>คิวอาร์โค้ด</b><small>รับเงินโอน</small></span>
+              </button>
+            </div>
             <div class="cart-secondary-actions">
               <button id="holdOrderBtn" class="btn-secondary-orange" disabled>พักออเดอร์</button>
               <button id="openHeldOrdersBtn" class="btn-secondary-orange">ออเดอร์พัก <span id="heldOrderCount">0</span></button>
@@ -347,6 +364,7 @@
         <div class="card chart-card">
           <div class="chart-title"><div><h3>ยอดขายวันนี้ตามชั่วโมง</h3><p>ดูช่วงเวลาที่ขายดีที่สุดของวันนี้</p></div><span id="liveChartNow" class="live-badge">อัปเดตล่าสุด</span></div>
           <canvas id="todayChart"></canvas>
+          <div id="todayChartInsight" class="chart-insight-v41"></div>
         </div>
         <div class="side-report">
           <div class="card"><h3>ช่องทางชำระ</h3><div id="paymentSummary"></div></div>
@@ -532,8 +550,11 @@
         <button type="button" data-bank="1000">฿1,000</button>
       </div>
 
-      <div id="cashPaymentStatus" class="cash-status-line zero">
-        <span>ยอดที่ต้องชำระ</span><strong>฿0</strong>
+      <div class="cash-due-row-v41">
+        <div id="cashPaymentStatus" class="cash-status-line zero">
+          <span>ยอดที่ต้องชำระ</span><strong>฿0</strong>
+        </div>
+        <button type="button" id="cashExactInlineBtn" class="cash-exact-inline-v41">พอดี</button>
       </div>
     </div>
 
