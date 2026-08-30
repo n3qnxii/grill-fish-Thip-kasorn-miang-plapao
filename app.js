@@ -575,6 +575,22 @@ document.addEventListener("click",e=>{
 });
 
 
+
+function ensureStockAlertDismissV42(){
+  const banner=$("stockAlertBanner") || document.querySelector(".stock-alert,.stock-warning,.low-stock-alert,.low-stock-banner,.inventory-alert,.inventory-warning");
+  if(!banner || banner.querySelector(".stock-alert-close-v42")) return;
+  const btn=document.createElement("button");
+  btn.type="button";
+  btn.className="stock-alert-close-v42";
+  btn.setAttribute("aria-label","ปิดแจ้งเตือนสต๊อก");
+  btn.textContent="×";
+  btn.onclick=(e)=>{
+    e.stopPropagation();
+    banner.classList.add("stock-alert-hidden-v42");
+  };
+  banner.appendChild(btn);
+}
+
 function renderAll(){$("shopTitle").textContent=state.settings.shopName;$("orderNo").textContent="#"+currentDailyOrderNumber();renderCategories();renderProducts();renderCart();renderOrders();renderDashboard();renderStock();renderPreorder();renderPreorderList();renderAdmin();renderHeldOrders();renderLowStockAlert();renderDayCloseSummary();updateQrDisplay();updatePreorderReminder()}
 function getCategoryList(){
   const productCats=[...new Set(state.products.filter(p=>p.active).map(p=>p.category).filter(Boolean))];
@@ -596,7 +612,7 @@ function filteredProducts(){const q=$("menuSearch").value.trim().toLowerCase();r
 function renderProducts(){
   $("products").innerHTML=filteredProducts().map(p=>{
     const selected=cart.find(x=>x.id===p.id);
-    return `<button class="product ${p.stock<=5?"low":""} ${p.stock<=0?"sold-out-v37":""} ${selected?"selected-product":""}" data-cat="${p.category}" onclick="toggleProductSelection(${p.id})">${selected?'<span class="product-check" aria-hidden="true">✓</span>':""}<strong>${p.name}</strong><span class="price">${money(p.price)}</span>${p.stock<=0?'<small>สินค้าหมด · แตะเพื่อดูสต๊อก</small>':""}</button>`
+    return `<button class="product ${p.stock<=5?"low":""} ${p.stock<=0?"sold-out-v37":""} ${selected?"selected-product":""}" data-cat="${p.category}" onclick="toggleProductSelection(${p.id})">${selected?`<span class="product-qty-badge-v41" aria-label="เลือก ${selected.qty} ชิ้น">${selected.qty}</span>`:""}<strong>${p.name}</strong><span class="price">${money(p.price)}</span>${p.stock<=0?'<small>สินค้าหมด · แตะเพื่อดูสต๊อก</small>':""}</button>`
   }).join("")||'<p class="empty">ไม่พบเมนู</p>';
   renderSelectedItemsCount();
 }
@@ -629,8 +645,13 @@ window.toggleProductSelection=id=>{
     return;
   }
   const row=cart.find(x=>x.id===id);
-  if(row){cart=cart.filter(x=>x.id!==id);playQtySound(false)}
-  else{cart.push({id:p.id,name:p.name,price:p.price,cost:p.cost,qty:1})}
+  if(row){
+    const maxQty=Math.min(100,Number(p.stock)||0);
+    if(row.qty>=maxQty){playQtySound(false);return}
+    row.qty+=1;playQtySound(true);
+  }else{
+    cart.push({id:p.id,name:p.name,price:p.price,cost:p.cost,qty:1});playQtySound(true);
+  }
   renderCart();renderProducts();
 };
 window.addItem=id=>toggleProductSelection(id);
@@ -647,7 +668,7 @@ window.openCartQtyKeypad=id=>{
   openNumericKeypad({title:`จำนวน ${row.name}`,hint:"สูงสุด 100",value:row.qty,min:0,max:Math.min(100,Number(p.stock)||100),maxDigits:3,onConfirm:n=>setCartQty(id,n)});
 };
 const subtotal=()=>cart.reduce((s,x)=>s+x.price*x.qty,0),discount=()=>Math.max(0,Number($("discountInput").value||0)),total=()=>Math.max(0,subtotal()-discount());
-function renderCart(){$("cartItems").innerHTML=cart.length?cart.map(x=>`<div class="cart-item"><div class="cart-item-info"><b>${x.name}</b><div class="hint">${money(x.price)} × ${x.qty}</div></div><div class="cart-item-controls"><div class="qty"><button onclick="changeQty(${x.id},-1)">−</button><button type="button" class="qty-number-input qty-number-button" onclick="openCartQtyKeypad(${x.id})" aria-label="จำนวน ${escapeHtml(x.name)}">${x.qty}</button><button onclick="changeQty(${x.id},1)">+</button></div><button class="cart-trash-btn" onclick="removeCartItem(${x.id})" title="ลบรายการ" aria-label="ลบ ${escapeHtml(x.name)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 11v5M14 11v5"/></svg></button></div></div>`).join(""):'<p class="empty">ยังไม่มีสินค้า</p>';$("subtotal").textContent=money(subtotal());$("discountDisplay").textContent=money(discount());$("total").textContent=money(total());$("payBtn").disabled=!cart.length;if($("holdOrderBtn"))$("holdOrderBtn").disabled=!cart.length;if($("heldOrderCount"))$("heldOrderCount").textContent=state.heldOrders?.length||0;renderSelectedItemsCount()}
+function renderCart(){$("cartItems").innerHTML=cart.length?cart.map(x=>`<div class="cart-item"><div class="cart-item-info"><b>${x.name}</b><div class="hint">${money(x.price)} × ${x.qty}</div></div><div class="cart-item-controls"><div class="qty"><button onclick="changeQty(${x.id},-1)">−</button><button type="button" class="qty-number-input qty-number-button" onclick="openCartQtyKeypad(${x.id})" aria-label="จำนวน ${escapeHtml(x.name)}">${x.qty}</button><button onclick="changeQty(${x.id},1)">+</button></div><button class="cart-trash-btn" onclick="removeCartItem(${x.id})" title="ลบรายการ" aria-label="ลบ ${escapeHtml(x.name)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 11v5M14 11v5"/></svg></button></div></div>`).join(""):'<p class="empty">ยังไม่มีสินค้า</p>';$("subtotal").textContent=money(subtotal());$("discountDisplay").textContent=money(discount());$("total").textContent=money(total());if($("payCashBtn"))$("payCashBtn").disabled=!cart.length;if($("payQrBtn"))$("payQrBtn").disabled=!cart.length;if($("holdOrderBtn"))$("holdOrderBtn").disabled=!cart.length;if($("heldOrderCount"))$("heldOrderCount").textContent=state.heldOrders?.length||0;renderSelectedItemsCount()}
 
 window.removeCartItem=id=>{cart=cart.filter(x=>x.id!==id);renderCart();renderProducts();playQtySound(false)};
 $("discountInput").addEventListener("input",renderCart);$("clearBtn").onclick=()=>{if(cart.length&&confirm("ล้างออเดอร์นี้ใช่ไหม?")){cart=[];$("discountInput").value=0;renderCart();renderProducts()}};
@@ -724,7 +745,7 @@ function openCashKeypad(){
   updateCashDisplays();
   const popup=$("cashKeypadPopup");if(!popup)return;
   if(popup.parentElement!==document.body)document.body.appendChild(popup);
-  if($("exactCashBtn"))$("exactCashBtn").textContent=`พอดี ${money(total())}`;
+  if($("exactCashBtn"))$("exactCashBtn").textContent="พอดี";
   popup.classList.remove("hidden");
   document.body.classList.add("cash-keypad-open");
 }
@@ -858,9 +879,9 @@ function printQueueTicket(){
 <meta charset="utf-8">
 <title>Queue ${orderLabel}</title>
 <style>
-@page{size:80mm auto;margin:6mm}
+@page{size:80mm auto;margin:4mm}
 *{box-sizing:border-box}
-body{margin:0;font-family:"Sarabun","Anuphan",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#111;background:#fff}
+body{margin:0;width:72mm;max-width:72mm;margin-left:auto;margin-right:auto;font-family:"Sarabun","Anuphan",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#111;background:#fff}
 .screen-actions{display:flex;gap:8px;margin-bottom:12px}
 .screen-actions button{flex:1;padding:10px;border-radius:8px;font:inherit;font-weight:700}
 .screen-actions button:first-child{border:1px solid #F2B36F;background:#FFF1DF;color:#D96F0B}
@@ -896,10 +917,30 @@ body{margin:0;font-family:"Sarabun","Anuphan",-apple-system,BlinkMacSystemFont,"
 
 if($("printQueueTicketBtn"))$("printQueueTicketBtn").onclick=printQueueTicket;
 
+function cancelCurrentOrderV41(){
+  const num=currentDailyOrderNumber();
+  const hasItems=cart.length>0;
+  const message=hasItems?`ยกเลิกออเดอร์ #${num} และข้ามไปเลขถัดไปใช่ไหม?`:`ยกเลิกคิว #${num} และรันเลขออเดอร์ถัดไปใช่ไหม?`;
+  if(!confirm(message))return;
+  const sub=subtotal(),disc=discount(),net=total(),cost=cart.reduce((s,x)=>s+(x.cost||0)*x.qty,0);
+  const cancelled={
+    id:Date.now(),number:num,items:cart.map(x=>({...x})),subtotal:sub,discount:disc,total:net,cost,
+    grossProfit:0,payment:"-",cashReceived:0,change:0,staffId:currentUser?.id||"",staffName:currentUser?.name||"-",
+    status:"cancelled",time:nowIso(),orderDate:localDateKey(),cancelledAt:nowIso(),cancelReason:"ลูกค้ายกเลิกก่อนชำระ"
+  };
+  state.orders.unshift(cancelled);
+  advanceDailyOrderNumber();
+  cart=[];$("discountInput").value=0;
+  saveState();renderAll();
+  playQtySound(false);
+}
+if($("cancelCurrentOrderBtn"))$("cancelCurrentOrderBtn").onclick=cancelCurrentOrderV41;
+
+
 // Payment
-function openPayment(){
+function openPayment(initialMethod=null){
   if(!cart.length)return;
-  $("paymentModal")?.querySelector(".payment-box")?.classList.remove("method-selected-v34");
+  $("paymentModal")?.querySelector(".payment-box")?.classList.toggle("method-selected-v34",!!initialMethod);
   $("modalTotal").textContent=money(total());
   $("payOrderNo").textContent="#"+currentDailyOrderNumber();
   selectedMethod=null;lastCashReceived=0;lastChange=0;
@@ -907,8 +948,13 @@ function openPayment(){
   $("cashArea").classList.add("hidden");$("qrArea").classList.add("hidden");
   setCashInputValue("");$("confirmPay").disabled=true;
   $("paymentModal").classList.remove("hidden");updateCashPaymentStatus();
+  if(initialMethod){
+    const target=[...document.querySelectorAll(".payment-methods button")].find(b=>b.dataset.method===initialMethod);
+    if(target)target.click();
+  }
 }
-$("payBtn").onclick=openPayment;
+if($("payCashBtn"))$("payCashBtn").onclick=()=>openPayment("เงินสด");
+if($("payQrBtn"))$("payQrBtn").onclick=()=>openPayment("QR");
 $("closeModal").onclick=$("cancelPay").onclick=()=>{$("paymentModal").classList.add("hidden");closeCashKeypad()};
 document.querySelectorAll(".payment-methods button").forEach(b=>b.onclick=()=>{
   playTapSound();tapFeedback(b);selectedMethod=b.dataset.method;
@@ -925,6 +971,7 @@ document.querySelectorAll(".payment-methods button").forEach(b=>b.onclick=()=>{
 });
 function updateCashPaymentStatus(){
   const box=$("cashPaymentStatus");if(!box)return;
+  if($("cashExactInlineBtn"))$("cashExactInlineBtn").textContent="พอดี";
   const received=Math.max(0,Number($("cashReceived")?.value||0));
   const due=Math.max(0,total()-received);
   lastCashReceived=received;lastChange=Math.max(0,received-total());
@@ -941,6 +988,9 @@ function updateCashPaymentStatus(){
   $("confirmPay").disabled=received<total();
 }
 $("cashReceived").addEventListener("input",updateCashPaymentStatus);
+if($("cashExactInlineBtn"))$("cashExactInlineBtn").onclick=()=>{
+  setCashInputValue(String(Math.round(total())));updateCashPaymentStatus();playTapSound();
+};
 
 $("qrZoomButton").onclick=()=>{
   const small=$("paymentQrImage");
@@ -1095,12 +1145,13 @@ function todayHourly(){const now=new Date(),labels=[],values=[];for(let h=8;h<=2
 function dailySeries(days){const labels=[],values=[],orders=paidOrders();for(let off=days-1;off>=0;off--){const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-off);const next=new Date(d);next.setDate(next.getDate()+1);labels.push(d.toLocaleDateString("th-TH",{day:"2-digit",month:"2-digit"}));values.push(orders.filter(o=>{const t=new Date(o.time);return t>=d&&t<next}).reduce((s,o)=>s+o.total,0))}return{labels,values}}
 function drawLineChart(canvasId,labels,values,height=230,showEvery=1){
   const canvas=$(canvasId);if(!canvas||!canvas.parentElement)return;
-  const width=Math.max(280,canvas.parentElement.clientWidth-30),dpr=window.devicePixelRatio||1;
+  const parent=canvas.parentElement;parent.classList.add("chart-interactive-v41");
+  const width=Math.max(280,parent.clientWidth-30),dpr=window.devicePixelRatio||1;
   canvas.width=width*dpr;canvas.height=height*dpr;canvas.style.width=width+"px";canvas.style.height=height+"px";
   const ctx=canvas.getContext("2d");ctx.scale(dpr,dpr);ctx.clearRect(0,0,width,height);
-  const pad={l:46,r:14,t:18,b:34},W=width-pad.l-pad.r,H=height-pad.t-pad.b;
+  const pad={l:48,r:16,t:20,b:36},W=width-pad.l-pad.r,H=height-pad.t-pad.b;
   const max=Math.max(...values,1),nice=Math.max(100,Math.ceil(max/100)*100);
-  ctx.font="9px -apple-system,Segoe UI,sans-serif";
+  ctx.font="10px Anuphan,Sarabun,-apple-system,Segoe UI,sans-serif";
   ctx.strokeStyle="#eee4d8";ctx.fillStyle="#8a735e";ctx.lineWidth=1;
   for(let k=0;k<=4;k++){
     const y=pad.t+H-H*k/4;
@@ -1108,23 +1159,68 @@ function drawLineChart(canvasId,labels,values,height=230,showEvery=1){
     ctx.textAlign="left";ctx.fillText("฿"+Math.round(nice*k/4),2,y+3);
   }
   const n=Math.max(values.length,1),step=n>1?W/(n-1):W;
-  const pts=values.map((v,i)=>({
-    x:n>1?pad.l+i*step:pad.l+W/2,
-    y:pad.t+H-H*(Number(v||0)/nice)
-  }));
+  const pts=values.map((v,i)=>({x:n>1?pad.l+i*step:pad.l+W/2,y:pad.t+H-H*(Number(v||0)/nice),value:Number(v||0),label:labels[i]}));
   if(pts.length){
     ctx.strokeStyle="#E76613";ctx.lineWidth=2.5;ctx.lineJoin="round";ctx.lineCap="round";
     ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.stroke();
     pts.forEach((p,i)=>{
       ctx.fillStyle="#FFFFFF";ctx.strokeStyle="#E76613";ctx.lineWidth=2;
-      ctx.beginPath();ctx.arc(p.x,p.y,3.5,0,Math.PI*2);ctx.fill();ctx.stroke();
-      if(i%showEvery===0||i===pts.length-1){
-        ctx.fillStyle="#8a735e";ctx.textAlign="center";ctx.fillText(labels[i],p.x,pad.t+H+15);
-      }
+      ctx.beginPath();ctx.arc(p.x,p.y,4,0,Math.PI*2);ctx.fill();ctx.stroke();
+      if(i%showEvery===0||i===pts.length-1){ctx.fillStyle="#8a735e";ctx.textAlign="center";ctx.fillText(labels[i],p.x,pad.t+H+17)}
     });
   }
+  canvas.__chartPointsV41=pts;
+  let tip=parent.querySelector('.chart-tooltip-v41');
+  if(!tip){tip=document.createElement('div');tip.className='chart-tooltip-v41 hidden';parent.appendChild(tip)}
+  if(!canvas.__tooltipBoundV41){
+    const show=(clientX,clientY)=>{
+      const rect=canvas.getBoundingClientRect(),x=clientX-rect.left,pts=canvas.__chartPointsV41||[];if(!pts.length)return;
+      let nearest=pts[0];for(const p of pts)if(Math.abs(p.x-x)<Math.abs(nearest.x-x))nearest=p;
+      tip.innerHTML=`<b>${nearest.label}</b><span>${money(nearest.value)}</span>`;
+      tip.classList.remove('hidden');
+      const left=Math.min(Math.max(nearest.x,60),rect.width-60);tip.style.left=left+'px';tip.style.top=Math.max(8,nearest.y-10)+'px';
+    };
+    canvas.addEventListener('mousemove',e=>show(e.clientX,e.clientY));
+    canvas.addEventListener('mouseleave',()=>tip.classList.add('hidden'));
+    canvas.addEventListener('touchstart',e=>{const t=e.touches?.[0];if(t)show(t.clientX,t.clientY)},{passive:true});
+    canvas.__tooltipBoundV41=true;
+  }
 }
-function renderSalesCharts(){const a=secondSeries(),b=todayHourly(),c=dailySeries(7),d=dailySeries(30);requestAnimationFrame(()=>{drawLineChart("secondChart",a.labels,a.values,235,10);drawLineChart("todayChart",b.labels,b.values,210,2);drawLineChart("weekChart",c.labels,c.values,210,1);drawLineChart("monthChart",d.labels,d.values,210,5)})}
+
+function todayHourlyOrderCountV42(){
+  const labels=[],values=[];
+  for(let h=8;h<=22;h++){
+    labels.push(String(h).padStart(2,"0")+":00");
+    values.push(0);
+  }
+  const now=new Date();
+  const todayKey=localDateKey(now);
+  state.orders
+    .filter(o=>o.status==="paid" && localDateKey(new Date(o.time))===todayKey)
+    .forEach(o=>{
+      const hr=new Date(o.time).getHours();
+      if(hr>=8&&hr<=22) values[hr-8]+=1;
+    });
+  return {labels,values};
+}
+
+function dailyOrderCountSeriesV42(days){
+  const labels=[],values=[];
+  for(let i=days-1;i>=0;i--){
+    const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-i);
+    const key=localDateKey(d);
+    labels.push(d.toLocaleDateString("th-TH",{day:"2-digit",month:"2-digit"}));
+    values.push(state.orders.filter(o=>o.status==="paid" && localDateKey(new Date(o.time))===key).length);
+  }
+  return {labels,values};
+}
+
+function renderTodayChartInsightV41(series){
+  const box=$("todayChartInsight");if(!box||!series?.values?.length)return;
+  const vals=series.values.map(Number),max=Math.max(...vals),positive=vals.filter(v=>v>0),min=positive.length?Math.min(...positive):0;
+  const peakIndex=vals.indexOf(max),quietIndex=min>0?vals.indexOf(min):vals.findIndex(v=>v===0);
+  box.innerHTML=`<div><small>ขายดีสุด</small><b>${series.labels[peakIndex]||"-"}</b><strong>${money(max)}</strong></div><div><small>ช่วงเงียบ</small><b>${quietIndex>=0?series.labels[quietIndex]:"-"}</b><strong>${money(quietIndex>=0?vals[quietIndex]:0)}</strong></div><span>แตะหรือชี้บนจุดกราฟเพื่อดูเวลาและยอดขาย</span>`;
+}
 
 function renderSalesHistoryStats(){
   const select=$("salesHistoryDate"),box=$("salesHistorySummary");if(!select||!box)return;
@@ -1189,17 +1285,29 @@ setInterval(()=>{if(currentUser&&!$("dashboard").classList.contains("hidden")){r
 window.addEventListener("resize",()=>{if(currentUser&&!$("dashboard").classList.contains("hidden"))renderSalesCharts()});
 
 // Stock
-function lowStockProducts(){return state.products.filter(p=>p.active&&Number(p.stock)<=5).sort((a,b)=>a.stock-b.stock)}
+function lowStockProducts(){return state.products.filter(p=>p.active&&Number(p.stock)>0&&Number(p.stock)<=5).sort((a,b)=>a.stock-b.stock)}
+let dismissedLowStockSignatureV43="";
+function lowStockSignatureV43(lows){return lows.map(p=>String(p.id)).sort().join("|")}
 function renderLowStockAlert(){
   const lows=lowStockProducts(),box=$("lowStockBanner");
   if(!box)return;
-  if(!lows.length){box.classList.add("hidden");return}
+  if(!lows.length){
+    box.classList.add("hidden");
+    dismissedLowStockSignatureV43="";
+    return;
+  }
+  const signature=lowStockSignatureV43(lows);
+  if(signature===dismissedLowStockSignatureV43){box.classList.add("hidden");return}
   box.classList.remove("hidden");
   $("lowStockText").textContent=lows.slice(0,4).map(p=>`${p.name} ${p.stock} ${p.unit}`).join(" · ")+(lows.length>4?` · อีก ${lows.length-4} รายการ`:"");
 }
 $("openLowStockBtn").onclick=()=>openPage("stock");
+if($("closeLowStockBtn"))$("closeLowStockBtn").onclick=()=>{
+  dismissedLowStockSignatureV43=lowStockSignatureV43(lowStockProducts());
+  $("lowStockBanner")?.classList.add("hidden");
+};
 function renderStock(){
-  const lows=lowStockProducts();if($("stockLowCount"))$("stockLowCount").textContent=lows.length?`ใกล้หมด ${lows.length} รายการ`:"สต๊อกปกติ";
+  const lows=state.products.filter(p=>p.active&&Number(p.stock)<=5);if($("stockLowCount"))$("stockLowCount").textContent=lows.length?`ต้องตรวจ ${lows.length} รายการ`:"สต๊อกปกติ";
   $("stockList").innerHTML=state.products.filter(p=>p.active).sort((a,b)=>a.stock-b.stock||a.name.localeCompare(b.name,"th")).map(p=>`<div class="stock-row ${p.stock<=5?"stock-low-row":""}"><div><b>${p.name}</b><div style="color:#8a735e;font-size:9px">${p.category} · ${money(p.price)} / ${p.unit}</div></div><div class="stock-qty-display"><b>${p.stock}</b> ${p.unit}${p.stock<=5?'<small>ใกล้หมด</small>':""}</div><div class="stock-actions"><button onclick="adjustStock(${p.id},-1)">−1</button><button onclick="adjustStock(${p.id},1)">+1</button><button onclick="setStock(${p.id})">ตั้งค่า</button></div></div>`).join("")
 }
 window.adjustStock=(id,d)=>{const p=state.products.find(x=>x.id===id);p.stock=Math.max(0,p.stock+d);saveState();renderAll()};
@@ -1920,3 +2028,84 @@ document.addEventListener("wheel",e=>{if(salePageActive()&&e.ctrlKey)e.preventDe
 document.addEventListener("keydown",e=>{if(salePageActive()&&(e.ctrlKey||e.metaKey)&&["=","+","-","0"].includes(e.key))e.preventDefault()});
 
 ensurePosUiPatch();initPaymentKeypad();initPreorderDateTime();initExportDate();initLogin();
+
+setInterval(ensureStockAlertDismissV42,1200);
+setTimeout(ensureStockAlertDismissV42,300);
+
+
+function drawOrderCountLineChartV42(canvasId,labels,values,height=230,showEvery=1){
+  const canvas=$(canvasId);if(!canvas||!canvas.parentElement)return;
+  const width=Math.max(280,canvas.parentElement.clientWidth-30),dpr=window.devicePixelRatio||1;
+  canvas.width=width*dpr;canvas.height=height*dpr;canvas.style.width=width+"px";canvas.style.height=height+"px";
+  const ctx=canvas.getContext("2d");ctx.scale(dpr,dpr);ctx.clearRect(0,0,width,height);
+
+  const pad={l:48,r:16,t:22,b:38},W=width-pad.l-pad.r,H=height-pad.t-pad.b;
+  const maxValue=Math.max(...values,1);
+  const nice=Math.max(4,Math.ceil(maxValue/4)*4);
+  const stepY=Math.max(1,Math.ceil(nice/4));
+
+  ctx.font="10px -apple-system,Segoe UI,sans-serif";
+  ctx.strokeStyle="#eee4d8";ctx.fillStyle="#8a735e";ctx.lineWidth=1;
+
+  for(let k=0;k<=4;k++){
+    const count=stepY*k;
+    const y=pad.t+H-H*(count/(stepY*4));
+    ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(width-pad.r,y);ctx.stroke();
+    ctx.textAlign="right";ctx.fillText(String(count),pad.l-8,y+3);
+  }
+
+  ctx.save();
+  ctx.translate(14,pad.t+H/2);
+  ctx.rotate(-Math.PI/2);
+  ctx.textAlign="center";
+  ctx.fillStyle="#6f665f";
+  ctx.font="11px -apple-system,Segoe UI,sans-serif";
+  ctx.fillText("จำนวนออเดอร์",0,0);
+  ctx.restore();
+
+  const n=Math.max(values.length,1),step=n>1?W/(n-1):W;
+  const maxScale=stepY*4;
+  const pts=values.map((v,i)=>({
+    x:n>1?pad.l+i*step:pad.l+W/2,
+    y:pad.t+H-H*(Number(v||0)/maxScale)
+  }));
+
+  if(pts.length){
+    ctx.strokeStyle="#E76613";ctx.lineWidth=2.5;ctx.lineJoin="round";ctx.lineCap="round";
+    ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.stroke();
+
+    pts.forEach((p,i)=>{
+      ctx.fillStyle="#FFFFFF";ctx.strokeStyle="#E76613";ctx.lineWidth=2;
+      ctx.beginPath();ctx.arc(p.x,p.y,4,0,Math.PI*2);ctx.fill();ctx.stroke();
+      if(i%showEvery===0||i===pts.length-1){
+        ctx.fillStyle="#8a735e";ctx.textAlign="center";
+        ctx.fillText(labels[i],p.x,pad.t+H+17);
+      }
+    });
+  }
+
+  canvas._v42ChartData={labels,values,pts};
+  canvas.onmousemove=canvas.ontouchstart=function(ev){
+    const rect=canvas.getBoundingClientRect();
+    const clientX=ev.touches?.[0]?.clientX ?? ev.clientX;
+    const x=clientX-rect.left;
+    if(!pts.length)return;
+    let best=0,dist=Infinity;
+    pts.forEach((p,i)=>{const d=Math.abs(p.x-x);if(d<dist){dist=d;best=i}});
+    const info=canvas.parentElement.querySelector(".chart-hover-v42") || document.createElement("div");
+    info.className="chart-hover-v42";
+    info.innerHTML=`<b>${labels[best]}</b><span>${values[best]} ออเดอร์</span>`;
+    if(!info.parentElement)canvas.parentElement.appendChild(info);
+  };
+}
+
+function renderSalesCharts(){
+  const realtime=secondSeries(),hourly=todayHourly(),week=dailySeries(7),month=dailySeries(30);
+  requestAnimationFrame(()=>{
+    drawLineChart("secondChart",realtime.labels,realtime.values,235,10);
+    drawLineChart("todayChart",hourly.labels,hourly.values,210,2);
+    drawLineChart("weekChart",week.labels,week.values,210,1);
+    drawLineChart("monthChart",month.labels,month.values,210,5);
+    renderTodayChartInsightV41(hourly);
+  });
+}
