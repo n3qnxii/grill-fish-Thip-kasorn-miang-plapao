@@ -3307,3 +3307,401 @@ body.queue-ticket-preview-v39 .screen-actions button,
     width:100%!important;
   }
 }
+
+/* =====================================================================
+   V40 — Center stock alert message
+   Keep the stock button on the right, center the alert text visually.
+   ===================================================================== */
+.stock-alert,
+.stock-warning,
+.stock-alert-banner,
+.stock-warning-banner,
+.low-stock-alert,
+.low-stock-banner,
+.out-stock-alert,
+.out-of-stock-alert,
+.inventory-alert,
+.inventory-warning{
+  position:relative!important;
+  min-height:74px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  padding-left:150px!important;
+  padding-right:150px!important;
+  text-align:center!important;
+}
+
+.stock-alert > :first-child,
+.stock-warning > :first-child,
+.stock-alert-banner > :first-child,
+.stock-warning-banner > :first-child,
+.low-stock-alert > :first-child,
+.low-stock-banner > :first-child,
+.out-stock-alert > :first-child,
+.out-of-stock-alert > :first-child,
+.inventory-alert > :first-child,
+.inventory-warning > :first-child{
+  margin-left:auto!important;
+  margin-right:auto!important;
+  text-align:center!important;
+}
+
+/* Stock action remains fixed on the right edge */
+.stock-alert button,
+.stock-warning button,
+.stock-alert-banner button,
+.stock-warning-banner button,
+.low-stock-alert button,
+.low-stock-banner button,
+.out-stock-alert button,
+.out-of-stock-alert button,
+.inventory-alert button,
+.inventory-warning button{
+  position:absolute!important;
+  right:18px!important;
+  top:50%!important;
+  transform:translateY(-50%)!important;
+}
+
+/* Actual banner used by the POS */
+#stockAlertBanner{
+  position:relative!important;
+  min-height:74px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  padding-left:150px!important;
+  padding-right:150px!important;
+  text-align:center!important;
+}
+#stockAlertBanner .stock-alert-text,
+#stockAlertBanner > div:first-child{
+  margin:0 auto!important;
+  text-align:center!important;
+}
+#stockAlertBanner button{
+  position:absolute!important;
+  right:18px!important;
+  top:50%!important;
+  transform:translateY(-50%)!important;
+}
+
+@media(max-width:760px){
+  .stock-alert,
+  .stock-warning,
+  .stock-alert-banner,
+  .stock-warning-banner,
+  .low-stock-alert,
+  .low-stock-banner,
+  .out-stock-alert,
+  .out-of-stock-alert,
+  .inventory-alert,
+  .inventory-warning,
+  #stockAlertBanner{
+    padding-left:16px!important;
+    padding-right:16px!important;
+    padding-bottom:68px!important;
+  }
+  .stock-alert button,
+  .stock-warning button,
+  .stock-alert-banner button,
+  .stock-warning-banner button,
+  .low-stock-alert button,
+  .low-stock-banner button,
+  .out-stock-alert button,
+  .out-of-stock-alert button,
+  .inventory-alert button,
+  .inventory-warning button,
+  #stockAlertBanner button{
+    top:auto!important;
+    bottom:12px!important;
+    right:50%!important;
+    transform:translateX(50%)!important;
+  }
+}
+
+/* =====================================================================
+   V41 — Faster menu selection, direct payments, queue cancel, better charts
+   ===================================================================== */
+.product-qty-badge-v41{
+  position:absolute!important;right:10px!important;top:9px!important;min-width:27px!important;height:27px!important;padding:0 7px!important;
+  display:grid!important;place-items:center!important;border-radius:999px!important;background:#E76613!important;color:#fff!important;
+  font-size:12px!important;font-weight:800!important;box-shadow:0 2px 7px rgba(231,102,19,.22)!important;
+}
+.product.selected-product{border-color:#E76613!important;background:#FFF8F1!important}
+.product.selected-product .product-check{display:none!important}
+
+.queue-ticket-actions-v41{display:flex!important;gap:8px!important;align-items:center!important}
+.queue-cancel-btn-v41{min-height:34px!important;padding:6px 11px!important;border:1px solid #F1B4B4!important;background:#FFF7F7!important;color:#C94A4A!important;font-size:10px!important;font-weight:700!important}
+
+.direct-payment-actions-v41{display:grid!important;grid-template-columns:1fr 1fr!important;gap:9px!important;margin-top:12px!important}
+.direct-pay-btn-v41{min-height:72px!important;padding:10px 12px!important;display:flex!important;align-items:center!important;justify-content:center!important;gap:10px!important;border-radius:14px!important;text-align:left!important}
+.direct-pay-btn-v41 svg{width:38px!important;height:38px!important;flex:0 0 auto!important}
+.direct-pay-btn-v41 span{display:grid!important;gap:1px!important}.direct-pay-btn-v41 b{font-size:15px!important;color:#211F1D!important}.direct-pay-btn-v41 small{font-size:9px!important;color:#837B74!important}
+.direct-cash-v41{background:#F4FAF1!important;border:1px solid #C9DFC1!important;color:#70A957!important}.direct-qr-v41{background:#F2F7FD!important;border:1px solid #C7D7EA!important;color:#32679F!important}
+.direct-pay-btn-v41:disabled{opacity:.42!important;cursor:not-allowed!important}
+
+.quick-bank{grid-template-columns:repeat(3,1fr)!important;gap:10px!important;margin-top:8px!important}
+.quick-bank button{min-height:54px!important;padding:12px 8px!important;font-size:15px!important;border-radius:13px!important;font-weight:800!important}
+.quick-bank-title{font-size:11px!important;margin-top:12px!important}
+.cash-due-row-v41{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;gap:10px!important;align-items:stretch!important;margin-top:12px!important}
+.cash-due-row-v41 .cash-status-line{margin:0!important;min-height:54px!important}
+.cash-exact-inline-v41{min-width:150px!important;border:1px solid #B9DFC5!important;background:#EAF6EE!important;color:#267343!important;font-size:13px!important;font-weight:800!important;border-radius:12px!important}
+
+.chart-interactive-v41{position:relative!important}.chart-tooltip-v41{position:absolute!important;transform:translate(-50%,-100%)!important;background:#252525!important;color:white!important;padding:7px 10px!important;border-radius:9px!important;display:grid!important;gap:2px!important;pointer-events:none!important;z-index:5!important;box-shadow:0 5px 18px rgba(0,0,0,.18)!important;white-space:nowrap!important}.chart-tooltip-v41 b{font-size:10px!important}.chart-tooltip-v41 span{font-size:12px!important;font-weight:800!important;color:#FFD4B3!important}
+.chart-insight-v41{display:grid!important;grid-template-columns:auto auto 1fr!important;gap:10px!important;align-items:center!important;margin-top:8px!important;padding-top:9px!important;border-top:1px solid #EEE5DB!important}.chart-insight-v41>div{display:flex!important;align-items:baseline!important;gap:5px!important;padding:6px 9px!important;border-radius:9px!important;background:#FFF8F1!important}.chart-insight-v41 small{color:#8A735E!important;font-size:9px!important}.chart-insight-v41 b{font-size:11px!important}.chart-insight-v41 strong{color:#D9620C!important;font-size:12px!important}.chart-insight-v41>span{justify-self:end!important;color:#8A8179!important;font-size:9px!important}
+
+@media(max-width:760px){.quick-bank{grid-template-columns:repeat(2,1fr)!important}.cash-due-row-v41{grid-template-columns:1fr!important}.cash-exact-inline-v41{width:100%!important}.direct-payment-actions-v41{grid-template-columns:1fr 1fr!important}.queue-ticket-actions-v41{flex-wrap:wrap!important}.chart-insight-v41{grid-template-columns:1fr 1fr!important}.chart-insight-v41>span{grid-column:1/-1!important;justify-self:start!important}}
+
+/* =====================================================================
+   V42 — Bigger cash buttons / closable stock alert / order-count charts
+   ===================================================================== */
+
+/* Larger, easier-to-tap banknote buttons */
+.quick-bank{
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:12px!important;
+}
+.quick-bank button{
+  min-height:66px!important;
+  border-radius:16px!important;
+  font-size:22px!important;
+  font-weight:800!important;
+  padding:12px 10px!important;
+}
+
+/* Exact amount button: bigger and just "พอดี" */
+#exactCashBtn{
+  min-height:60px!important;
+  min-width:170px!important;
+  border-radius:16px!important;
+  font-size:20px!important;
+  font-weight:800!important;
+  padding:12px 26px!important;
+  background:#EAF6EE!important;
+  color:#267343!important;
+  border:1px solid #B8DDC4!important;
+}
+#cashDueRow,
+.cash-due-row,
+.payment-due-row{
+  align-items:stretch!important;
+  gap:12px!important;
+}
+
+/* Stock alert close button */
+.stock-alert-hidden-v42{
+  display:none!important;
+}
+.stock-alert-close-v42{
+  position:absolute!important;
+  right:14px!important;
+  top:12px!important;
+  transform:none!important;
+  width:34px!important;
+  height:34px!important;
+  min-width:34px!important;
+  padding:0!important;
+  border-radius:50%!important;
+  border:1px solid #E9B9A6!important;
+  background:#FFF7F2!important;
+  color:#C85D36!important;
+  font-size:22px!important;
+  font-weight:700!important;
+  line-height:1!important;
+  z-index:4!important;
+}
+#stockAlertBanner,
+.stock-alert,
+.stock-warning,
+.low-stock-alert,
+.low-stock-banner,
+.inventory-alert,
+.inventory-warning{
+  position:relative!important;
+  padding-right:62px!important;
+}
+
+/* Chart hover card */
+.chart-hover-v42{
+  position:absolute!important;
+  right:18px!important;
+  top:18px!important;
+  display:flex!important;
+  flex-direction:column!important;
+  gap:2px!important;
+  padding:9px 12px!important;
+  border-radius:12px!important;
+  background:#262321!important;
+  color:#fff!important;
+  box-shadow:0 10px 24px rgba(0,0,0,.16)!important;
+  pointer-events:none!important;
+  font-size:12px!important;
+}
+.chart-hover-v42 b{
+  font-size:13px!important;
+}
+.chart-hover-v42 span{
+  color:#FFD9BA!important;
+  font-weight:700!important;
+}
+
+@media(max-width:720px){
+  .quick-bank{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
+  .quick-bank button{
+    min-height:62px!important;
+    font-size:20px!important;
+  }
+  #exactCashBtn{
+    width:100%!important;
+  }
+}
+
+/* =====================================================================
+   V43 — Balanced exact-cash button / sales charts / true low-stock alert
+   ===================================================================== */
+.cash-due-row-v41{
+  grid-template-columns:minmax(0,1.7fr) minmax(220px,1fr)!important;
+  gap:14px!important;
+}
+.cash-due-row-v41 .cash-status-line{
+  min-height:66px!important;
+  border-radius:15px!important;
+  padding:12px 16px!important;
+}
+#cashExactInlineBtn.cash-exact-inline-v41{
+  min-width:220px!important;
+  min-height:66px!important;
+  border-radius:15px!important;
+  font-size:18px!important;
+  font-weight:800!important;
+  padding:12px 26px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+}
+
+#lowStockBanner.low-stock-banner{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) auto!important;
+  align-items:center!important;
+  gap:16px!important;
+  padding:14px 16px!important;
+  text-align:center!important;
+}
+#lowStockBanner.hidden{display:none!important}
+.low-stock-message-v43{
+  min-width:0!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:2px!important;
+  text-align:center!important;
+}
+.low-stock-actions-v43{
+  display:flex!important;
+  align-items:center!important;
+  gap:8px!important;
+}
+.low-stock-close-v43{
+  width:38px!important;
+  height:38px!important;
+  min-width:38px!important;
+  padding:0!important;
+  border-radius:11px!important;
+  border:1px solid #E8B8A5!important;
+  background:#FFF8F3!important;
+  color:#C85D36!important;
+  font-size:22px!important;
+  font-weight:700!important;
+  line-height:1!important;
+}
+
+/* Hide obsolete V42 floating chart card; V41 point tooltip is used again. */
+.chart-hover-v42{display:none!important}
+
+@media(max-width:760px){
+  .cash-due-row-v41{grid-template-columns:1fr!important}
+  #cashExactInlineBtn.cash-exact-inline-v41{width:100%!important;min-width:0!important}
+  #lowStockBanner.low-stock-banner{grid-template-columns:1fr!important}
+  .low-stock-actions-v43{justify-content:center!important}
+}
+
+/* =====================================================================
+   V44 — Equal-size amount due + exact cash button
+   ===================================================================== */
+.cash-due-row-v41{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+  gap:14px!important;
+  align-items:stretch!important;
+}
+.cash-due-row-v41 .cash-status-line,
+#cashExactInlineBtn.cash-exact-inline-v41{
+  width:100%!important;
+  min-width:0!important;
+  min-height:76px!important;
+  height:76px!important;
+  box-sizing:border-box!important;
+  border-radius:16px!important;
+}
+.cash-due-row-v41 .cash-status-line{
+  padding:14px 18px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+}
+#cashExactInlineBtn.cash-exact-inline-v41{
+  padding:14px 18px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  font-size:20px!important;
+  font-weight:800!important;
+}
+@media(max-width:760px){
+  .cash-due-row-v41{
+    grid-template-columns:1fr 1fr!important;
+    gap:10px!important;
+  }
+  .cash-due-row-v41 .cash-status-line,
+  #cashExactInlineBtn.cash-exact-inline-v41{
+    min-height:68px!important;
+    height:68px!important;
+  }
+}
+
+/* =====================================================================
+   V45 — Larger inline Exact button beside amount due
+   ===================================================================== */
+#paymentModal #cashArea .cash-due-row-v41{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+  gap:14px!important;
+  width:100%!important;
+  align-items:stretch!important;
+}
+#paymentModal #cashArea .cash-due-row-v41 .cash-status-line,
+#paymentModal #cashArea #cashExactInlineBtn.cash-exact-inline-v41{
+  width:100%!important;
+  min-width:0!important;
+  height:82px!important;
+  min-height:82px!important;
+  box-sizing:border-box!important;
+  border-radius:17px!important;
+}
+#paymentModal #cashArea #cashExactInlineBtn.cash-exact-inline-v41{
+  font-size:22px!important;
+  font-weight:900!important;
+  padding:16px 22px!important;
+}
+@media(max-width:760px){
+  #paymentModal #cashArea .cash-due-row-v41{grid-template-columns:1fr 1fr!important;gap:10px!important}
+  #paymentModal #cashArea .cash-due-row-v41 .cash-status-line,
+  #paymentModal #cashArea #cashExactInlineBtn.cash-exact-inline-v41{height:74px!important;min-height:74px!important}
+}
