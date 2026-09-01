@@ -1184,8 +1184,46 @@ function printOrder(o,isCopy=false){
 function paidOrders(){return state.orders.filter(o=>o.status==="paid")}
 function ordersForRange(){const valid=paidOrders();if(dashboardRange==="all")return valid;const now=new Date();if(dashboardRange==="today")return valid.filter(o=>new Date(o.time).toDateString()===now.toDateString());const days=Number(dashboardRange),min=new Date(now.getTime()-days*86400000);return valid.filter(o=>new Date(o.time)>=min)}
 function secondSeries(){const now=new Date(),labels=[],values=[],orders=paidOrders();for(let off=59;off>=0;off--){const t=new Date(now.getTime()-off*1000);t.setMilliseconds(0);const next=new Date(t.getTime()+1000);labels.push(t.toLocaleTimeString("th-TH",{hour12:false,hour:"2-digit",minute:"2-digit",second:"2-digit"}));values.push(orders.filter(o=>{const d=new Date(o.time);return d>=t&&d<next}).length)}return{labels,values}}
-function todayHourly(){const now=new Date(),labels=[],values=[];for(let h=6;h<=22;h++){labels.push(String(h).padStart(2,"0")+":00");values.push(paidOrders().filter(o=>{const d=new Date(o.time);return d.toDateString()===now.toDateString()&&d.getHours()===h}).length)}return{labels,values}}
-function dailySeries(days){const labels=[],values=[],orders=paidOrders();for(let off=days-1;off>=0;off--){const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-off);const next=new Date(d);next.setDate(next.getDate()+1);labels.push(d.toLocaleDateString("th-TH",{day:"2-digit",month:"2-digit"}));values.push(orders.filter(o=>{const t=new Date(o.time);return t>=d&&t<next}).length)}return{labels,values}}
+function selectedSalesHistoryKeyV53(){
+  const select=$("salesHistoryDate");
+  return select?.value || localDateKey();
+}
+function dateFromLocalKeyV53(key){
+  const [y,m,d]=String(key||localDateKey()).split("-").map(Number);
+  const out=new Date(y||new Date().getFullYear(),Math.max(0,(m||1)-1),d||1,12,0,0,0);
+  return out;
+}
+function selectedDateHourlyV53(key=selectedSalesHistoryKeyV53()){
+  const labels=[],values=[],sales=[];
+  for(let h=6;h<=22;h++){
+    labels.push(String(h).padStart(2,"0")+":00");
+    const orders=paidOrders().filter(o=>{
+      const d=new Date(o.time);
+      return localDateKey(d)===key && d.getHours()===h;
+    });
+    values.push(orders.length);
+    sales.push(orders.reduce((sum,o)=>sum+Number(o.total||0),0));
+  }
+  return {labels,values,sales,key};
+}
+function dailySeriesToSelectedV53(days,key=selectedSalesHistoryKeyV53()){
+  const labels=[],values=[],sales=[],orders=paidOrders();
+  const end=dateFromLocalKeyV53(key);
+  end.setHours(0,0,0,0);
+  for(let off=days-1;off>=0;off--){
+    const d=new Date(end);
+    d.setDate(end.getDate()-off);
+    const dayKey=localDateKey(d);
+    const os=orders.filter(o=>localDateKey(new Date(o.time))===dayKey);
+    labels.push(d.toLocaleDateString("th-TH",{day:"2-digit",month:"2-digit"}));
+    values.push(os.length);
+    sales.push(os.reduce((sum,o)=>sum+Number(o.total||0),0));
+  }
+  return {labels,values,sales,key};
+}
+// Kept for compatibility with older calls.
+function todayHourly(){return selectedDateHourlyV53()}
+function dailySeries(days){return dailySeriesToSelectedV53(days)}
 function drawLineChart(canvasId,labels,values,height=230,showEvery=1){
   const canvas=$(canvasId);if(!canvas||!canvas.parentElement)return;
   const parent=canvas.parentElement;parent.classList.add("chart-interactive-v46");parent.classList.remove("chart-scroll-v46");
@@ -1249,6 +1287,27 @@ function renderSalesHistoryStats(){
   const key=select.value,all=state.orders.filter(o=>localDateKey(new Date(o.time))===key),paid=all.filter(o=>o.status==="paid"),cancelled=all.filter(o=>o.status==="cancelled"),sales=paid.reduce((s,o)=>s+Number(o.total||0),0);
   box.innerHTML=`<div><span>ออเดอร์สำเร็จ</span><b>${paid.length} ออเดอร์</b></div><div><span>ยอดขาย</span><b>${money(sales)}</b></div><div><span>ยกเลิก</span><b>${cancelled.length} ออเดอร์</b></div><div><span>เลขออเดอร์ล่าสุด</span><b>${all.length?"#"+String(Math.max(...all.map(o=>Number(o.number)||0))).padStart(3,"0"):"-"}</b></div>`;
 }
+function renderSelectedDateDashboardDetailsV53(){
+  const key=selectedSalesHistoryKeyV53();
+  const os=paidOrders().filter(o=>localDateKey(new Date(o.time))===key);
+  const cashOrders=os.filter(o=>o.payment==="เงินสด"),qrOrders=os.filter(o=>o.payment==="QR");
+  const cash=cashOrders.reduce((s,o)=>s+Number(o.total||0),0);
+  const qr=qrOrders.reduce((s,o)=>s+Number(o.total||0),0);
+
+  if($("paymentSummary")){
+    $("paymentSummary").innerHTML=`<div class="pay-line"><span class="pay-label"><svg class="pay-svg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M6 9h.01M18 15h.01"/></svg><span>เงินสด</span></span><b>${money(cash)} · ${cashOrders.length} ครั้ง</b></div><div class="pay-line"><span class="pay-label"><svg class="pay-svg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM15 14h2v2h-2zM19 14h1v3h-3v3h-3v-2h2v-2h3z"/></svg><span>QR</span></span><b>${money(qr)} · ${qrOrders.length} ครั้ง</b></div>`;
+  }
+
+  const count={};
+  os.forEach(o=>o.items.forEach(i=>count[i.name]=(count[i.name]||0)+i.qty));
+  const top=Object.entries(count).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  if($("topProducts")){
+    $("topProducts").innerHTML=top.length
+      ?top.map((x,i)=>`<div class="top-line"><span>${i+1}. ${x[0]}</span><b>${x[1]} ชิ้น</b></div>`).join("")
+      :"<p class='empty'>ยังไม่มีข้อมูลวันที่เลือก</p>";
+  }
+}
+
 function renderDashboard(){
   if(currentUser?.role!=="owner"){return}
   const os=todayPaidOrders();
@@ -1258,7 +1317,7 @@ function renderDashboard(){
   const count={};os.forEach(o=>o.items.forEach(i=>count[i.name]=(count[i.name]||0)+i.qty));
   const top=Object.entries(count).sort((a,b)=>b[1]-a[1]).slice(0,5);
   $("topProducts").innerHTML=top.length?top.map((x,i)=>`<div class="top-line"><span>${i+1}. ${x[0]}</span><b>${x[1]} ชิ้น</b></div>`).join(""):"<p class='empty'>ยังไม่มีข้อมูลวันนี้</p>";
-  renderDayCloseSummary();renderSalesHistoryStats();renderSalesCharts()
+  renderDayCloseSummary();renderSalesHistoryStats();renderSelectedDateDashboardDetailsV53();renderSalesCharts()
 }
 function todayPaidOrders(){
   const now=new Date();return state.orders.filter(o=>o.status==="paid"&&new Date(o.time).toDateString()===now.toDateString());
@@ -1297,7 +1356,11 @@ function printDayClose(){
   w.document.close();
 }
 $("printDayCloseBtn").onclick=printDayClose;
-$("salesHistoryDate").onchange=renderSalesHistoryStats;
+$("salesHistoryDate").onchange=()=>{
+  renderSalesHistoryStats();
+  renderSelectedDateDashboardDetailsV53();
+  renderSalesCharts();
+};
 
 setInterval(()=>{if(currentUser&&!$("dashboard").classList.contains("hidden")){renderSalesCharts();updateClock()}},1000);
 window.addEventListener("resize",()=>{if(currentUser&&!$("dashboard").classList.contains("hidden"))renderSalesCharts()});
@@ -1335,10 +1398,12 @@ function updateStockBulkUiV48(){
   const allEl=$("stockSelectAllV48");
   const amountEl=$("stockBulkAmountV48");
   const applyEl=$("stockBulkApplyV48");
+  const subtractEl=$("stockBulkSubtractV52");
 
   if(countEl)countEl.textContent=`เลือก ${count} รายการ`;
-  if(amountEl)amountEl.textContent=`+${stockBulkAmountV48}`;
+  if(amountEl)amountEl.textContent=String(stockBulkAmountV48);
   if(applyEl)applyEl.disabled=count===0;
+  if(subtractEl)subtractEl.disabled=count===0;
 
   if(allEl){
     allEl.checked=activeIds.length>0&&count===activeIds.length;
@@ -1381,6 +1446,7 @@ function bindStockBulkV48(){
   const selectAll=$("stockSelectAllV48");
   const amountBtn=$("stockBulkAmountV48");
   const applyBtn=$("stockBulkApplyV48");
+  const subtractBtn=$("stockBulkSubtractV52");
   const clearBtn=$("stockBulkClearV48");
 
   if(selectAll&&!selectAll.dataset.boundV48){
@@ -1398,8 +1464,8 @@ function bindStockBulkV48(){
     amountBtn.dataset.boundV48="1";
     amountBtn.addEventListener("click",()=>{
       openNumericKeypad({
-        title:"จำนวนสต๊อกที่จะเพิ่ม",
-        hint:"จำนวนนี้จะเพิ่มให้สินค้าที่เลือกทั้งหมด",
+        title:"จำนวนสต๊อก",
+        hint:"ใช้จำนวนนี้สำหรับเพิ่มหรือลดสินค้าที่เลือกทั้งหมด",
         value:stockBulkAmountV48,
         min:1,max:999999,maxDigits:6,
         onConfirm:n=>{
@@ -1415,6 +1481,24 @@ function bindStockBulkV48(){
     clearBtn.addEventListener("click",()=>{
       selectedStockIdsV48.clear();
       renderStock();
+    });
+  }
+
+  if(subtractBtn&&!subtractBtn.dataset.boundV52){
+    subtractBtn.dataset.boundV52="1";
+    subtractBtn.addEventListener("click",()=>{
+      if(!selectedStockIdsV48.size)return;
+      const amount=Math.max(1,Number(stockBulkAmountV48)||1);
+      const targets=state.products.filter(p=>selectedStockIdsV48.has(p.id));
+      if(!targets.length)return;
+
+      targets.forEach(p=>{
+        p.stock=Math.max(0,(Number(p.stock)||0)-amount);
+      });
+
+      saveState();
+      selectedStockIdsV48.clear();
+      renderAll();
     });
   }
 
@@ -2224,7 +2308,21 @@ function drawOrderCountLineChartV42(canvasId,labels,values,height=230,showEvery=
 }
 
 function renderSalesCharts(){
-  const realtime=secondSeries(),hourly=todayHourly(),week=dailySeries(7),month=dailySeries(30);
+  const key=selectedSalesHistoryKeyV53();
+  const selectedDate=dateFromLocalKeyV53(key);
+  const realtime=secondSeries();
+  const hourly=selectedDateHourlyV53(key);
+  const week=dailySeriesToSelectedV53(7,key);
+  const month=dailySeriesToSelectedV53(30,key);
+
+  const longDate=selectedDate.toLocaleDateString("th-TH",{day:"2-digit",month:"long",year:"numeric"});
+  const shortDate=selectedDate.toLocaleDateString("th-TH",{day:"2-digit",month:"2-digit",year:"2-digit"});
+  if($("todayChartTitle"))$("todayChartTitle").textContent=`จำนวนออเดอร์ตามชั่วโมง · ${longDate}`;
+  if($("todayChartSubtitle"))$("todayChartSubtitle").textContent="ช่วงเวลา 06:00–22:00 ของวันที่เลือก";
+  if($("liveChartNow"))$("liveChartNow").textContent=shortDate;
+  if($("weekChartTitle"))$("weekChartTitle").textContent=`จำนวนออเดอร์ 7 วัน ถึง ${shortDate}`;
+  if($("monthChartTitle"))$("monthChartTitle").textContent=`จำนวนออเดอร์ 30 วัน ถึง ${shortDate}`;
+
   requestAnimationFrame(()=>{
     drawLineChart("secondChart",realtime.labels,realtime.values,235,10);
     drawLineChart("todayChart",hourly.labels,hourly.values,210,2);
