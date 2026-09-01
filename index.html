@@ -362,8 +362,8 @@
       </div>
       <div class="report-grid report-main report-main-clean">
         <div class="card chart-card">
-          <div class="chart-title"><div><h3>ยอดขายวันนี้ตามชั่วโมง</h3><p>ดูช่วงเวลาที่ขายดีที่สุดของวันนี้</p></div><span id="liveChartNow" class="live-badge">อัปเดตล่าสุด</span></div>
-          <canvas id="todayChart"></canvas>
+          <div class="chart-title"><div><h3>จำนวนออเดอร์วันนี้ตามชั่วโมง</h3><p>ดูว่าช่วงเวลาไหนมีออเดอร์มากหรือน้อย</p></div><span id="liveChartNow" class="live-badge">อัปเดตล่าสุด</span></div>
+          <div class="chart-scroll-v46"><canvas id="todayChart"></canvas></div>
           <div id="todayChartInsight" class="chart-insight-v41"></div>
         </div>
         <div class="side-report">
@@ -372,8 +372,8 @@
         </div>
       </div>
       <div class="report-grid report-history">
-        <div class="card chart-card"><h3>ยอดขาย 7 วันล่าสุด</h3><canvas id="weekChart"></canvas></div>
-        <div class="card chart-card"><h3>ยอดขาย 30 วันล่าสุด</h3><canvas id="monthChart"></canvas></div>
+        <div class="card chart-card"><h3>จำนวนออเดอร์ 7 วันล่าสุด</h3><div class="chart-scroll-v46"><canvas id="weekChart"></canvas></div></div>
+        <div class="card chart-card"><h3>จำนวนออเดอร์ 30 วันล่าสุด</h3><div class="chart-scroll-v46"><canvas id="monthChart"></canvas></div></div>
       </div>
       <canvas id="secondChart" class="hidden" aria-hidden="true"></canvas>
     </section>
@@ -622,6 +622,7 @@
         <input id="receiptNoteInput" type="text" maxlength="80" placeholder="เช่น คุณเอ / โต๊ะ 3 / ไม่เอาผัก">
       </div>
       <button id="printBtn" class="btn-secondary-orange full">พิมพ์ใบเสร็จ</button>
+      <div id="successCountdown" class="success-countdown-v46" aria-live="polite">เริ่มออเดอร์ใหม่อัตโนมัติใน 5 วินาที</div>
       <button id="newOrder" class="primary full btn-strong">เริ่มออเดอร์ใหม่</button>
     </div>
   </div>
