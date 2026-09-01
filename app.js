@@ -591,7 +591,7 @@ function ensureStockAlertDismissV42(){
   banner.appendChild(btn);
 }
 
-function renderAll(){$("shopTitle").textContent=state.settings.shopName;$("orderNo").textContent="#"+currentDailyOrderNumber();renderCategories();renderProducts();renderCart();renderOrders();renderDashboard();renderStock();renderPreorder();renderPreorderList();renderAdmin();renderHeldOrders();renderLowStockAlert();renderDayCloseSummary();updateQrDisplay();updatePreorderReminder()}
+function renderAll(){bindStockBulkV48();$("shopTitle").textContent=state.settings.shopName;$("orderNo").textContent="#"+currentDailyOrderNumber();renderCategories();renderProducts();renderCart();renderOrders();renderDashboard();renderStock();renderPreorder();renderPreorderList();renderAdmin();renderHeldOrders();renderLowStockAlert();renderDayCloseSummary();updateQrDisplay();updatePreorderReminder()}
 function getCategoryList(){
   const productCats=[...new Set(state.products.filter(p=>p.active).map(p=>p.category).filter(Boolean))];
   const custom=Array.isArray(state.settings.customCategories)?state.settings.customCategories:[];
@@ -983,7 +983,11 @@ function updateCashPaymentStatus(){
     box.innerHTML=`<span>ขาดอีก</span><strong>${money(due)}</strong>`;
   }else{
     box.className="cash-status-line enough";
-    box.innerHTML=`<span>รับเงินครบแล้ว</span><strong>เงินทอน ${money(lastChange)}</strong>`;
+    if(lastChange>0){
+      box.innerHTML=`<span>เงินทอน</span><strong>${money(lastChange)}</strong>`;
+    }else{
+      box.innerHTML=`<span>ชำระพอดี</span><strong>${money(total())}</strong>`;
+    }
   }
   $("confirmPay").disabled=received<total();
 }
@@ -991,6 +995,24 @@ $("cashReceived").addEventListener("input",updateCashPaymentStatus);
 if($("cashExactInlineBtn"))$("cashExactInlineBtn").onclick=()=>{
   setCashInputValue(String(Math.round(total())));updateCashPaymentStatus();playTapSound();
 };
+if($("cashClearInlineBtn"))$("cashClearInlineBtn").onclick=()=>{
+  clearCash();updateCashPaymentStatus();playTapSound();
+};
+
+// V49: lock pinch zoom only while the payment modal is visible.
+// Other pages remain normally zoomable.
+function paymentZoomLockedV49(){
+  const modal=$("paymentModal");
+  return !!(modal && !modal.classList.contains("hidden"));
+}
+["gesturestart","gesturechange","gestureend"].forEach(type=>{
+  document.addEventListener(type,e=>{
+    if(paymentZoomLockedV49()) e.preventDefault();
+  },{passive:false});
+});
+document.addEventListener("touchmove",e=>{
+  if(paymentZoomLockedV49() && e.touches && e.touches.length>1) e.preventDefault();
+},{passive:false});
 
 $("qrZoomButton").onclick=()=>{
   const small=$("paymentQrImage");
@@ -1002,6 +1024,29 @@ $("qrZoomButton").onclick=()=>{
 };
 $("closeQrFullscreen").onclick=()=>$("qrFullscreen").classList.add("hidden");
 $("qrFullscreen").addEventListener("click",e=>{if(e.target===$("qrFullscreen"))$("qrFullscreen").classList.add("hidden")});
+
+
+let successAutoTimerV46=null;
+function resetOrderAfterSuccessV46(){
+  $("successModal").classList.add("hidden");
+  cart=[];
+  $("discountInput").value=0;
+  lastCashReceived=0;lastChange=0;
+  renderCart();renderProducts();
+  $("orderNo").textContent="#"+currentDailyOrderNumber();
+}
+function startSuccessCountdownV46(){
+  if(successAutoTimerV46){clearInterval(successAutoTimerV46);successAutoTimerV46=null}
+  let sec=5;
+  const el=$("successCountdown");
+  const paint=()=>{if(el)el.innerHTML=`เริ่มออเดอร์ใหม่อัตโนมัติใน <b>${sec}</b> วินาที`};
+  paint();
+  successAutoTimerV46=setInterval(()=>{
+    sec--;
+    if(sec<=0){clearInterval(successAutoTimerV46);successAutoTimerV46=null;resetOrderAfterSuccessV46();return}
+    paint();
+  },1000);
+}
 
 $("confirmPay").onclick=()=>{
   if(!selectedMethod)return;
@@ -1018,36 +1063,7 @@ $("confirmPay").onclick=()=>{
   if($("receiptNoteInput"))$("receiptNoteInput").value="";
   $("successModal").classList.remove("hidden");startSuccessCountdownV46();playPaymentSuccessSound();announcePayment(order);renderAll();
 };
-let successCountdownTimerV46=null;
-let successCountdownLeftV46=5;
-function closeSuccessAndStartNewOrderV46(){
-  if(successCountdownTimerV46){clearInterval(successCountdownTimerV46);successCountdownTimerV46=null}
-  $("successModal").classList.add("hidden");
-  cart=[];
-  $("discountInput").value=0;
-  lastCashReceived=0;
-  lastChange=0;
-  renderCart();
-  renderProducts();
-  $("orderNo").textContent="#"+currentDailyOrderNumber();
-}
-function startSuccessCountdownV46(){
-  if(successCountdownTimerV46)clearInterval(successCountdownTimerV46);
-  successCountdownLeftV46=5;
-  const label=$("successCountdown");
-  const paint=()=>{if(label)label.textContent=`เริ่มออเดอร์ใหม่อัตโนมัติใน ${successCountdownLeftV46} วินาที`};
-  paint();
-  successCountdownTimerV46=setInterval(()=>{
-    successCountdownLeftV46-=1;
-    if(successCountdownLeftV46<=0){
-      if(label)label.textContent="กำลังเริ่มออเดอร์ใหม่…";
-      closeSuccessAndStartNewOrderV46();
-      return;
-    }
-    paint();
-  },1000);
-}
-$("newOrder").onclick=closeSuccessAndStartNewOrderV46;
+$("newOrder").onclick=()=>{if(successAutoTimerV46){clearInterval(successAutoTimerV46);successAutoTimerV46=null}resetOrderAfterSuccessV46();};
 $("printBtn").onclick=()=>{
   if(!lastOrder)return;
   lastOrder.receiptNote=String($("receiptNoteInput")?.value||"").trim();
@@ -1167,51 +1183,26 @@ function printOrder(o,isCopy=false){
 // Dashboard / realtime 1 second
 function paidOrders(){return state.orders.filter(o=>o.status==="paid")}
 function ordersForRange(){const valid=paidOrders();if(dashboardRange==="all")return valid;const now=new Date();if(dashboardRange==="today")return valid.filter(o=>new Date(o.time).toDateString()===now.toDateString());const days=Number(dashboardRange),min=new Date(now.getTime()-days*86400000);return valid.filter(o=>new Date(o.time)>=min)}
-function secondSeries(){const now=new Date(),labels=[],values=[],orders=paidOrders();for(let off=59;off>=0;off--){const t=new Date(now.getTime()-off*1000);t.setMilliseconds(0);const next=new Date(t.getTime()+1000);labels.push(t.toLocaleTimeString("th-TH",{hour12:false,hour:"2-digit",minute:"2-digit",second:"2-digit"}));values.push(orders.filter(o=>{const d=new Date(o.time);return d>=t&&d<next}).reduce((s,o)=>s+o.total,0))}return{labels,values}}
-function todayHourly(){const now=new Date(),labels=[],values=[];for(let h=8;h<=22;h++){labels.push(String(h).padStart(2,"0")+":00");values.push(paidOrders().filter(o=>{const d=new Date(o.time);return d.toDateString()===now.toDateString()&&d.getHours()===h}).reduce((s,o)=>s+o.total,0))}return{labels,values}}
-function dailySeries(days){const labels=[],values=[],orders=paidOrders();for(let off=days-1;off>=0;off--){const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-off);const next=new Date(d);next.setDate(next.getDate()+1);labels.push(d.toLocaleDateString("th-TH",{day:"2-digit",month:"2-digit"}));values.push(orders.filter(o=>{const t=new Date(o.time);return t>=d&&t<next}).reduce((s,o)=>s+o.total,0))}return{labels,values}}
+function secondSeries(){const now=new Date(),labels=[],values=[],orders=paidOrders();for(let off=59;off>=0;off--){const t=new Date(now.getTime()-off*1000);t.setMilliseconds(0);const next=new Date(t.getTime()+1000);labels.push(t.toLocaleTimeString("th-TH",{hour12:false,hour:"2-digit",minute:"2-digit",second:"2-digit"}));values.push(orders.filter(o=>{const d=new Date(o.time);return d>=t&&d<next}).length)}return{labels,values}}
+function todayHourly(){const now=new Date(),labels=[],values=[];for(let h=6;h<=22;h++){labels.push(String(h).padStart(2,"0")+":00");values.push(paidOrders().filter(o=>{const d=new Date(o.time);return d.toDateString()===now.toDateString()&&d.getHours()===h}).length)}return{labels,values}}
+function dailySeries(days){const labels=[],values=[],orders=paidOrders();for(let off=days-1;off>=0;off--){const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-off);const next=new Date(d);next.setDate(next.getDate()+1);labels.push(d.toLocaleDateString("th-TH",{day:"2-digit",month:"2-digit"}));values.push(orders.filter(o=>{const t=new Date(o.time);return t>=d&&t<next}).length)}return{labels,values}}
 function drawLineChart(canvasId,labels,values,height=230,showEvery=1){
   const canvas=$(canvasId);if(!canvas||!canvas.parentElement)return;
-  const parent=canvas.parentElement;parent.classList.add("chart-interactive-v41");
+  const parent=canvas.parentElement;parent.classList.add("chart-interactive-v46");parent.classList.remove("chart-scroll-v46");
   const width=Math.max(280,parent.clientWidth-30),dpr=window.devicePixelRatio||1;
   canvas.width=width*dpr;canvas.height=height*dpr;canvas.style.width=width+"px";canvas.style.height=height+"px";
   const ctx=canvas.getContext("2d");ctx.scale(dpr,dpr);ctx.clearRect(0,0,width,height);
-  const pad={l:48,r:16,t:20,b:36},W=width-pad.l-pad.r,H=height-pad.t-pad.b;
-  const max=Math.max(...values,1),nice=Math.max(100,Math.ceil(max/100)*100);
-  ctx.font="10px Anuphan,Sarabun,-apple-system,Segoe UI,sans-serif";
-  ctx.strokeStyle="#eee4d8";ctx.fillStyle="#8a735e";ctx.lineWidth=1;
-  for(let k=0;k<=4;k++){
-    const y=pad.t+H-H*k/4;
-    ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(width-pad.r,y);ctx.stroke();
-    ctx.textAlign="left";ctx.fillText("฿"+Math.round(nice*k/4),2,y+3);
-  }
+  const pad={l:48,r:18,t:20,b:38},W=width-pad.l-pad.r,H=height-pad.t-pad.b;
+  const maxVal=Math.max(...values,1),top=Math.max(4,Math.ceil(maxVal/4)*4);
+  ctx.font="10px Anuphan,Sarabun,-apple-system,Segoe UI,sans-serif";ctx.strokeStyle="#eee4d8";ctx.fillStyle="#8a735e";ctx.lineWidth=1;
+  for(let k=0;k<=4;k++){const v=Math.round(top*k/4),y=pad.t+H-H*k/4;ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(width-pad.r,y);ctx.stroke();ctx.textAlign="right";ctx.fillText(String(v),pad.l-8,y+3)}
+  ctx.save();ctx.translate(13,pad.t+H/2);ctx.rotate(-Math.PI/2);ctx.textAlign="center";ctx.fillStyle="#6f665f";ctx.font="11px Anuphan,Sarabun,sans-serif";ctx.fillText("จำนวนออเดอร์",0,0);ctx.restore();
   const n=Math.max(values.length,1),step=n>1?W/(n-1):W;
-  const pts=values.map((v,i)=>({x:n>1?pad.l+i*step:pad.l+W/2,y:pad.t+H-H*(Number(v||0)/nice),value:Number(v||0),label:labels[i]}));
-  if(pts.length){
-    ctx.strokeStyle="#E76613";ctx.lineWidth=2.5;ctx.lineJoin="round";ctx.lineCap="round";
-    ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.stroke();
-    pts.forEach((p,i)=>{
-      ctx.fillStyle="#FFFFFF";ctx.strokeStyle="#E76613";ctx.lineWidth=2;
-      ctx.beginPath();ctx.arc(p.x,p.y,4,0,Math.PI*2);ctx.fill();ctx.stroke();
-      if(i%showEvery===0||i===pts.length-1){ctx.fillStyle="#8a735e";ctx.textAlign="center";ctx.fillText(labels[i],p.x,pad.t+H+17)}
-    });
-  }
-  canvas.__chartPointsV41=pts;
-  let tip=parent.querySelector('.chart-tooltip-v41');
-  if(!tip){tip=document.createElement('div');tip.className='chart-tooltip-v41 hidden';parent.appendChild(tip)}
-  if(!canvas.__tooltipBoundV41){
-    const show=(clientX,clientY)=>{
-      const rect=canvas.getBoundingClientRect(),x=clientX-rect.left,pts=canvas.__chartPointsV41||[];if(!pts.length)return;
-      let nearest=pts[0];for(const p of pts)if(Math.abs(p.x-x)<Math.abs(nearest.x-x))nearest=p;
-      tip.innerHTML=`<b>${nearest.label}</b><span>${money(nearest.value)}</span>`;
-      tip.classList.remove('hidden');
-      const left=Math.min(Math.max(nearest.x,60),rect.width-60);tip.style.left=left+'px';tip.style.top=Math.max(8,nearest.y-10)+'px';
-    };
-    canvas.addEventListener('mousemove',e=>show(e.clientX,e.clientY));
-    canvas.addEventListener('mouseleave',()=>tip.classList.add('hidden'));
-    canvas.addEventListener('touchstart',e=>{const t=e.touches?.[0];if(t)show(t.clientX,t.clientY)},{passive:true});
-    canvas.__tooltipBoundV41=true;
-  }
+  const pts=values.map((v,i)=>({x:n>1?pad.l+i*step:pad.l+W/2,y:pad.t+H-H*(Number(v||0)/top),value:Number(v||0),label:labels[i]}));
+  if(pts.length){ctx.strokeStyle="#E76613";ctx.lineWidth=2.5;ctx.lineJoin="round";ctx.lineCap="round";ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.stroke();pts.forEach((p,i)=>{ctx.fillStyle="#fff";ctx.strokeStyle="#E76613";ctx.lineWidth=2;ctx.beginPath();ctx.arc(p.x,p.y,4,0,Math.PI*2);ctx.fill();ctx.stroke();if(i%showEvery===0||i===pts.length-1){ctx.fillStyle="#8a735e";ctx.textAlign="center";ctx.fillText(labels[i],p.x,pad.t+H+18)}})}
+  canvas.__chartPointsV46=pts;
+  let tip=parent.querySelector('.chart-tooltip-v46');if(!tip){tip=document.createElement('div');tip.className='chart-tooltip-v46 hidden';parent.appendChild(tip)}
+  if(!canvas.__tooltipBoundV46){const show=(cx)=>{const rect=canvas.getBoundingClientRect(),x=cx-rect.left,pts=canvas.__chartPointsV46||[];if(!pts.length)return;let nearest=pts[0];for(const p of pts)if(Math.abs(p.x-x)<Math.abs(nearest.x-x))nearest=p;tip.innerHTML=`<b>${nearest.label}</b><span>${nearest.value} ออเดอร์</span>`;tip.classList.remove('hidden');tip.style.left=Math.min(Math.max(nearest.x,70),rect.width-70)+'px';tip.style.top=Math.max(8,nearest.y-8)+'px'};canvas.addEventListener('mousemove',e=>show(e.clientX));canvas.addEventListener('mouseleave',()=>tip.classList.add('hidden'));canvas.addEventListener('touchstart',e=>{const t=e.touches?.[0];if(t)show(t.clientX)},{passive:true});canvas.__tooltipBoundV46=true}
 }
 
 function todayHourlyOrderCountV42(){
@@ -1246,7 +1237,7 @@ function renderTodayChartInsightV41(series){
   const box=$("todayChartInsight");if(!box||!series?.values?.length)return;
   const vals=series.values.map(Number),max=Math.max(...vals),positive=vals.filter(v=>v>0),min=positive.length?Math.min(...positive):0;
   const peakIndex=vals.indexOf(max),quietIndex=min>0?vals.indexOf(min):vals.findIndex(v=>v===0);
-  box.innerHTML=`<div><small>ขายดีสุด</small><b>${series.labels[peakIndex]||"-"}</b><strong>${money(max)}</strong></div><div><small>ช่วงเงียบ</small><b>${quietIndex>=0?series.labels[quietIndex]:"-"}</b><strong>${money(quietIndex>=0?vals[quietIndex]:0)}</strong></div><span>แตะหรือชี้บนจุดกราฟเพื่อดูเวลาและยอดขาย</span>`;
+  box.innerHTML=`<div><small>ออเดอร์เยอะสุด</small><b>${series.labels[peakIndex]||"-"}</b><strong>${max} ออเดอร์</strong></div><div><small>ช่วงเงียบ</small><b>${quietIndex>=0?series.labels[quietIndex]:"-"}</b><strong>${quietIndex>=0?vals[quietIndex]:0} ออเดอร์</strong></div><span>แตะหรือชี้จุดกราฟเพื่อดูจำนวนออเดอร์</span>`;
 }
 
 function renderSalesHistoryStats(){
@@ -1333,10 +1324,116 @@ if($("closeLowStockBtn"))$("closeLowStockBtn").onclick=()=>{
   dismissedLowStockSignatureV43=lowStockSignatureV43(lowStockProducts());
   $("lowStockBanner")?.classList.add("hidden");
 };
-function renderStock(){
-  const lows=state.products.filter(p=>p.active&&Number(p.stock)<=5);if($("stockLowCount"))$("stockLowCount").textContent=lows.length?`ต้องตรวจ ${lows.length} รายการ`:"สต๊อกปกติ";
-  $("stockList").innerHTML=state.products.filter(p=>p.active).sort((a,b)=>a.stock-b.stock||a.name.localeCompare(b.name,"th")).map(p=>`<div class="stock-row ${p.stock<=5?"stock-low-row":""}"><div><b>${p.name}</b><div style="color:#8a735e;font-size:9px">${p.category} · ${money(p.price)} / ${p.unit}</div></div><div class="stock-qty-display"><b>${p.stock}</b> ${p.unit}${p.stock<=5?'<small>ใกล้หมด</small>':""}</div><div class="stock-actions"><button onclick="adjustStock(${p.id},-1)">−1</button><button onclick="adjustStock(${p.id},1)">+1</button><button onclick="setStock(${p.id})">ตั้งค่า</button></div></div>`).join("")
+let selectedStockIdsV48=new Set();
+let stockBulkAmountV48=1;
+
+function updateStockBulkUiV48(){
+  const activeIds=state.products.filter(p=>p.active).map(p=>p.id);
+  selectedStockIdsV48=new Set([...selectedStockIdsV48].filter(id=>activeIds.includes(id)));
+  const count=selectedStockIdsV48.size;
+  const countEl=$("stockSelectedCountV48");
+  const allEl=$("stockSelectAllV48");
+  const amountEl=$("stockBulkAmountV48");
+  const applyEl=$("stockBulkApplyV48");
+
+  if(countEl)countEl.textContent=`เลือก ${count} รายการ`;
+  if(amountEl)amountEl.textContent=`+${stockBulkAmountV48}`;
+  if(applyEl)applyEl.disabled=count===0;
+
+  if(allEl){
+    allEl.checked=activeIds.length>0&&count===activeIds.length;
+    allEl.indeterminate=count>0&&count<activeIds.length;
+  }
 }
+
+window.toggleStockSelectV48=(id,checked)=>{
+  if(checked)selectedStockIdsV48.add(id);
+  else selectedStockIdsV48.delete(id);
+  updateStockBulkUiV48();
+};
+
+function renderStock(){
+  const lows=state.products.filter(p=>p.active&&Number(p.stock)<=5);
+  if($("stockLowCount"))$("stockLowCount").textContent=lows.length?`ต้องตรวจ ${lows.length} รายการ`:"สต๊อกปกติ";
+
+  const rows=state.products.filter(p=>p.active).sort((a,b)=>a.stock-b.stock||a.name.localeCompare(b.name,"th"));
+  $("stockList").innerHTML=rows.map(p=>`
+    <div class="stock-row stock-row-v48 ${p.stock<=5?"stock-low-row":""}">
+      <label class="stock-check-v48" aria-label="เลือก ${escapeHtml(p.name)}">
+        <input type="checkbox" ${selectedStockIdsV48.has(p.id)?"checked":""} onchange="toggleStockSelectV48(${p.id},this.checked)">
+      </label>
+      <div class="stock-product-info-v48">
+        <b>${p.name}</b>
+        <div>${p.category} · ${money(p.price)} / ${p.unit}</div>
+      </div>
+      <div class="stock-qty-display"><b>${p.stock}</b> ${p.unit}${p.stock<=5?'<small>ใกล้หมด</small>':""}</div>
+      <div class="stock-actions">
+        <button onclick="adjustStock(${p.id},-1)">−1</button>
+        <button onclick="adjustStock(${p.id},1)">+1</button>
+        <button onclick="setStock(${p.id})">ตั้งค่า</button>
+      </div>
+    </div>`).join("");
+
+  updateStockBulkUiV48();
+}
+
+function bindStockBulkV48(){
+  const selectAll=$("stockSelectAllV48");
+  const amountBtn=$("stockBulkAmountV48");
+  const applyBtn=$("stockBulkApplyV48");
+  const clearBtn=$("stockBulkClearV48");
+
+  if(selectAll&&!selectAll.dataset.boundV48){
+    selectAll.dataset.boundV48="1";
+    selectAll.addEventListener("change",()=>{
+      selectedStockIdsV48.clear();
+      if(selectAll.checked){
+        state.products.filter(p=>p.active).forEach(p=>selectedStockIdsV48.add(p.id));
+      }
+      renderStock();
+    });
+  }
+
+  if(amountBtn&&!amountBtn.dataset.boundV48){
+    amountBtn.dataset.boundV48="1";
+    amountBtn.addEventListener("click",()=>{
+      openNumericKeypad({
+        title:"จำนวนสต๊อกที่จะเพิ่ม",
+        hint:"จำนวนนี้จะเพิ่มให้สินค้าที่เลือกทั้งหมด",
+        value:stockBulkAmountV48,
+        min:1,max:999999,maxDigits:6,
+        onConfirm:n=>{
+          stockBulkAmountV48=Math.max(1,Number(n)||1);
+          updateStockBulkUiV48();
+        }
+      });
+    });
+  }
+
+  if(clearBtn&&!clearBtn.dataset.boundV48){
+    clearBtn.dataset.boundV48="1";
+    clearBtn.addEventListener("click",()=>{
+      selectedStockIdsV48.clear();
+      renderStock();
+    });
+  }
+
+  if(applyBtn&&!applyBtn.dataset.boundV48){
+    applyBtn.dataset.boundV48="1";
+    applyBtn.addEventListener("click",()=>{
+      if(!selectedStockIdsV48.size)return;
+      const amount=Math.max(1,Number(stockBulkAmountV48)||1);
+      const targets=state.products.filter(p=>selectedStockIdsV48.has(p.id));
+      if(!targets.length)return;
+      targets.forEach(p=>p.stock=Math.max(0,Number(p.stock)||0)+amount);
+      saveState();
+      selectedStockIdsV48.clear();
+      renderAll();
+    });
+  }
+  updateStockBulkUiV48();
+}
+setTimeout(bindStockBulkV48,0);
 window.adjustStock=(id,d)=>{const p=state.products.find(x=>x.id===id);p.stock=Math.max(0,p.stock+d);saveState();renderAll()};
 window.setStock=id=>{
   const p=state.products.find(x=>x.id===id);if(!p)return;
@@ -2126,96 +2223,13 @@ function drawOrderCountLineChartV42(canvasId,labels,values,height=230,showEvery=
   };
 }
 
-
-function hourlyOrderCountV46(){
-  const now=new Date(),labels=[],values=[],orders=paidOrders();
-  for(let h=8;h<=22;h++){
-    labels.push(String(h).padStart(2,"0")+":00");
-    values.push(orders.filter(o=>{const d=new Date(o.time);return d.toDateString()===now.toDateString()&&d.getHours()===h}).length);
-  }
-  return {labels,values};
-}
-function dailyOrderCountV46(days){
-  const labels=[],values=[],orders=paidOrders();
-  for(let off=days-1;off>=0;off--){
-    const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-off);
-    const next=new Date(d);next.setDate(next.getDate()+1);
-    labels.push(d.toLocaleDateString("th-TH",{day:"2-digit",month:"2-digit"}));
-    values.push(orders.filter(o=>{const t=new Date(o.time);return t>=d&&t<next}).length);
-  }
-  return {labels,values};
-}
-
 function renderSalesCharts(){
-  const hourly=hourlyOrderCountV46(),week=dailyOrderCountV46(7),month=dailyOrderCountV46(30);
+  const realtime=secondSeries(),hourly=todayHourly(),week=dailySeries(7),month=dailySeries(30);
   requestAnimationFrame(()=>{
-    drawOrderCountScrollableV46("todayChart",hourly.labels,hourly.values,225,2,980);
-    drawOrderCountScrollableV46("weekChart",week.labels,week.values,220,1,760);
-    drawOrderCountScrollableV46("monthChart",month.labels,month.values,220,2,1500);
-    renderOrderChartInsightV46(hourly);
+    drawLineChart("secondChart",realtime.labels,realtime.values,235,10);
+    drawLineChart("todayChart",hourly.labels,hourly.values,210,2);
+    drawLineChart("weekChart",week.labels,week.values,210,1);
+    drawLineChart("monthChart",month.labels,month.values,210,5);
+    renderTodayChartInsightV41(hourly);
   });
-}
-
-
-
-function drawOrderCountScrollableV46(canvasId,labels,values,height=230,showEvery=1,minContentWidth=760){
-  const canvas=$(canvasId);if(!canvas||!canvas.parentElement)return;
-  const viewport=canvas.parentElement;
-  viewport.classList.add("chart-scroll-v46");
-  const visible=Math.max(280,viewport.clientWidth||viewport.parentElement?.clientWidth||280);
-  const width=Math.max(visible,minContentWidth);
-  const dpr=window.devicePixelRatio||1;
-  canvas.width=width*dpr;canvas.height=height*dpr;
-  canvas.style.width=width+"px";canvas.style.height=height+"px";canvas.style.minWidth=width+"px";
-  const ctx=canvas.getContext("2d");ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,width,height);
-
-  const pad={l:58,r:22,t:22,b:40},W=width-pad.l-pad.r,H=height-pad.t-pad.b;
-  const maxValue=Math.max(...values.map(Number),1);
-  const yStep=maxValue<=10?1:Math.ceil(maxValue/10);
-  const maxAxis=Math.max(1,Math.ceil(maxValue/yStep)*yStep);
-  ctx.font='11px Anuphan,Sarabun,-apple-system,"Segoe UI",sans-serif';
-  ctx.strokeStyle="#EEE4D8";ctx.fillStyle="#746A61";ctx.lineWidth=1;
-  for(let count=0;count<=maxAxis;count+=yStep){
-    const y=pad.t+H-H*(count/maxAxis);
-    ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(width-pad.r,y);ctx.stroke();
-    ctx.textAlign="right";ctx.fillText(String(count),pad.l-10,y+4);
-  }
-  ctx.save();ctx.translate(17,pad.t+H/2);ctx.rotate(-Math.PI/2);ctx.textAlign="center";
-  ctx.fillStyle="#746A61";ctx.font='11px Anuphan,Sarabun,-apple-system,"Segoe UI",sans-serif';ctx.fillText("จำนวนออเดอร์",0,0);ctx.restore();
-
-  const n=Math.max(labels.length,1),step=n>1?W/(n-1):W;
-  const pts=values.map((v,i)=>({x:n>1?pad.l+i*step:pad.l+W/2,y:pad.t+H-H*(Number(v||0)/maxAxis),value:Number(v||0),label:labels[i]}));
-  if(pts.length){
-    ctx.strokeStyle="#E76613";ctx.lineWidth=2.5;ctx.lineJoin="round";ctx.lineCap="round";
-    ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.stroke();
-    pts.forEach((p,i)=>{
-      ctx.fillStyle="#FFF";ctx.strokeStyle="#E76613";ctx.lineWidth=2;
-      ctx.beginPath();ctx.arc(p.x,p.y,4.5,0,Math.PI*2);ctx.fill();ctx.stroke();
-      if(i%showEvery===0||i===pts.length-1){ctx.fillStyle="#746A61";ctx.textAlign="center";ctx.fillText(labels[i],p.x,pad.t+H+19)}
-    });
-  }
-
-  canvas.__orderPtsV46=pts;
-  let tip=viewport.querySelector(".chart-tooltip-v46");
-  if(!tip){tip=document.createElement("div");tip.className="chart-tooltip-v46 hidden";viewport.appendChild(tip)}
-  if(!canvas.__orderTooltipBoundV46){
-    const show=(clientX)=>{
-      const rect=canvas.getBoundingClientRect(),x=clientX-rect.left,points=canvas.__orderPtsV46||[];if(!points.length)return;
-      let nearest=points[0];for(const p of points)if(Math.abs(p.x-x)<Math.abs(nearest.x-x))nearest=p;
-      tip.innerHTML=`<b>${nearest.label}</b><span>${nearest.value} ออเดอร์</span>`;
-      tip.classList.remove("hidden");
-      tip.style.left=(nearest.x)+"px";tip.style.top=Math.max(12,nearest.y-8)+"px";
-    };
-    canvas.addEventListener("mousemove",e=>show(e.clientX));
-    canvas.addEventListener("touchstart",e=>{if(e.touches?.[0])show(e.touches[0].clientX)},{passive:true});
-    canvas.addEventListener("mouseleave",()=>tip.classList.add("hidden"));
-    canvas.__orderTooltipBoundV46=true;
-  }
-}
-
-function renderOrderChartInsightV46(series){
-  const box=$("todayChartInsight");if(!box||!series?.values?.length)return;
-  const vals=series.values.map(Number),max=Math.max(...vals),peak=vals.indexOf(max);
-  const zeros=vals.map((v,i)=>v===0?i:-1).filter(i=>i>=0),quiet=zeros.length?zeros[0]:vals.indexOf(Math.min(...vals));
-  box.innerHTML=`<div><small>ออเดอร์เยอะสุด</small><b>${series.labels[peak]||"-"}</b><strong>${max} ออเดอร์</strong></div><div><small>ช่วงเงียบ</small><b>${series.labels[quiet]||"-"}</b><strong>${vals[quiet]||0} ออเดอร์</strong></div><span>เลื่อนกราฟซ้าย–ขวา และแตะ/ชี้จุดเพื่อดูจำนวนออเดอร์</span>`;
 }
