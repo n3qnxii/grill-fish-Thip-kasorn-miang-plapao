@@ -362,7 +362,7 @@
       </div>
       <div class="report-grid report-main report-main-clean">
         <div class="card chart-card">
-          <div class="chart-title"><div><h3>จำนวนออเดอร์วันนี้ตามชั่วโมง</h3><p>ดูจำนวนออเดอร์ในแต่ละช่วงเวลา</p></div><span id="liveChartNow" class="live-badge">อัปเดตล่าสุด</span></div>
+          <div class="chart-title"><div><h3 id="todayChartTitle">จำนวนออเดอร์ตามชั่วโมง</h3><p id="todayChartSubtitle">ดูจำนวนออเดอร์ในแต่ละช่วงเวลาของวันที่เลือก</p></div><span id="liveChartNow" class="live-badge">วันที่เลือก</span></div>
           <canvas id="todayChart"></canvas>
           <div id="todayChartInsight" class="chart-insight-v41"></div>
         </div>
@@ -372,8 +372,8 @@
         </div>
       </div>
       <div class="report-grid report-history">
-        <div class="card chart-card"><h3>จำนวนออเดอร์ 7 วันล่าสุด</h3><canvas id="weekChart"></canvas></div>
-        <div class="card chart-card"><h3>จำนวนออเดอร์ 30 วันล่าสุด</h3><canvas id="monthChart"></canvas></div>
+        <div class="card chart-card"><h3 id="weekChartTitle">จำนวนออเดอร์ 7 วัน ถึงวันที่เลือก</h3><canvas id="weekChart"></canvas></div>
+        <div class="card chart-card"><h3 id="monthChartTitle">จำนวนออเดอร์ 30 วัน ถึงวันที่เลือก</h3><canvas id="monthChart"></canvas></div>
       </div>
       <canvas id="secondChart" class="hidden" aria-hidden="true"></canvas>
     </section>
@@ -385,8 +385,8 @@
     <div id="stockLowCount" class="stock-low-count"></div>
   </div>
 
-  <div class="stock-bulk-card-v48">
-    <div class="stock-bulk-main-v48">
+  <div class="stock-bulk-card-v52">
+    <div class="stock-bulk-select-v52">
       <label class="stock-select-all-v48">
         <input id="stockSelectAllV48" type="checkbox">
         <span>เลือกทั้งหมด</span>
@@ -394,10 +394,15 @@
       <span id="stockSelectedCountV48" class="stock-selected-count-v48">เลือก 0 รายการ</span>
     </div>
 
-    <div class="stock-bulk-actions-v48">
-      <button id="stockBulkAmountV48" type="button" class="stock-bulk-amount-v48">+1</button>
-      <button id="stockBulkApplyV48" type="button" class="primary stock-bulk-apply-v48" disabled>เพิ่มสต๊อกที่เลือก</button>
-      <button id="stockBulkClearV48" type="button" class="btn-neutral stock-bulk-clear-v48">ล้างที่เลือก</button>
+    <div class="stock-bulk-controls-v52">
+      <button id="stockBulkAmountV48" type="button" class="stock-bulk-amount-v52">1</button>
+
+      <div class="stock-bulk-action-group-v52">
+        <button id="stockBulkSubtractV52" type="button" class="stock-bulk-subtract-v52" disabled>− ลดสต๊อก</button>
+        <button id="stockBulkApplyV48" type="button" class="stock-bulk-add-v52" disabled>+ เพิ่มสต๊อก</button>
+      </div>
+
+      <button id="stockBulkClearV48" type="button" class="stock-bulk-clear-v52">ล้างที่เลือก</button>
     </div>
   </div>
 
@@ -573,12 +578,12 @@
         <button type="button" data-bank="1000">฿1,000</button>
       </div>
 
-      <div class="cash-due-row-v49">
+      <div class="cash-due-row-v51">
+        <button type="button" id="cashClearInlineBtn" class="cash-clear-inline-v49">ล้าง</button>
         <div id="cashPaymentStatus" class="cash-status-line zero">
           <span>ยอดที่ต้องชำระ</span><strong>฿0</strong>
         </div>
         <button type="button" id="cashExactInlineBtn" class="cash-exact-inline-v41">พอดี</button>
-        <button type="button" id="cashClearInlineBtn" class="cash-clear-inline-v49">ล้าง</button>
       </div>
     </div>
 
