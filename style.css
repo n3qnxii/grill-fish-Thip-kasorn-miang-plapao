@@ -3705,3 +3705,53 @@ body.queue-ticket-preview-v39 .screen-actions button,
   #paymentModal #cashArea .cash-due-row-v41 .cash-status-line,
   #paymentModal #cashArea #cashExactInlineBtn.cash-exact-inline-v41{height:74px!important;min-height:74px!important}
 }
+
+
+/* =====================================================================
+   V46 — success 5-second auto close + scrollable order-count reports
+   ===================================================================== */
+.success-countdown-v46{
+  margin-top:10px!important;
+  padding:8px 10px!important;
+  border-radius:10px!important;
+  background:#EAF6EE!important;
+  color:#267343!important;
+  font-size:12px!important;
+  font-weight:700!important;
+  text-align:center!important;
+}
+
+#dashboard .chart-scroll-v46{
+  width:100%!important;
+  max-width:100%!important;
+  overflow-x:auto!important;
+  overflow-y:hidden!important;
+  -webkit-overflow-scrolling:touch!important;
+  overscroll-behavior-x:contain!important;
+  position:relative!important;
+  padding-bottom:5px!important;
+  scrollbar-width:thin!important;
+  scrollbar-color:#D9CFC5 transparent!important;
+}
+#dashboard .chart-scroll-v46::-webkit-scrollbar{height:8px!important}
+#dashboard .chart-scroll-v46::-webkit-scrollbar-thumb{background:#D9CFC5!important;border-radius:999px!important}
+#dashboard .chart-scroll-v46 canvas{display:block!important;max-width:none!important;flex:none!important}
+.chart-tooltip-v46{
+  position:absolute!important;
+  transform:translate(-50%,-100%)!important;
+  background:#252525!important;
+  color:#fff!important;
+  padding:8px 11px!important;
+  border-radius:10px!important;
+  display:grid!important;
+  gap:2px!important;
+  pointer-events:none!important;
+  z-index:8!important;
+  box-shadow:0 6px 20px rgba(0,0,0,.18)!important;
+  white-space:nowrap!important;
+}
+.chart-tooltip-v46 b{font-size:11px!important}.chart-tooltip-v46 span{font-size:12px!important;font-weight:800!important;color:#FFD4B3!important}
+#dashboard .chart-card{overflow:hidden!important}
+@media(max-width:760px){
+  .success-countdown-v46{font-size:11px!important}
+}
