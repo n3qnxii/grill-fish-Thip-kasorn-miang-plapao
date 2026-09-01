@@ -1016,11 +1016,38 @@ $("confirmPay").onclick=()=>{
   $("successReceived").textContent=money(order.cashReceived);
   $("successCashSummary").classList.toggle("hidden",selectedMethod==="QR");
   if($("receiptNoteInput"))$("receiptNoteInput").value="";
-  $("successModal").classList.remove("hidden");playPaymentSuccessSound();announcePayment(order);renderAll();
+  $("successModal").classList.remove("hidden");startSuccessCountdownV46();playPaymentSuccessSound();announcePayment(order);renderAll();
 };
-$("newOrder").onclick=()=>{
-  $("successModal").classList.add("hidden");cart=[];$("discountInput").value=0;lastCashReceived=0;lastChange=0;renderCart();renderProducts();$("orderNo").textContent="#"+currentDailyOrderNumber();
-};
+let successCountdownTimerV46=null;
+let successCountdownLeftV46=5;
+function closeSuccessAndStartNewOrderV46(){
+  if(successCountdownTimerV46){clearInterval(successCountdownTimerV46);successCountdownTimerV46=null}
+  $("successModal").classList.add("hidden");
+  cart=[];
+  $("discountInput").value=0;
+  lastCashReceived=0;
+  lastChange=0;
+  renderCart();
+  renderProducts();
+  $("orderNo").textContent="#"+currentDailyOrderNumber();
+}
+function startSuccessCountdownV46(){
+  if(successCountdownTimerV46)clearInterval(successCountdownTimerV46);
+  successCountdownLeftV46=5;
+  const label=$("successCountdown");
+  const paint=()=>{if(label)label.textContent=`เริ่มออเดอร์ใหม่อัตโนมัติใน ${successCountdownLeftV46} วินาที`};
+  paint();
+  successCountdownTimerV46=setInterval(()=>{
+    successCountdownLeftV46-=1;
+    if(successCountdownLeftV46<=0){
+      if(label)label.textContent="กำลังเริ่มออเดอร์ใหม่…";
+      closeSuccessAndStartNewOrderV46();
+      return;
+    }
+    paint();
+  },1000);
+}
+$("newOrder").onclick=closeSuccessAndStartNewOrderV46;
 $("printBtn").onclick=()=>{
   if(!lastOrder)return;
   lastOrder.receiptNote=String($("receiptNoteInput")?.value||"").trim();
@@ -2099,13 +2126,96 @@ function drawOrderCountLineChartV42(canvasId,labels,values,height=230,showEvery=
   };
 }
 
+
+function hourlyOrderCountV46(){
+  const now=new Date(),labels=[],values=[],orders=paidOrders();
+  for(let h=8;h<=22;h++){
+    labels.push(String(h).padStart(2,"0")+":00");
+    values.push(orders.filter(o=>{const d=new Date(o.time);return d.toDateString()===now.toDateString()&&d.getHours()===h}).length);
+  }
+  return {labels,values};
+}
+function dailyOrderCountV46(days){
+  const labels=[],values=[],orders=paidOrders();
+  for(let off=days-1;off>=0;off--){
+    const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-off);
+    const next=new Date(d);next.setDate(next.getDate()+1);
+    labels.push(d.toLocaleDateString("th-TH",{day:"2-digit",month:"2-digit"}));
+    values.push(orders.filter(o=>{const t=new Date(o.time);return t>=d&&t<next}).length);
+  }
+  return {labels,values};
+}
+
 function renderSalesCharts(){
-  const realtime=secondSeries(),hourly=todayHourly(),week=dailySeries(7),month=dailySeries(30);
+  const hourly=hourlyOrderCountV46(),week=dailyOrderCountV46(7),month=dailyOrderCountV46(30);
   requestAnimationFrame(()=>{
-    drawLineChart("secondChart",realtime.labels,realtime.values,235,10);
-    drawLineChart("todayChart",hourly.labels,hourly.values,210,2);
-    drawLineChart("weekChart",week.labels,week.values,210,1);
-    drawLineChart("monthChart",month.labels,month.values,210,5);
-    renderTodayChartInsightV41(hourly);
+    drawOrderCountScrollableV46("todayChart",hourly.labels,hourly.values,225,2,980);
+    drawOrderCountScrollableV46("weekChart",week.labels,week.values,220,1,760);
+    drawOrderCountScrollableV46("monthChart",month.labels,month.values,220,2,1500);
+    renderOrderChartInsightV46(hourly);
   });
+}
+
+
+
+function drawOrderCountScrollableV46(canvasId,labels,values,height=230,showEvery=1,minContentWidth=760){
+  const canvas=$(canvasId);if(!canvas||!canvas.parentElement)return;
+  const viewport=canvas.parentElement;
+  viewport.classList.add("chart-scroll-v46");
+  const visible=Math.max(280,viewport.clientWidth||viewport.parentElement?.clientWidth||280);
+  const width=Math.max(visible,minContentWidth);
+  const dpr=window.devicePixelRatio||1;
+  canvas.width=width*dpr;canvas.height=height*dpr;
+  canvas.style.width=width+"px";canvas.style.height=height+"px";canvas.style.minWidth=width+"px";
+  const ctx=canvas.getContext("2d");ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,width,height);
+
+  const pad={l:58,r:22,t:22,b:40},W=width-pad.l-pad.r,H=height-pad.t-pad.b;
+  const maxValue=Math.max(...values.map(Number),1);
+  const yStep=maxValue<=10?1:Math.ceil(maxValue/10);
+  const maxAxis=Math.max(1,Math.ceil(maxValue/yStep)*yStep);
+  ctx.font='11px Anuphan,Sarabun,-apple-system,"Segoe UI",sans-serif';
+  ctx.strokeStyle="#EEE4D8";ctx.fillStyle="#746A61";ctx.lineWidth=1;
+  for(let count=0;count<=maxAxis;count+=yStep){
+    const y=pad.t+H-H*(count/maxAxis);
+    ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(width-pad.r,y);ctx.stroke();
+    ctx.textAlign="right";ctx.fillText(String(count),pad.l-10,y+4);
+  }
+  ctx.save();ctx.translate(17,pad.t+H/2);ctx.rotate(-Math.PI/2);ctx.textAlign="center";
+  ctx.fillStyle="#746A61";ctx.font='11px Anuphan,Sarabun,-apple-system,"Segoe UI",sans-serif';ctx.fillText("จำนวนออเดอร์",0,0);ctx.restore();
+
+  const n=Math.max(labels.length,1),step=n>1?W/(n-1):W;
+  const pts=values.map((v,i)=>({x:n>1?pad.l+i*step:pad.l+W/2,y:pad.t+H-H*(Number(v||0)/maxAxis),value:Number(v||0),label:labels[i]}));
+  if(pts.length){
+    ctx.strokeStyle="#E76613";ctx.lineWidth=2.5;ctx.lineJoin="round";ctx.lineCap="round";
+    ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.stroke();
+    pts.forEach((p,i)=>{
+      ctx.fillStyle="#FFF";ctx.strokeStyle="#E76613";ctx.lineWidth=2;
+      ctx.beginPath();ctx.arc(p.x,p.y,4.5,0,Math.PI*2);ctx.fill();ctx.stroke();
+      if(i%showEvery===0||i===pts.length-1){ctx.fillStyle="#746A61";ctx.textAlign="center";ctx.fillText(labels[i],p.x,pad.t+H+19)}
+    });
+  }
+
+  canvas.__orderPtsV46=pts;
+  let tip=viewport.querySelector(".chart-tooltip-v46");
+  if(!tip){tip=document.createElement("div");tip.className="chart-tooltip-v46 hidden";viewport.appendChild(tip)}
+  if(!canvas.__orderTooltipBoundV46){
+    const show=(clientX)=>{
+      const rect=canvas.getBoundingClientRect(),x=clientX-rect.left,points=canvas.__orderPtsV46||[];if(!points.length)return;
+      let nearest=points[0];for(const p of points)if(Math.abs(p.x-x)<Math.abs(nearest.x-x))nearest=p;
+      tip.innerHTML=`<b>${nearest.label}</b><span>${nearest.value} ออเดอร์</span>`;
+      tip.classList.remove("hidden");
+      tip.style.left=(nearest.x)+"px";tip.style.top=Math.max(12,nearest.y-8)+"px";
+    };
+    canvas.addEventListener("mousemove",e=>show(e.clientX));
+    canvas.addEventListener("touchstart",e=>{if(e.touches?.[0])show(e.touches[0].clientX)},{passive:true});
+    canvas.addEventListener("mouseleave",()=>tip.classList.add("hidden"));
+    canvas.__orderTooltipBoundV46=true;
+  }
+}
+
+function renderOrderChartInsightV46(series){
+  const box=$("todayChartInsight");if(!box||!series?.values?.length)return;
+  const vals=series.values.map(Number),max=Math.max(...vals),peak=vals.indexOf(max);
+  const zeros=vals.map((v,i)=>v===0?i:-1).filter(i=>i>=0),quiet=zeros.length?zeros[0]:vals.indexOf(Math.min(...vals));
+  box.innerHTML=`<div><small>ออเดอร์เยอะสุด</small><b>${series.labels[peak]||"-"}</b><strong>${max} ออเดอร์</strong></div><div><small>ช่วงเงียบ</small><b>${series.labels[quiet]||"-"}</b><strong>${vals[quiet]||0} ออเดอร์</strong></div><span>เลื่อนกราฟซ้าย–ขวา และแตะ/ชี้จุดเพื่อดูจำนวนออเดอร์</span>`;
 }
