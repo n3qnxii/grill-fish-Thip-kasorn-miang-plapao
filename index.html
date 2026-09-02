@@ -23,7 +23,13 @@
   <div class="brand-side">
     <div class="brand-pattern" aria-hidden="true"></div>
     <div class="brand-center">
-      <div class="fish-logo fish-logo-svg"><svg class="brand-fish-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12c3.8-5 9.5-6.8 14-3l3-2v10l-3-2c-4.5 3.8-10.2 2-14-3Z"/><circle cx="16" cy="11" r="1" fill="currentColor" stroke="none"/><path d="M5 12H2"/></svg></div>
+      <div class="login-fish-logo" aria-label="โลโก้รูปปลา">
+        <svg viewBox="0 0 120 72" aria-hidden="true">
+          <path d="M18 36c16-19 41-25 62-11 7 5 12 11 15 11s8-6 16-12v24c-8-6-13-12-16-12s-8 6-15 11C59 61 34 55 18 36Z"/>
+          <circle cx="52" cy="31" r="3"/>
+          <path d="M31 36h26"/>
+        </svg>
+      </div>
       <h1>ร้านทิพย์เกษรเมี่ยงปลาเผา</h1>
       <p>ปลาเผาบ้านดุงซิตี้ • สด • ใหม่ทุกวัน</p>
       <span class="version">● ระบบ POS by n3qnxii</span>
@@ -59,7 +65,17 @@
   
 
 <aside id="appSidebar" class="app-sidebar collapsed" aria-label="เมนูหลัก">
-  <div class="sidebar-brand"><div class="brand-mini"><span><svg class="brand-mini-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12c3.8-5 9.5-6.8 14-3l3-2v10l-3-2c-4.5 3.8-10.2 2-14-3Z"/><circle cx="16" cy="11" r="1" fill="currentColor" stroke="none"/><path d="M5 12H2"/></svg></span><div><b id="shopTitle">ร้านทิพย์เกษรเมี่ยงปลาเผา</b><small id="todayText"></small></div></div></div>
+  <div class="sidebar-brand sidebar-brand-v63">
+  <div class="brand-mini brand-mini-v63">
+    <span class="sidebar-logo-wrap sidebar-brand-art sidebar-brand-art-v63">
+      <img src="assets/thipkasorn-logo.png" alt="โลโก้ร้านทิพย์เกษรเมี่ยงปลาเผา">
+    </span>
+    <div class="sidebar-brand-copy-v63">
+      <b id="shopTitle">ทิพย์เกษรเมี่ยงปลาเผา</b>
+      <small id="todayText"></small>
+    </div>
+  </div>
+</div>
   <button id="sidebarToggle" class="sidebar-toggle" type="button" aria-label="ขยายเมนู" title="ขยาย/พับเมนู">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>
     <span>เมนู</span>
@@ -226,10 +242,8 @@
 
           <div id="preStatusTabs" class="pre-status-tabs" role="tablist" aria-label="กรองสถานะ">
             <button type="button" class="active" data-pre-status="all">ทั้งหมด</button>
-            <button type="button" data-pre-status="pending">รอยืนยัน</button>
             <button type="button" data-pre-status="confirmed">ยืนยันแล้ว</button>
-            <button type="button" data-pre-status="preparing">กำลังเตรียม</button>
-            <button type="button" data-pre-status="ready">พร้อมรับ</button>
+            <button type="button" data-pre-status="completed">สำเร็จ</button>
             <button type="button" data-pre-status="cancelled">ยกเลิก</button>
           </div>
 
