@@ -1,0 +1,10 @@
+{
+  "name": "fish-pos-customer-display",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Local Raspberry Pi server and customer display bridge for Fish POS",
+  "main": "server.js",
+  "scripts": {"start": "node server.js"},
+  "dependencies": {"ws": "^8.18.0",
+    "qrcode": "^1.5.4"}
+}
