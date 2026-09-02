@@ -367,10 +367,25 @@ let preorderPageViewV25="list";
   if(Array.isArray(state.preorders)){
     state.preorders.forEach(o=>{
       if(o.status==="waiting"){o.status="pending";changed=true}
-      else if(!["pending","confirmed","preparing","ready","cancelled"].includes(o.status)){
+      else if(!["pending","confirmed","preparing","ready","completed","cancelled"].includes(o.status)){
         o.status=o.status==="cancelled"?"cancelled":"pending";
         changed=true;
       }
+    });
+  }
+  if(changed)saveState();
+})();
+
+// V54 — Simplified preorder status flow
+// Old data is kept, but old workflow statuses are mapped to the new 3-state flow:
+// pending/preparing -> confirmed, ready -> completed.
+(function migratePreorderStatusV54(){
+  let changed=false;
+  if(Array.isArray(state.preorders)){
+    state.preorders.forEach(o=>{
+      if(o.status==="pending"||o.status==="preparing"||o.status==="waiting"){o.status="confirmed";changed=true}
+      else if(o.status==="ready"){o.status="completed";changed=true}
+      else if(!["confirmed","completed","cancelled"].includes(o.status)){o.status="confirmed";changed=true}
     });
   }
   if(changed)saveState();
@@ -668,7 +683,7 @@ window.openCartQtyKeypad=id=>{
   openNumericKeypad({title:`จำนวน ${row.name}`,hint:"สูงสุด 100",value:row.qty,min:0,max:Math.min(100,Number(p.stock)||100),maxDigits:3,onConfirm:n=>setCartQty(id,n)});
 };
 const subtotal=()=>cart.reduce((s,x)=>s+x.price*x.qty,0),discount=()=>Math.max(0,Number($("discountInput").value||0)),total=()=>Math.max(0,subtotal()-discount());
-function renderCart(){$("cartItems").innerHTML=cart.length?cart.map(x=>`<div class="cart-item"><div class="cart-item-info"><b>${x.name}</b><div class="hint">${money(x.price)} × ${x.qty}</div></div><div class="cart-item-controls"><div class="qty"><button onclick="changeQty(${x.id},-1)">−</button><button type="button" class="qty-number-input qty-number-button" onclick="openCartQtyKeypad(${x.id})" aria-label="จำนวน ${escapeHtml(x.name)}">${x.qty}</button><button onclick="changeQty(${x.id},1)">+</button></div><button class="cart-trash-btn" onclick="removeCartItem(${x.id})" title="ลบรายการ" aria-label="ลบ ${escapeHtml(x.name)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 11v5M14 11v5"/></svg></button></div></div>`).join(""):'<p class="empty">ยังไม่มีสินค้า</p>';$("subtotal").textContent=money(subtotal());$("discountDisplay").textContent=money(discount());$("total").textContent=money(total());if($("payCashBtn"))$("payCashBtn").disabled=!cart.length;if($("payQrBtn"))$("payQrBtn").disabled=!cart.length;if($("holdOrderBtn"))$("holdOrderBtn").disabled=!cart.length;if($("heldOrderCount"))$("heldOrderCount").textContent=state.heldOrders?.length||0;renderSelectedItemsCount()}
+function renderCart(){$("cartItems").innerHTML=cart.length?cart.map(x=>`<div class="cart-item"><div class="cart-item-info"><b>${x.name}</b><div class="hint">${money(x.price)} × ${x.qty}</div></div><div class="cart-item-controls"><div class="qty"><button onclick="changeQty(${x.id},-1)">−</button><button type="button" class="qty-number-input qty-number-button" onclick="openCartQtyKeypad(${x.id})" aria-label="จำนวน ${escapeHtml(x.name)}">${x.qty}</button><button onclick="changeQty(${x.id},1)">+</button></div><button class="cart-trash-btn" onclick="removeCartItem(${x.id})" title="ลบรายการ" aria-label="ลบ ${escapeHtml(x.name)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 11v5M14 11v5"/></svg></button></div></div>`).join(""):'<p class="empty">ยังไม่มีสินค้า</p>';$("subtotal").textContent=money(subtotal());$("discountDisplay").textContent=money(discount());$("total").textContent=money(total());if($("payCashBtn"))$("payCashBtn").disabled=!cart.length;if($("payQrBtn"))$("payQrBtn").disabled=!cart.length;if($("holdOrderBtn"))$("holdOrderBtn").disabled=!cart.length;if($("heldOrderCount"))$("heldOrderCount").textContent=state.heldOrders?.length||0;renderSelectedItemsCount();customerDisplayCart()}
 
 window.removeCartItem=id=>{cart=cart.filter(x=>x.id!==id);renderCart();renderProducts();playQtySound(false)};
 $("discountInput").addEventListener("input",renderCart);$("clearBtn").onclick=()=>{if(cart.length&&confirm("ล้างออเดอร์นี้ใช่ไหม?")){cart=[];$("discountInput").value=0;renderCart();renderProducts()}};
@@ -803,9 +818,21 @@ function buildPromptPayPayload(target,amount){
   payload+=ppTlv("58","TH")+"6304";
   return payload+ppCrc16(payload);
 }
-function createQrDataUrl(text,size=360){
+async function createQrDataUrl(text,size=360){
+  // Raspberry Pi local mode: generate QR from the local server, so the shop can keep working without Internet.
+  if(location.protocol==="http:"){
+    try{
+      const url=`/api/qr?size=${encodeURIComponent(size)}&text=${encodeURIComponent(String(text))}`;
+      const res=await fetch(url,{cache:"no-store"});
+      if(res.ok){
+        const data=await res.json();
+        if(data?.dataUrl)return data.dataUrl;
+      }
+    }catch(e){}
+  }
+  // GitHub/normal browser fallback: use the QRCode library already included by the POS.
   return new Promise((resolve,reject)=>{
-    if(!window.QRCode){reject(new Error("ไม่สามารถโหลดตัวสร้าง QR ได้ กรุณาเชื่อมต่ออินเทอร์เน็ต"));return}
+    if(!window.QRCode){reject(new Error("ไม่สามารถโหลดตัวสร้าง QR ได้ กรุณาเชื่อมต่ออินเทอร์เน็ตหรือเปิด POS ผ่าน Raspberry Pi"));return}
     const holder=document.createElement("div");
     holder.style.cssText="position:fixed;left:-9999px;top:-9999px;opacity:0";
     document.body.appendChild(holder);
@@ -835,6 +862,7 @@ async function renderPromptPayPaymentQr(){
     $("qrPlaceholder").style.display="none";
     $("qrFullscreenImage").src=src;
     $("qrFullscreenAmount").textContent=money(total());
+    customerDisplayQr(src);
     return true;
   }catch(err){
     console.error(err);
@@ -955,7 +983,7 @@ function openPayment(initialMethod=null){
 }
 if($("payCashBtn"))$("payCashBtn").onclick=()=>openPayment("เงินสด");
 if($("payQrBtn"))$("payQrBtn").onclick=()=>openPayment("QR");
-$("closeModal").onclick=$("cancelPay").onclick=()=>{$("paymentModal").classList.add("hidden");closeCashKeypad()};
+$("closeModal").onclick=$("cancelPay").onclick=()=>{$("paymentModal").classList.add("hidden");closeCashKeypad();customerDisplayCart()};
 document.querySelectorAll(".payment-methods button").forEach(b=>b.onclick=()=>{
   playTapSound();tapFeedback(b);selectedMethod=b.dataset.method;
   $("paymentModal")?.querySelector(".payment-box")?.classList.add("method-selected-v34");
@@ -964,9 +992,9 @@ document.querySelectorAll(".payment-methods button").forEach(b=>b.onclick=()=>{
   $("qrArea").classList.toggle("hidden",selectedMethod!=="QR");
   if(selectedMethod==="QR"){
     lastCashReceived=total();lastChange=0;$("qrAmount").textContent=money(total());
-    $("qrFullscreenAmount").textContent=money(total());renderPromptPayPaymentQr().then(ok=>{$("confirmPay").disabled=!ok&&!state.settings.qrImage});
+    $("qrFullscreenAmount").textContent=money(total());customerDisplayQr("");renderPromptPayPaymentQr().then(ok=>{$("confirmPay").disabled=!ok&&!state.settings.qrImage;customerDisplayQr()});
   }else{
-    setCashInputValue("");$("confirmPay").disabled=true;updateCashPaymentStatus();
+    setCashInputValue("");$("confirmPay").disabled=true;updateCashPaymentStatus();customerDisplayCash();
   }
 });
 function updateCashPaymentStatus(){
@@ -990,6 +1018,7 @@ function updateCashPaymentStatus(){
     }
   }
   $("confirmPay").disabled=received<total();
+  if(selectedMethod==="เงินสด")customerDisplayCash();
 }
 $("cashReceived").addEventListener("input",updateCashPaymentStatus);
 if($("cashExactInlineBtn"))$("cashExactInlineBtn").onclick=()=>{
@@ -1055,6 +1084,7 @@ $("confirmPay").onclick=()=>{
   const order={id:Date.now(),number:num,items:cart.map(x=>({...x})),subtotal:sub,discount:disc,total:net,cost,grossProfit:net-cost,payment:selectedMethod,cashReceived:selectedMethod==="เงินสด"?lastCashReceived:net,change:selectedMethod==="เงินสด"?lastChange:0,staffId:currentUser.id,staffName:currentUser.name,status:"paid",time:nowIso(),orderDate:localDateKey(),cancelledAt:null};
   cart.forEach(row=>{const p=state.products.find(x=>x.id===row.id);p.stock-=row.qty});
   state.orders.unshift(order);advanceDailyOrderNumber();lastOrder=order;saveState();
+  customerDisplaySuccess(order);
   $("paymentModal").classList.add("hidden");$("qrFullscreen").classList.add("hidden");
   $("successOrderNo").textContent=`ออเดอร์ #${num}`;$("successTotal").textContent=money(net);
   $("successChange").textContent=money(order.change);
@@ -1127,9 +1157,10 @@ function printOrder(o,isCopy=false){
   .toolbar .print-btn{border:1px solid #E67A18;background:#F28C28;color:#fff}
   .receipt-wrap{width:350px;max-width:100%;margin:18px auto;background:#fff;border:1px solid #ddd}
   .receipt{padding:16px 14px;font-size:14px;line-height:1.45;color:#000}
-  .brand{text-align:center;padding-bottom:10px;border-bottom:1px solid #111}
-  .shop{font-size:20px;font-weight:700}
-  .shop-address,.shop-phone{font-size:13px;margin-top:1px}
+  .brand{text-align:center;padding-bottom:10px;border-bottom:1px solid #111}.brand-v61{padding:2px 0 10px}.shop-contact-v61{margin-top:3px;display:flex;flex-direction:column;gap:1px;align-items:center}
+  .receipt-logo{display:block;width:232px;max-width:92%;height:auto;max-height:112px;object-fit:contain;margin:0 auto 6px;filter:grayscale(1) contrast(1.2)}
+  .shop{font-size:20px;font-weight:700;display:none}
+  .shop-address,.shop-phone{font-size:12px;margin-top:0;line-height:1.35}
   .copy-mark{display:inline-block;margin-top:6px;padding:2px 7px;border:1px solid #000;border-radius:999px;font-size:10px;font-weight:600}
   .meta-card{display:grid;grid-template-columns:1fr 1fr;gap:5px 12px;padding:9px 0;border-bottom:1px dashed #777;margin-bottom:8px}
   .meta-card div{font-size:11px;color:#222}.meta-card b{display:block;color:#000;font-size:12px;margin-top:1px}
@@ -1145,14 +1176,16 @@ function printOrder(o,isCopy=false){
   .receipt-note{margin-top:8px;padding:7px 0;border-top:1px dashed #777;border-bottom:1px dashed #777;color:#000}
   .receipt-note span{display:block;font-size:10px}.receipt-note b{display:block;margin-top:2px;font-weight:500}
   .thanks{text-align:center;margin-top:12px;font-size:11px;color:#000}
-  @media print{body{background:#fff}.toolbar{display:none!important}.receipt-wrap{width:100%;margin:0;border:0}.receipt{padding:0}}
+  @media print{body{background:#fff}.toolbar{display:none!important}.receipt-wrap{width:100%;margin:0;border:0}.receipt{padding:0}.receipt-logo{width:62mm;max-width:94%;max-height:27mm;filter:grayscale(1) contrast(1.3)}}
   </style></head><body>
   <div class="toolbar"><button class="back-btn" id="backToOrders">กลับ</button><button class="print-btn" id="printAgain">พิมพ์ใบเสร็จ</button></div>
   <div class="receipt-wrap"><div class="receipt">
-    <div class="brand">
-      <div class="shop">${escapeHtml(state.settings.shopName)}</div>
-      <div class="shop-address">บ้านดุง อุดรธานี 41190</div>
-      <div class="shop-phone">โทรศัพท์ 0897109954</div>
+    <div class="brand brand-v61">
+      <img class="receipt-logo receipt-logo-v61" src="${new URL('assets/thipkasorn-logo.png', location.href).href}" alt="โลโก้ร้านทิพย์เกษรเมี่ยงปลาเผา">
+      <div class="shop-contact-v61">
+        <div class="shop-address">บ้านดุง อุดรธานี 41190</div>
+        <div class="shop-phone">โทรศัพท์ 0897109954</div>
+      </div>
       ${isCopy?'<div class="copy-mark">สำเนาใบเสร็จ</div>':""}
     </div>
     <div class="meta-card">
@@ -1540,7 +1573,7 @@ function applyPreorderReminderCollapsed(){
 
 function tomorrowWaitingOrders(){
   const key=dateKey(tomorrowDate());
-  return state.preorders.filter(o=>o.date===key&&!["ready","cancelled"].includes(o.status)).sort((a,b)=>String(a.pickup).localeCompare(String(b.pickup)));
+  return state.preorders.filter(o=>o.date===key&&!["completed","cancelled"].includes(o.status)).sort((a,b)=>String(a.pickup).localeCompare(String(b.pickup)));
 }
 function preorderReminderSummary(){
   const orders=tomorrowWaitingOrders();
@@ -1597,7 +1630,7 @@ function dismissPreorderNotificationV37(id){
   renderPreorderBell();
 }
 function clearDismissedIfStatusChangedV37(){
-  const current=new Set(state.preorders.filter(o=>!["ready","cancelled"].includes(o.status)).map(o=>String(o.id)));
+  const current=new Set(state.preorders.filter(o=>!["completed","cancelled"].includes(o.status)).map(o=>String(o.id)));
   const kept=[...dismissedPreorderIdsV37()].filter(id=>current.has(id));
   localStorage.setItem(DISMISSED_PREORDER_KEY,JSON.stringify(kept));
 }
@@ -1712,12 +1745,10 @@ function initPreorderDateTime(){
 }
 function preorderStatusMeta(status){
   return {
-    pending:{label:"รอยืนยัน",cls:"pending",next:"confirmed",action:"ยืนยันออเดอร์"},
-    confirmed:{label:"ยืนยันแล้ว",cls:"confirmed",next:"preparing",action:"เริ่มเตรียม"},
-    preparing:{label:"กำลังเตรียม",cls:"preparing",next:"ready",action:"พร้อมรับ"},
-    ready:{label:"พร้อมรับ",cls:"ready",next:null,action:null},
+    confirmed:{label:"ยืนยันแล้ว",cls:"confirmed",next:"completed",action:"สำเร็จ"},
+    completed:{label:"สำเร็จ",cls:"completed",next:null,action:null},
     cancelled:{label:"ยกเลิก",cls:"cancelled",next:null,action:null}
-  }[status]||{label:"รอยืนยัน",cls:"pending",next:"confirmed",action:"ยืนยันออเดอร์"};
+  }[status]||{label:"ยืนยันแล้ว",cls:"confirmed",next:"completed",action:"สำเร็จ"};
 }
 
 function getPreorderCategories(){
@@ -1817,7 +1848,7 @@ function renderPreorderList(){
   });
 
   if(selected)list=list.filter(p=>p.date===selected);
-  if(preorderStatusFilter!=="all")list=list.filter(p=>(p.status||"pending")===preorderStatusFilter);
+  if(preorderStatusFilter!=="all")list=list.filter(p=>(p.status||"confirmed")===preorderStatusFilter);
   if(query)list=list.filter(o=>preorderSearchText(o).includes(query));
 
   if(selected){
@@ -1828,7 +1859,7 @@ function renderPreorderList(){
   }
 
   const prep={};
-  list.filter(x=>x.status!=="cancelled").forEach(o=>(o.items||[]).forEach(i=>prep[i.name]=(prep[i.name]||0)+i.qty));
+  list.filter(x=>!["completed","cancelled"].includes(x.status)).forEach(o=>(o.items||[]).forEach(i=>prep[i.name]=(prep[i.name]||0)+i.qty));
   $("preparationSummary").textContent=Object.keys(prep).length
     ?"สรุปของที่ต้องเตรียม: "+Object.entries(prep).map(([n,q])=>`${n} ${q}`).join(" • ")
     :"ยังไม่มีรายการที่ต้องเตรียม";
@@ -1840,7 +1871,7 @@ function renderPreorderList(){
   }
 
   box.innerHTML=list.map(o=>{
-    const meta=preorderStatusMeta(o.status||"pending");
+    const meta=preorderStatusMeta(o.status||"confirmed");
     const pickupDate=new Date(o.date+"T12:00:00").toLocaleDateString("th-TH",{day:"2-digit",month:"short",year:"2-digit"});
     const itemText=(o.items||[]).map(i=>`${escapeHtml(i.name)} ×${i.qty}`).join(" · ");
     const nextBtn=meta.next
@@ -1941,7 +1972,7 @@ $("savePreorderBtn").onclick=()=>{
     note:$("preNote").value.trim(),
     items:preorderCart.map(x=>({...x})),
     total:preorderCart.reduce((s,x)=>s+x.price*x.qty,0),
-    status:"pending",
+    status:"confirmed",
     createdAt:nowIso(),
     staffName:currentUser.name
   };
@@ -1965,7 +1996,7 @@ $("savePreorderBtn").onclick=()=>{
 };
 
 window.setPreStatus=(id,status)=>{
-  const allowed=["pending","confirmed","preparing","ready","cancelled"];
+  const allowed=["confirmed","completed","cancelled"];
   if(!allowed.includes(status))return;
   const o=state.preorders.find(x=>x.id===id);if(!o)return;
   o.status=status;
@@ -1978,7 +2009,7 @@ window.setPreStatus=(id,status)=>{
 
 window.advancePreStatus=id=>{
   const o=state.preorders.find(x=>x.id===id);if(!o)return;
-  const next={pending:"confirmed",confirmed:"preparing",preparing:"ready"}[o.status||"pending"];
+  const next={confirmed:"completed"}[o.status||"confirmed"];
   if(next)setPreStatus(id,next);
 };
 
@@ -2234,6 +2265,102 @@ function salePageActive(){return currentUser&&!$("sale").classList.contains("hid
 document.addEventListener("touchmove",e=>{if(salePageActive()&&e.touches&&e.touches.length>1)e.preventDefault()},{passive:false});
 document.addEventListener("wheel",e=>{if(salePageActive()&&e.ctrlKey)e.preventDefault()},{passive:false});
 document.addEventListener("keydown",e=>{if(salePageActive()&&(e.ctrlKey||e.metaKey)&&["=","+","-","0"].includes(e.key))e.preventDefault()});
+
+
+
+// =====================================================================
+// V54 — Customer Display bridge (iPad POS -> Raspberry Pi -> HDMI display)
+// Works in two modes:
+// 1) BroadcastChannel for preview on the same browser/device.
+// 2) WebSocket for real shop use when POS is served by Raspberry Pi locally.
+// =====================================================================
+const CUSTOMER_DISPLAY_CHANNEL="fish-pos-customer-display-v1";
+let customerDisplayChannel=null;
+let customerDisplaySocket=null;
+let customerDisplayReconnectTimer=null;
+let customerDisplayLastPayload=null;
+
+function customerDisplaySocketUrl(){
+  try{
+    const query=new URLSearchParams(location.search);
+    const explicit=query.get("displayWs")||localStorage.getItem("fish_pos_display_ws")||"";
+    if(explicit)return explicit;
+    // When served from Raspberry Pi over local HTTP, connect to its WebSocket bridge.
+    if(location.protocol==="http:")return `ws://${location.hostname}:8787`;
+  }catch(e){}
+  // GitHub Pages is HTTPS. We intentionally do not open insecure ws:// from HTTPS.
+  // Same-device preview still works through BroadcastChannel.
+  return "";
+}
+function initCustomerDisplayBridge(){
+  try{customerDisplayChannel=new BroadcastChannel(CUSTOMER_DISPLAY_CHANNEL)}catch(e){}
+  connectCustomerDisplaySocket();
+}
+function connectCustomerDisplaySocket(){
+  const url=customerDisplaySocketUrl();
+  if(!url)return;
+  clearTimeout(customerDisplayReconnectTimer);
+  try{
+    customerDisplaySocket=new WebSocket(url);
+    customerDisplaySocket.addEventListener("open",()=>{
+      if(customerDisplayLastPayload)customerDisplaySocket.send(JSON.stringify(customerDisplayLastPayload));
+    });
+    customerDisplaySocket.addEventListener("close",()=>{
+      customerDisplayReconnectTimer=setTimeout(connectCustomerDisplaySocket,1800);
+    });
+    customerDisplaySocket.addEventListener("error",()=>{try{customerDisplaySocket.close()}catch(e){}});
+  }catch(e){customerDisplayReconnectTimer=setTimeout(connectCustomerDisplaySocket,1800)}
+}
+function sendCustomerDisplay(payload){
+  const full={
+    type:"display:update",
+    shopName:state?.settings?.shopName||"ร้านทิพย์เกษรเมี่ยงปลาเผา",
+    orderNo:currentDailyOrderNumber(),
+    items:cart.map(x=>({id:x.id,name:x.name,price:Number(x.price||0),qty:Number(x.qty||0)})),
+    subtotal:subtotal(),
+    discount:discount(),
+    total:total(),
+    paymentMethod:selectedMethod||null,
+    cashReceived:Number(lastCashReceived||0),
+    change:Number(lastChange||0),
+    qrDataUrl:"",
+    updatedAt:Date.now(),
+    ...payload
+  };
+  customerDisplayLastPayload=full;
+  try{customerDisplayChannel?.postMessage(full)}catch(e){}
+  try{if(customerDisplaySocket?.readyState===WebSocket.OPEN)customerDisplaySocket.send(JSON.stringify(full))}catch(e){}
+}
+function customerDisplayCart(){
+  // Keep payment/success screens visible even if renderAll() refreshes the POS behind the modal.
+  if($("successModal")&&!$("successModal").classList.contains("hidden"))return;
+  if($("paymentModal")&&!$("paymentModal").classList.contains("hidden")){
+    if(selectedMethod==="เงินสด"){customerDisplayCash();return}
+    if(selectedMethod==="QR"){customerDisplayQr();return}
+  }
+  sendCustomerDisplay({screen:cart.length?"cart":"idle",paymentMethod:null,cashReceived:0,change:0,qrDataUrl:""});
+}
+function customerDisplayCash(){
+  if(!cart.length)return;
+  sendCustomerDisplay({screen:"cash",paymentMethod:"เงินสด",cashReceived:Number(lastCashReceived||0),change:Number(lastChange||0),qrDataUrl:""});
+}
+function customerDisplayQr(src=""){
+  if(!cart.length)return;
+  const qr=src||$("paymentQrImage")?.src||state?.settings?.qrImage||"";
+  sendCustomerDisplay({screen:"qr",paymentMethod:"QR",cashReceived:total(),change:0,qrDataUrl:qr});
+}
+function customerDisplaySuccess(order){
+  if(!order)return;
+  sendCustomerDisplay({
+    screen:"success",
+    orderNo:order.number,
+    items:(order.items||[]).map(x=>({id:x.id,name:x.name,price:Number(x.price||0),qty:Number(x.qty||0)})),
+    subtotal:Number(order.subtotal||0),discount:Number(order.discount||0),total:Number(order.total||0),
+    paymentMethod:order.payment,cashReceived:Number(order.cashReceived||0),change:Number(order.change||0),qrDataUrl:""
+  });
+}
+
+initCustomerDisplayBridge();
 
 ensurePosUiPatch();initPaymentKeypad();initPreorderDateTime();initExportDate();initLogin();
 
