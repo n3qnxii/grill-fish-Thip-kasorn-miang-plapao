@@ -1283,3 +1283,179 @@ html,body{
     min-height:32px!important;
   }
 }
+
+/* =====================================================================
+   V67 — Customer Display refinement
+   ===================================================================== */
+.display-header-v63{
+  gap:7px!important;
+  padding-left:18px!important;
+}
+.customer-brand-logo-v63{
+  width:205px!important;
+  flex-basis:205px!important;
+}
+.brand-copy-v63{
+  margin-left:-3px!important;
+}
+.brand-copy-v63 h1{
+  font-size:31px!important;
+  letter-spacing:-.45px!important;
+}
+.brand-copy-v63 p{
+  margin-top:4px!important;
+  font-size:17px!important;
+}
+.customer-item{
+  grid-template-columns:minmax(0,1fr) auto!important;
+  gap:16px!important;
+  padding:12px 4px!important;
+}
+.customer-item-name b{
+  font-size:clamp(17px,2.35vw,22px)!important;
+  line-height:1.22!important;
+}
+.customer-item-name small{
+  font-size:clamp(12px,1.65vw,14px)!important;
+  margin-top:4px!important;
+}
+.customer-item-price{
+  min-width:126px!important;
+  padding:8px 14px!important;
+  border-radius:14px!important;
+  border:1px solid #F2B475!important;
+  background:#FFF3E7!important;
+  color:#B6530C!important;
+  text-align:center!important;
+  font-size:clamp(21px,2.8vw,29px)!important;
+  font-weight:950!important;
+  line-height:1!important;
+  box-shadow:0 2px 8px rgba(199,91,15,.08)!important;
+}
+.total-card>strong{
+  font-size:clamp(38px,6vw,58px)!important;
+}
+@media(max-width:760px){
+  .customer-brand-logo-v63{width:170px!important;flex-basis:170px!important}
+  .brand-copy-v63 h1{font-size:25px!important}
+  .brand-copy-v63 p{font-size:14px!important}
+  .customer-item-price{min-width:104px!important;padding:7px 10px!important}
+}
+@media(max-width:520px),(max-height:360px){
+  .customer-brand-logo-v63{width:120px!important;flex-basis:120px!important}
+  .display-header-v63{gap:4px!important;padding-left:10px!important}
+  .customer-item-price{font-size:19px!important;min-width:90px!important}
+}
+
+/* =====================================================================
+   V68 — Customer Display hierarchy + calm idle motion
+   ===================================================================== */
+/* Item line totals are plain text: the amount due remains the strongest element. */
+.customer-item-price{
+  min-width:0!important;padding:0!important;border:0!important;background:transparent!important;
+  box-shadow:none!important;border-radius:0!important;color:#C85A0B!important;
+  font-size:clamp(18px,2.25vw,25px)!important;font-weight:850!important;text-align:right!important;
+}
+.customer-item-name small{
+  font-size:clamp(15px,1.95vw,18px)!important;font-weight:700!important;color:#59616A!important;
+  margin-top:6px!important;letter-spacing:.05px;
+}
+/* Reduce line-total emphasis slightly while making the payment total unmistakable. */
+.total-card{background:#fff!important;padding:20px!important}
+.total-card>span{font-size:clamp(19px,2.45vw,26px)!important;font-weight:900!important;color:#4F555C!important}
+.total-card>strong{font-size:clamp(68px,9vw,104px)!important;font-weight:950!important;letter-spacing:-2.5px!important;margin:16px 0 15px!important;color:#D85E06!important}
+.total-card>small{font-size:clamp(13px,1.55vw,16px)!important;font-weight:650!important}
+/* Queue number should be readable but not compete with the total. */
+.display-header-v63 .order-chip{font-size:clamp(18px,2.2vw,27px)!important;min-width:104px!important;height:58px!important;padding:0 18px!important}
+/* QR: maximize scan area while keeping balanced whitespace. */
+.screen[data-screen="qr"] .qr-layout{grid-template-columns:minmax(270px,.62fr) minmax(0,1.48fr)!important;gap:10px!important;padding:10px!important}
+.screen[data-screen="qr"] .qr-card{padding:4px!important}
+.screen[data-screen="qr"] .qr-card img.ready{width:min(99%,calc(100vh - 86px))!important;height:min(99%,calc(100vh - 86px))!important}
+.screen[data-screen="qr"] .payment-total{font-size:clamp(64px,9vw,102px)!important;font-weight:950!important}
+/* Waiting screen: subtle branded animation, no extra image assets. */
+.screen-idle{overflow:hidden;position:relative;background:radial-gradient(circle at 50% 48%,#FFF8F0 0,#fff 42%,#F8FAFC 100%)!important}
+.screen-idle::before,.screen-idle::after{content:"";position:absolute;border-radius:50%;border:1px solid rgba(235,112,28,.13);inset:50% auto auto 50%;transform:translate(-50%,-50%);pointer-events:none}
+.screen-idle::before{width:330px;height:330px;animation:v68Pulse 3.2s ease-in-out infinite}
+.screen-idle::after{width:430px;height:430px;animation:v68Pulse 3.2s .8s ease-in-out infinite}
+.idle-center{position:relative;z-index:1}
+.idle-icon{width:94px!important;height:94px!important;background:#FFF0E3!important;color:#E86F16!important;border:1px solid #F4C79F!important;box-shadow:0 12px 34px rgba(222,102,20,.12)!important;animation:v68Float 2.8s ease-in-out infinite}
+.idle-center h2{font-size:clamp(34px,4.6vw,52px)!important;letter-spacing:-.5px}
+.idle-center p{font-size:clamp(16px,1.9vw,21px)!important}
+.idle-note{font-size:clamp(14px,1.55vw,17px)!important;background:#fff!important;box-shadow:0 6px 20px rgba(0,0,0,.035)!important}
+@keyframes v68Float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes v68Pulse{0%,100%{opacity:.35;transform:translate(-50%,-50%) scale(.92)}50%{opacity:.8;transform:translate(-50%,-50%) scale(1.04)}}
+@media(prefers-reduced-motion:reduce){.idle-icon,.screen-idle::before,.screen-idle::after{animation:none!important}}
+@media(max-height:560px){
+  .total-card>strong{font-size:58px!important;margin:8px 0!important}.total-card>span{font-size:18px!important}
+  .customer-item-name small{font-size:14px!important}.display-header-v63 .order-chip{height:42px!important;font-size:17px!important;min-width:76px!important}
+  .screen[data-screen="qr"] .qr-card img.ready{width:min(99%,calc(100vh - 76px))!important;height:min(99%,calc(100vh - 76px))!important}
+}
+
+/* =====================================================================
+   V69 — QR payment layout balance / single-line heading
+   ===================================================================== */
+.screen[data-screen="qr"] .qr-layout{
+  grid-template-columns:minmax(390px,.82fr) minmax(0,1.48fr)!important;
+  gap:16px!important;
+  padding:14px 16px!important;
+}
+.screen[data-screen="qr"] .qr-copy{
+  padding:24px 28px!important;
+  justify-content:center!important;
+}
+.screen[data-screen="qr"] .eyebrow{
+  margin:0 0 16px!important;
+  font-size:clamp(13px,1.25vw,16px)!important;
+}
+.screen[data-screen="qr"] .qr-copy h2{
+  white-space:nowrap!important;
+  font-size:clamp(25px,2.55vw,37px)!important;
+  line-height:1.12!important;
+  margin:0 0 16px!important;
+  letter-spacing:-.4px!important;
+}
+.screen[data-screen="qr"] .payment-total{
+  font-size:clamp(68px,7.6vw,96px)!important;
+  margin:4px 0 16px!important;
+  line-height:.98!important;
+}
+.screen[data-screen="qr"] .qr-copy p{
+  font-size:clamp(14px,1.45vw,19px)!important;
+  line-height:1.42!important;
+  margin:4px 0 0!important;
+  max-width:34ch!important;
+}
+.screen[data-screen="qr"] .qr-card{
+  padding:8px!important;
+  border-radius:22px!important;
+}
+.screen[data-screen="qr"] .qr-card img.ready{
+  max-width:calc(100% - 4px)!important;
+  max-height:calc(100% - 4px)!important;
+}
+@media(max-height:760px){
+  .screen[data-screen="qr"] .qr-layout{
+    grid-template-columns:minmax(340px,.78fr) minmax(0,1.52fr)!important;
+    gap:12px!important;padding:10px 12px!important;
+  }
+  .screen[data-screen="qr"] .qr-copy{padding:18px 22px!important}
+  .screen[data-screen="qr"] .qr-copy h2{font-size:clamp(23px,2.45vw,32px)!important;margin-bottom:11px!important}
+  .screen[data-screen="qr"] .payment-total{font-size:clamp(58px,7vw,80px)!important;margin:2px 0 10px!important}
+  .screen[data-screen="qr"] .qr-copy p{font-size:clamp(13px,1.35vw,17px)!important}
+}
+@media(max-height:560px){
+  .screen[data-screen="qr"] .qr-layout{
+    grid-template-columns:minmax(300px,.72fr) minmax(0,1.58fr)!important;
+    gap:8px!important;padding:7px 8px!important;
+  }
+  .screen[data-screen="qr"] .qr-copy{padding:12px 16px!important}
+  .screen[data-screen="qr"] .eyebrow{font-size:12px!important;margin-bottom:8px!important;padding:6px 10px!important}
+  .screen[data-screen="qr"] .qr-copy h2{font-size:22px!important;margin-bottom:7px!important}
+  .screen[data-screen="qr"] .payment-total{font-size:52px!important;margin:0 0 7px!important}
+  .screen[data-screen="qr"] .qr-copy p{font-size:12px!important;line-height:1.3!important}
+  .screen[data-screen="qr"] .qr-card{padding:5px!important}
+}
+@media(max-width:720px){
+  .screen[data-screen="qr"] .qr-copy h2{white-space:normal!important}
+}
+\n/* =====================================================================\n   V70 — production customer display: clean, readable, immediate-order UI\n   ===================================================================== */\n.display-shell{background:#f7f8fa!important}\n.display-header-v63{min-height:92px!important;background:#fff!important;border-bottom:1px solid #e9ecef!important}\n.screen{background:#f7f8fa!important}\n.cart-list-wrap,.total-card,.qr-copy,.qr-card,.payment-copy,.cash-summary-card{box-shadow:0 8px 28px rgba(27,35,45,.045)!important}\n.idle-center{max-width:760px;margin:auto}\n.idle-brand-v70{width:112px;height:112px;border-radius:34px;display:grid;place-items:center;margin:0 auto 14px;background:linear-gradient(145deg,#fff4e9,#fff);border:1px solid #f2d1b3;box-shadow:0 18px 50px rgba(215,101,20,.12);animation:v70Float 3.1s ease-in-out infinite}\n.idle-brand-v70 span{font-size:58px;filter:saturate(.9)}\n.idle-kicker-v70{display:inline-flex;padding:7px 14px;border-radius:999px;background:#fff0e3;color:#b8550e;font-weight:850;font-size:15px;margin-bottom:12px}\n.screen-idle::before{width:380px!important;height:380px!important}.screen-idle::after{width:510px!important;height:510px!important}\n.idle-center h2{font-size:clamp(38px,5vw,58px)!important}.idle-center p{font-size:clamp(17px,2vw,22px)!important;max-width:620px;line-height:1.45}\n.idle-note{font-size:clamp(14px,1.5vw,17px)!important;padding:9px 16px!important}\n.customer-item-name b{font-size:clamp(19px,2.2vw,25px)!important}\n.customer-item-name small{font-size:clamp(16px,1.7vw,20px)!important;font-weight:700!important;color:#60676f!important}\n.customer-item-price{font-size:clamp(19px,2vw,24px)!important;font-weight:850!important;color:#333!important}\n.total-card>span{font-size:clamp(22px,2.2vw,28px)!important;font-weight:850!important;color:#34383d!important}\n.total-card>strong{font-size:clamp(56px,7vw,82px)!important;line-height:1!important;color:#d85c08!important}\n.order-chip{font-size:clamp(22px,2.4vw,31px)!important;padding:8px 16px!important}\n.qr-copy h2{white-space:nowrap!important;font-size:clamp(28px,3vw,42px)!important}\n.qr-copy .payment-total{font-size:clamp(58px,7vw,88px)!important}\n.qr-card img.ready{width:min(96%,720px)!important;height:min(96%,720px)!important;object-fit:contain!important}\n@keyframes v70Float{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(-8px) rotate(1deg)}}\n@media(max-width:900px){.qr-copy h2{white-space:normal!important}.display-header-v63{min-height:78px!important}}\n@media(prefers-reduced-motion:reduce){.idle-brand-v70{animation:none!important}}\n

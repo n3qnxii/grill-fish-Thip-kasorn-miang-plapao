@@ -353,6 +353,7 @@
       <div class="page-heading">
       <div><h2>รายงานการขาย</h2><p>สรุปยอดสำคัญสำหรับเช็กก่อนปิดร้าน และดูแนวโน้มการขาย</p></div>
       <div class="dashboard-tools">
+        <a id="remoteDashboardBtnV64" class="remote-dashboard-btn-v67" href="remote-dashboard.html" target="_blank" rel="noopener"><span class="remote-live-dot-v67"></span><span><b>ดูยอดออนไลน์</b><small>REAL‑TIME</small></span></a>
         <div class="export-date-tools">
           <input id="exportSalesDate" type="date" aria-label="วันที่สำหรับ Export">
           <button id="exportSelectedCsvBtn" class="export-csv-btn">⬇ Export วันที่เลือก</button>
@@ -360,6 +361,10 @@
         </div>
       </div>
     </div>
+      <div class="card period-card-v65">
+        <div class="period-head-v65"><div><h3>สรุปรายรับ <span id="periodLabelV65">วันนี้</span></h3><p>ดูยอดรวมรายวัน 7 วัน เดือน และปี จากออเดอร์ที่ชำระสำเร็จ</p></div><div class="period-tabs-v65"><button class="active" data-period-v65="today">วันนี้</button><button data-period-v65="week">7 วัน</button><button data-period-v65="month">เดือน</button><button data-period-v65="year">ปี</button></div></div>
+        <div id="periodSummaryV65" class="period-summary-v65"></div>
+      </div>
       <div class="card day-close-card">
         <div class="day-close-head">
           <div><h3>สรุปปิดยอดวันนี้</h3><p>ยอดขาย เงินสด QR ส่วนลด ออเดอร์ยกเลิก และกำไรโดยประมาณ</p></div>
@@ -388,6 +393,10 @@
       <div class="report-grid report-history">
         <div class="card chart-card"><h3 id="weekChartTitle">จำนวนออเดอร์ 7 วัน ถึงวันที่เลือก</h3><canvas id="weekChart"></canvas></div>
         <div class="card chart-card"><h3 id="monthChartTitle">จำนวนออเดอร์ 30 วัน ถึงวันที่เลือก</h3><canvas id="monthChart"></canvas></div>
+      </div>
+      <div class="card audit-card-v65">
+        <div class="audit-head-v65"><div><h3>🧾 Audit Log</h3><p>ประวัติกิจกรรมสำคัญของร้าน พนักงานทั่วไปแก้ไขจากหน้า POS ไม่ได้</p></div><div class="audit-filter-v65"><input id="auditSearchV65" placeholder="ค้นหาพนักงาน / ออเดอร์ / กิจกรรม"><select id="auditTypeV65"><option value="all">กิจกรรมทั้งหมด</option><option value="ขาย">การขาย</option><option value="ยกเลิก">ยกเลิก</option><option value="สต๊อก">สต๊อก</option><option value="สินค้า">สินค้า</option><option value="ออเดอร์ล่วงหน้า">ออเดอร์ล่วงหน้า</option><option value="ผู้ใช้งาน">ผู้ใช้งาน</option></select></div></div>
+        <div id="auditLogListV65" class="audit-list-v65"></div>
       </div>
       <canvas id="secondChart" class="hidden" aria-hidden="true"></canvas>
     </section>
@@ -457,7 +466,46 @@
     </details>
   </div>
 </div>
-      <div class="admin-grid admin-tools-grid"><div class="card"><div class="admin-card-head"><div><h3>เพิ่มเมนู</h3><p>เพิ่มสินค้า ราคา ต้นทุน สต๊อก และหมวด</p></div><span class="admin-head-icon"><svg class="admin-svg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></span></div><div class="form-grid admin-product-form-v38">
+      <div class="admin-grid admin-tools-grid">
+  <div class="card admin-primary-card printer-card-v66">
+    <div class="admin-card-head">
+      <div>
+        <h3>เครื่องพิมพ์ใบเสร็จ Epson</h3>
+        
+      </div>
+      <span class="admin-head-icon">🖨️</span>
+    </div>
+    <div class="printer-grid-v66">
+      <label>IP เครื่องปริ้น
+        <input id="printerIpV66" inputmode="decimal" placeholder="เช่น 192.168.1.60">
+      </label>
+      <label>Device ID
+        <input id="printerDeviceIdV66" value="local_printer" placeholder="local_printer">
+      </label>
+    </div>
+    <div class="printer-switches-v66">
+      <label class="printer-switch-row-v66">
+        <input id="printerEnabledV66" type="checkbox">
+        <span><b>เปิดใช้เครื่องปริ้น Wi‑Fi</b><small>เมื่อเปิด ระบบจะส่งงานพิมพ์ผ่าน Raspberry Pi</small></span>
+      </label>
+      <label class="printer-switch-row-v66">
+        <input id="autoReceiptV66" type="checkbox">
+        <span><b>พิมพ์ใบเสร็จอัตโนมัติ</b><small>หลังชำระเงินสำเร็จ พิมพ์ทันทีโดยไม่ต้องกดยืนยัน</small></span>
+      </label>
+      <label class="printer-switch-row-v66">
+        <input id="autoQueueV66" type="checkbox">
+        <span><b>พิมพ์บัตรคิวอัตโนมัติ</b><small>พิมพ์คิวต่อจากใบเสร็จทันที</small></span>
+      </label>
+    </div>
+    <div class="printer-actions-v66">
+      <button id="savePrinterV66" class="primary">บันทึกเครื่องปริ้น</button>
+      <button id="testPrinterV66" class="btn-secondary-orange">ทดสอบพิมพ์</button>
+      <span id="printerStatusV66" class="printer-status-v66">ยังไม่ได้ตั้งค่า</span>
+    </div>
+    
+  </div>
+
+<div class="card"><div class="admin-card-head"><div><h3>เพิ่มเมนู</h3><p>เพิ่มสินค้า ราคา ต้นทุน สต๊อก และหมวด</p></div><span class="admin-head-icon"><svg class="admin-svg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></span></div><div class="form-grid admin-product-form-v38">
   <div class="admin-product-name-field-v38"><label>ชื่อสินค้า</label><input id="newName"></div>
   <div class="admin-product-category-field-v38"><label>หมวด</label><select id="newCategory"></select>
       <div class="category-add-row category-add-row-v37 category-add-row-v39">
@@ -470,7 +518,29 @@
         <div id="categoryManager"></div>
       </div>
       <div class="card"><h3>จัดการเมนู</h3><div id="adminProducts" class="table-wrap"></div></div>
-      <div class="card"><h3>ข้อมูลสำรอง</h3><div class="inline-actions"><button id="exportBtn" class="secondary">Export JSON</button><button id="exportTodayCsvAdminBtn" class="secondary">Export ยอดขายวันนี้ CSV</button><button id="importBtn" class="secondary">Import JSON</button><input id="importFile" type="file" accept=".json" class="hidden"><button id="resetBtn" class="danger">รีเซ็ตข้อมูลทดลอง</button></div></div>
+      <div class="card admin-backup-card-v67">
+  <div class="admin-card-head"><div><h3>ข้อมูลสำรอง</h3><p>สำรองข้อมูลร้านและตั้งค่า Cloud เฉพาะเจ้าของ</p></div><span class="admin-head-icon">☁️</span></div>
+  <div class="inline-actions">
+    <button id="exportBtn" class="secondary">Export JSON</button>
+    <button id="exportTodayCsvAdminBtn" class="secondary">Export ยอดขายวันนี้ CSV</button>
+    <button id="importBtn" class="secondary">Import JSON</button>
+    <input id="importFile" type="file" accept=".json" class="hidden">
+    <button id="resetBtn" class="danger">รีเซ็ตข้อมูลทดลอง</button>
+  </div>
+  <details class="cloud-advanced-v67">
+    <summary>ตั้งค่า Cloud / Remote Backup</summary>
+    <div class="remote-sync-fields-v64 cloud-admin-fields-v67">
+      <label>Cloud Server URL<input id="remoteSyncUrlV64" type="url" placeholder="https://your-pos-server.example.com"></label>
+      <label>Shop Key<input id="remoteShopKeyV64" type="password" placeholder="รหัสลับสำหรับส่งข้อมูลขึ้น Cloud"></label>
+      <button id="saveRemoteSyncV64" class="primary">บันทึก Cloud Sync</button>
+    </div>
+    <div class="cloud-health-v65" id="cloudHealthV65"></div>
+    <div class="cloud-actions-v65">
+      <button id="syncNowV65" class="btn-neutral">Sync ตอนนี้</button>
+      <button id="backupNowV65" class="btn-secondary-orange">Backup ตอนนี้</button>
+    </div>
+  </details>
+</div>
     </section>
   </main>
 </div>

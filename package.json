@@ -1,10 +1,16 @@
 {
   "name": "fish-pos-customer-display",
-  "version": "1.0.0",
+  "version": "1.4.0",
   "private": true,
-  "description": "Local Raspberry Pi server and customer display bridge for Fish POS",
+  "description": "Fish POS V72 - unified direct Epson printing including day close",
   "main": "server.js",
-  "scripts": {"start": "node server.js"},
-  "dependencies": {"ws": "^8.18.0",
-    "qrcode": "^1.5.4"}
+  "scripts": {
+    "start": "node server.js",
+    "start:local": "node server.js",
+    "start:cloud": "node server-cloud.js"
+  },
+  "dependencies": {
+    "ws": "^8.18.0",
+    "qrcode": "^1.5.4"
+  }
 }

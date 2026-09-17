@@ -4475,3 +4475,90 @@ body.queue-ticket-preview-v39 .screen-actions button,
   min-width:48px!important;
   flex-basis:48px!important;
 }
+
+.remote-sync-card-v64{margin-bottom:16px;padding:18px;display:grid;gap:14px}
+.remote-sync-card-v64 h3{margin:0 0 5px}.remote-sync-card-v64 p{margin:0;color:var(--muted)}
+.remote-sync-fields-v64{display:grid;grid-template-columns:minmax(220px,1.5fr) minmax(180px,1fr) auto;gap:10px;align-items:end}
+.remote-sync-fields-v64 label{display:grid;gap:6px;font-weight:700}.remote-sync-fields-v64 input{min-height:44px}
+.remote-dashboard-btn-v64{text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+@media(max-width:900px){.remote-sync-fields-v64{grid-template-columns:1fr}}
+
+/* V65 — Revenue periods, cloud health, audit log */
+.period-card-v65{margin-bottom:16px;padding:18px}.period-head-v65{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}.period-head-v65 h3{margin:0}.period-head-v65 p{margin:5px 0 0;color:var(--muted)}
+.period-tabs-v65{display:flex;gap:6px;flex-wrap:wrap}.period-tabs-v65 button{border:1px solid #eadfd7;background:#fff;padding:9px 13px;border-radius:999px;font-weight:800}.period-tabs-v65 button.active{background:#fff1e8;border-color:#ef7b2d;color:#cf5a09}
+.period-summary-v65{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin-top:16px}.period-summary-v65>div{background:#faf8f6;border:1px solid #eee6e0;border-radius:16px;padding:14px}.period-summary-v65 small{display:block;color:#777;margin-bottom:7px}.period-summary-v65 b{font-size:21px}.period-summary-v65 .wide{grid-column:span 2}
+.cloud-health-v65{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:5px}.cloud-health-v65>div{padding:10px 12px;border-radius:13px;background:#f7f7f7;border:1px solid #ececec}.cloud-health-v65 b,.cloud-health-v65 small{display:block}.cloud-health-v65 small{margin-top:3px;color:#777}.cloud-actions-v65{display:flex;gap:8px;justify-content:flex-end}
+.audit-card-v65{margin-top:16px;padding:18px}.audit-head-v65{display:flex;justify-content:space-between;gap:14px;align-items:flex-start}.audit-head-v65 h3{margin:0}.audit-head-v65 p{margin:5px 0 0;color:var(--muted)}.audit-filter-v65{display:flex;gap:8px}.audit-filter-v65 input,.audit-filter-v65 select{min-height:40px;border:1px solid #e1e1e1;border-radius:11px;padding:8px 10px;background:#fff}.audit-list-v65{margin-top:14px;max-height:440px;overflow:auto}.audit-row-v65{display:grid;grid-template-columns:30px 1fr auto;gap:10px;align-items:start;padding:12px 4px;border-bottom:1px solid #eee}.audit-icon-v65{width:25px;height:25px;border-radius:50%;display:grid;place-items:center;background:#fff0e5;color:#d66110;font-weight:900}.audit-main-v65 p{margin:3px 0 0;color:#666}.audit-meta-v65{text-align:right}.audit-meta-v65 b,.audit-meta-v65 small{display:block}.audit-meta-v65 small{color:#888;margin-top:3px}
+@media(max-width:900px){.period-head-v65,.audit-head-v65{flex-direction:column}.period-summary-v65{grid-template-columns:repeat(2,1fr)}.period-summary-v65 .wide{grid-column:span 2}.cloud-health-v65{grid-template-columns:1fr}.audit-filter-v65{width:100%;flex-direction:column}.audit-filter-v65 input,.audit-filter-v65 select{width:100%}}
+
+/* V66 Epson Wi-Fi printer */
+.printer-card-v66{grid-column:1/-1}
+.printer-grid-v66{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
+.printer-grid-v66 label{display:grid;gap:6px;font-weight:700}
+.printer-switches-v66{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0}
+.printer-switch-row-v66{display:flex;gap:10px;align-items:flex-start;padding:12px;border:1px solid #ece5dc;border-radius:14px;background:#fffaf4;cursor:pointer}
+.printer-switch-row-v66 input{width:20px;height:20px;margin-top:2px;accent-color:#e97817}
+.printer-switch-row-v66 span{display:grid;gap:3px}.printer-switch-row-v66 small{color:#747474;font-weight:500;line-height:1.35}
+.printer-actions-v66{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.printer-status-v66{font-size:13px;font-weight:750;color:#6c7278}.printer-status-v66.ok{color:#18864b}.printer-status-v66.error{color:#c63e32}.printer-status-v66.pending{color:#c66a13}
+.printer-help-v66{display:block;margin-top:10px;color:#777;line-height:1.45}
+@media(max-width:900px){.printer-grid-v66,.printer-switches-v66{grid-template-columns:1fr}}
+
+/* =====================================================================
+   V67 — Remote button + admin cleanup
+   ===================================================================== */
+.remote-dashboard-btn-v67{
+  display:inline-flex;align-items:center;gap:10px;
+  min-height:48px;padding:8px 16px;
+  border:1px solid #ef8b45;border-radius:14px;
+  background:linear-gradient(135deg,#f47b19,#df5e0c);
+  color:#fff;text-decoration:none;
+  box-shadow:0 8px 18px rgba(225,96,13,.18);
+  font-weight:850;
+}
+.remote-dashboard-btn-v67:hover{transform:translateY(-1px);box-shadow:0 10px 22px rgba(225,96,13,.23)}
+.remote-dashboard-btn-v67 span:last-child{display:grid;line-height:1.05}
+.remote-dashboard-btn-v67 b{font-size:13px}.remote-dashboard-btn-v67 small{font-size:8px;letter-spacing:1.2px;opacity:.85;margin-top:4px}
+.remote-live-dot-v67{width:9px;height:9px;border-radius:50%;background:#a8ffca;box-shadow:0 0 0 4px rgba(168,255,202,.16)}
+.cloud-advanced-v67{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
+.cloud-advanced-v67>summary{cursor:pointer;font-size:12px;font-weight:800;color:#6d5847;list-style:none}
+.cloud-advanced-v67>summary::-webkit-details-marker{display:none}
+.cloud-advanced-v67>summary::after{content:"⌄";float:right;color:#9b806b}
+.cloud-admin-fields-v67{margin-top:12px}
+.printer-card-v66 .admin-card-head{margin-bottom:4px}
+@media(max-width:800px){.remote-dashboard-btn-v67{min-height:44px;padding:7px 12px}}
+
+/* =====================================================================
+   V71 — Preorder print action: intentionally prominent for shop use
+   ===================================================================== */
+.preorder-card-row{
+  grid-template-columns:92px minmax(150px,.9fr) minmax(180px,1.25fr) 92px 138px!important;
+}
+.preorder-card-actions{gap:7px!important}
+.preorder-card-actions .pre-print-v71{
+  min-height:43px!important;
+  padding:0 10px!important;
+  border:1px solid #E96B12!important;
+  border-radius:10px!important;
+  background:linear-gradient(135deg,#F47A1F,#E45F0B)!important;
+  color:#fff!important;
+  font-size:11px!important;
+  font-weight:900!important;
+  box-shadow:0 5px 12px rgba(225,95,10,.18)!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:6px!important;
+}
+.preorder-card-actions .pre-print-v71:hover{transform:translateY(-1px);box-shadow:0 7px 15px rgba(225,95,10,.24)!important}
+.preorder-card-actions .pre-print-v71:disabled{opacity:.68;transform:none}
+.pre-print-icon-v71{font-size:15px;line-height:1}
+@media(max-width:980px){
+  .preorder-card-row{grid-template-columns:86px minmax(140px,1fr) minmax(160px,1.1fr) 88px 126px!important}
+}
+@media(max-width:760px){
+  .preorder-card-row{grid-template-columns:1fr!important}
+  .preorder-card-total{text-align:left!important}
+  .preorder-card-actions{grid-template-columns:1fr 1fr!important}
+  .preorder-card-actions .pre-print-v71{grid-column:1/-1}
+}

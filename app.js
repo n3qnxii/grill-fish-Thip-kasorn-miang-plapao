@@ -7,7 +7,7 @@ const STAFF_LIST=[
   {id:5,name:"น้องไนท์",pin:"4444",role:"staff"},
   {id:6,name:"STAFF",pin:"5555",role:"staff"}
 ];
-const demoState={settings:{shopName:"ร้านทิพย์เกษรเมี่ยงปลาเผา",nextOrder:1,qrImage:"",promptPayId:"",dailyOrderCounters:{},customCategories:[],categoryOrder:["ปลาชุดใหญ่","ปลาชุดเล็ก","ปลาตัว","ของเพิ่ม","เครื่องดื่ม"]},staff:STAFF_LIST,products:[
+const demoState={settings:{shopName:"ร้านทิพย์เกษรเมี่ยงปลาเผา",nextOrder:1,qrImage:"",promptPayId:"",dailyOrderCounters:{},remoteSyncUrl:"",remoteShopKey:"",remoteDashboardUrl:"",printerEnabled:false,printerIp:"",printerDeviceId:"local_printer",autoPrintReceipt:true,autoPrintQueue:true,customCategories:[],categoryOrder:["ปลาชุดใหญ่","ปลาชุดเล็ก","ปลาตัว","ของเพิ่ม","เครื่องดื่ม"]},staff:STAFF_LIST,products:[
   {id:1,name:"ปลาเผาเป็นชุด",category:"ปลาชุดใหญ่",price:160,cost:110,stock:50,unit:"ตัว",active:true},
   {id:2,name:"ปลาเผาเป็นชุด",category:"ปลาชุดใหญ่",price:170,cost:110,stock:50,unit:"ตัว",active:true},
   {id:3,name:"ปลาเผาเป็นชุด",category:"ปลาชุดใหญ่",price:180,cost:110,stock:50,unit:"ตัว",active:true},
@@ -46,7 +46,7 @@ const demoState={settings:{shopName:"ร้านทิพย์เกษรเ�
   {id:35,name:"น้ำจิ้มปั่น",category:"ของเพิ่ม",price:10,cost:3,stock:100,unit:"ถุง",active:true},
   {id:36,name:"น้ำดื่ม",category:"เครื่องดื่ม",price:10,cost:5,stock:100,unit:"ขวด",active:true},
   {id:37,name:"ผัก",category:"ของเพิ่ม",price:20,cost:7,stock:100,unit:"ถุง",active:true}
-],orders:[],preorders:[],heldOrders:[]};
+],orders:[],preorders:[],heldOrders:[],auditLog:[],syncQueue:[]};
 const $=id=>document.getElementById(id), clone=o=>JSON.parse(JSON.stringify(o));
 const money=n=>"฿"+Number(n||0).toLocaleString("th-TH",{maximumFractionDigits:2});
 
@@ -350,9 +350,9 @@ function advanceDailyOrderNumber(){
   state.settings.nextOrder=state.settings.dailyOrderCounters[key];
 }
 
-function loadState(){try{const x=JSON.parse(localStorage.getItem(STORAGE_KEY)||"null")||clone(demoState);if(!x.settings)x.settings=clone(demoState.settings);if(typeof x.settings.qrImage!=="string")x.settings.qrImage="";if(typeof x.settings.promptPayId!=="string")x.settings.promptPayId="";
+function loadState(){try{const x=JSON.parse(localStorage.getItem(STORAGE_KEY)||"null")||clone(demoState);if(!x.settings)x.settings=clone(demoState.settings);if(typeof x.settings.qrImage!=="string")x.settings.qrImage="";if(typeof x.settings.promptPayId!=="string")x.settings.promptPayId="";if(typeof x.settings.remoteSyncUrl!=="string")x.settings.remoteSyncUrl="";if(typeof x.settings.remoteShopKey!=="string")x.settings.remoteShopKey="";if(typeof x.settings.remoteDashboardUrl!=="string")x.settings.remoteDashboardUrl="";if(typeof x.settings.printerEnabled!=="boolean")x.settings.printerEnabled=false;if(typeof x.settings.printerIp!=="string")x.settings.printerIp="";if(typeof x.settings.printerDeviceId!=="string"||!x.settings.printerDeviceId)x.settings.printerDeviceId="local_printer";if(typeof x.settings.autoPrintReceipt!=="boolean")x.settings.autoPrintReceipt=true;if(typeof x.settings.autoPrintQueue!=="boolean")x.settings.autoPrintQueue=true;
 if(!x.settings.dailyOrderCounters||typeof x.settings.dailyOrderCounters!=="object")x.settings.dailyOrderCounters={};
-if(!Array.isArray(x.settings.customCategories))x.settings.customCategories=[];if(!Array.isArray(x.settings.categoryOrder))x.settings.categoryOrder=[];if(!Array.isArray(x.products))x.products=clone(demoState.products);if(!Array.isArray(x.orders))x.orders=[];if(!Array.isArray(x.preorders))x.preorders=[];if(!Array.isArray(x.heldOrders))x.heldOrders=[];x.staff=clone(STAFF_LIST);return x}catch(e){return clone(demoState)}}
+if(!Array.isArray(x.settings.customCategories))x.settings.customCategories=[];if(!Array.isArray(x.settings.categoryOrder))x.settings.categoryOrder=[];if(!Array.isArray(x.products))x.products=clone(demoState.products);if(!Array.isArray(x.orders))x.orders=[];if(!Array.isArray(x.preorders))x.preorders=[];if(!Array.isArray(x.heldOrders))x.heldOrders=[];if(!Array.isArray(x.auditLog))x.auditLog=[];if(!Array.isArray(x.syncQueue))x.syncQueue=[];x.staff=clone(STAFF_LIST);return x}catch(e){return clone(demoState)}}
 let state=loadState(),currentUser=null,selectedStaffId=null,cart=[],selectedMethod=null,lastOrder=null,currentCategory="ปลาชุดใหญ่",dashboardRange="today",orderStatusFilter="today",lastCashReceived=0,lastChange=0,preorderCart=[],preorderStatusFilter="all",preorderCategory="all";
 
 let preorderPageViewV25="list";
@@ -394,6 +394,73 @@ let preorderPageViewV25="list";
 // V10.7 shop name migration for existing saved data
 if(state.settings&&state.settings.shopName===("ร้านทิพย์เกษรเมี่ยงปลาเผา"+"ทิพย์เกษร")){state.settings.shopName="ร้านทิพย์เกษรเมี่ยงปลาเผา";saveState();}
 function saveState(){state.staff=clone(STAFF_LIST);localStorage.setItem(STORAGE_KEY,JSON.stringify(state))}
+
+function auditV65(action,detail="",meta={}){
+  if(!Array.isArray(state.auditLog))state.auditLog=[];
+  const row={id:Date.now()+Math.floor(Math.random()*1000),time:nowIso(),action:String(action),detail:String(detail||""),staffId:currentUser?.id||null,staffName:currentUser?.name||"ระบบ",role:currentUser?.role||"system",...meta};
+  state.auditLog.unshift(row);
+  state.auditLog=state.auditLog.slice(0,5000);
+  try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state))}catch(e){}
+  queueSyncV65("audit",row);
+  renderAuditV65();
+  return row;
+}
+function queueSyncV65(type,payload){
+  if(!Array.isArray(state.syncQueue))state.syncQueue=[];
+  state.syncQueue.push({id:`${Date.now()}-${Math.random().toString(36).slice(2,8)}`,type,payload,createdAt:nowIso(),tries:0});
+  state.syncQueue=state.syncQueue.slice(-3000);
+  try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state))}catch(e){}
+  updateCloudStatusV65();
+  setTimeout(flushSyncQueueV65,50);
+}
+function cloudBaseV65(){return String(state.settings.remoteSyncUrl||"").trim().replace(/\/+$/,"")}
+function cloudHeadersV65(){return {"Content-Type":"application/json","X-Shop-Key":String(state.settings.remoteShopKey||"").trim()}}
+async function flushSyncQueueV65(){
+  if(window.__syncingV65)return;
+  const base=cloudBaseV65(),key=String(state.settings.remoteShopKey||"").trim();
+  if(!base||!key||!navigator.onLine){updateCloudStatusV65(false);return}
+  window.__syncingV65=true;
+  try{
+    while(state.syncQueue.length){
+      const job=state.syncQueue[0];job.tries=(job.tries||0)+1;
+      let path=job.type==="audit"?"/api/audit/sync":"/api/orders/sync";
+      const body=job.type==="audit"?{audit:job.payload,shopName:state.settings.shopName||""}:{order:job.payload,shopName:state.settings.shopName||""};
+      let r;
+      try{r=await fetch(base+path,{method:"POST",headers:cloudHeadersV65(),body:JSON.stringify(body)})}catch(e){break}
+      if(!r.ok){if(job.tries>=5)job.lastError=`HTTP ${r.status}`;break}
+      state.syncQueue.shift();state.settings.lastCloudSyncAt=nowIso();
+      localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
+    }
+    updateCloudStatusV65(state.syncQueue.length===0);
+  }finally{window.__syncingV65=false}
+}
+async function remoteSyncOrderV64(order){queueSyncV65("order",order);return true}
+async function backupCloudV65(manual=false){
+  const base=cloudBaseV65(),key=String(state.settings.remoteShopKey||"").trim();
+  if(!base||!key){if(manual)alert("กรุณาตั้งค่า Cloud Server URL และ Shop Key ก่อน");return false}
+  const payload={version:"V65",savedAt:nowIso(),shopName:state.settings.shopName||"",data:{settings:state.settings,products:state.products,orders:state.orders,preorders:state.preorders,heldOrders:state.heldOrders,auditLog:state.auditLog}};
+  try{
+    const r=await fetch(base+"/api/backup/snapshot",{method:"POST",headers:cloudHeadersV65(),body:JSON.stringify(payload)});
+    if(!r.ok)throw new Error(`HTTP ${r.status}`);
+    state.settings.lastCloudBackupAt=nowIso();localStorage.setItem(STORAGE_KEY,JSON.stringify(state));updateCloudStatusV65(true);
+    if(manual)alert("สำรองข้อมูลขึ้น Cloud สำเร็จ");return true;
+  }catch(e){updateCloudStatusV65(false);if(manual)alert("สำรองข้อมูลไม่สำเร็จ ระบบขายยังใช้งานได้ตามปกติ");return false}
+}
+function scheduleBackupV65(){
+  clearInterval(window.__backupTimerV65);
+  window.__backupTimerV65=setInterval(()=>{if(cloudBaseV65()&&state.settings.remoteShopKey)backupCloudV65(false)},15*60*1000);
+}
+function updateCloudStatusV65(ok){
+  const el=$("cloudHealthV65");if(!el)return;
+  const pending=Array.isArray(state.syncQueue)?state.syncQueue.length:0;
+  const last=state.settings.lastCloudSyncAt?new Date(state.settings.lastCloudSyncAt).toLocaleString("th-TH"):'ยังไม่เคย Sync';
+  const backup=state.settings.lastCloudBackupAt?new Date(state.settings.lastCloudBackupAt).toLocaleString("th-TH"):'ยังไม่เคย Backup';
+  el.innerHTML=`<div><b>${navigator.onLine?'อินเทอร์เน็ต ✓':'ออฟไลน์'}</b><small>${navigator.onLine?'พร้อมส่งข้อมูล':'POS ยังขายต่อได้'}</small></div><div><b>${pending?`รอ Sync ${pending}`:'Sync ✓'}</b><small>${last}</small></div><div><b>${state.settings.lastCloudBackupAt?'Backup ✓':'Backup —'}</b><small>${backup}</small></div>`;
+}
+window.addEventListener("online",()=>{flushSyncQueueV65();backupCloudV65(false);updateCloudStatusV65(true)});
+window.addEventListener("offline",()=>updateCloudStatusV65(false));
+
+
 function enforceShopNameV24(){
   if(state.settings)state.settings.shopName="ร้านทิพย์เกษรเมี่ยงปลาเผา";
   if($("shopTitle"))$("shopTitle").textContent="ร้านทิพย์เกษรเมี่ยงปลาเผา";
@@ -519,6 +586,7 @@ function toggleStaffAccountPopoverV29(){
 }
 
 function applyCurrentUser(staff){
+  const previousUserV65=currentUser;
   currentUser=staff;
   $("loginScreen").classList.add("hidden");$("app").classList.remove("hidden");
   $("staffBadge").textContent=`${staff.name} · ${staff.role==="owner"?"เจ้าของ":"พนักงาน"}`;
@@ -535,6 +603,7 @@ function applyCurrentUser(staff){
   if(staff.role!=="owner"&&!$("admin").classList.contains("hidden"))openPage("sale");
   renderStaffAccountSwitcherV29();
   renderAll();
+  if(!previousUserV65||previousUserV65.id!==staff.id)auditV65(previousUserV65?"สลับผู้ใช้งาน":"เข้าสู่ระบบ",`${staff.name} (${staff.role==="owner"?"เจ้าของ":"พนักงาน"})`);
 }
 function attemptLogin(){if(!selectedStaffId){$("loginHint").textContent="กรุณาเลือกพนักงานก่อน";return}const staff=STAFF_LIST.find(s=>s.id===selectedStaffId);if(!staff||staff.pin!==$("pinInput").value){$("loginHint").textContent="PIN ไม่ถูกต้อง กรุณาลองใหม่";clearPin();return}applyCurrentUser(staff)}
 $("logoutBtn").onclick=()=>location.reload();
@@ -667,6 +736,9 @@ window.toggleProductSelection=id=>{
   }else{
     cart.push({id:p.id,name:p.name,price:p.price,cost:p.cost,qty:1});playQtySound(true);
   }
+  // V70: broadcast the order immediately on the very first product tap.
+  // This makes the Raspberry Pi customer screen leave the welcome screen at once.
+  customerDisplayCart();
   renderCart();renderProducts();
 };
 window.addItem=id=>toggleProductSelection(id);
@@ -956,7 +1028,7 @@ function cancelCurrentOrderV41(){
     grossProfit:0,payment:"-",cashReceived:0,change:0,staffId:currentUser?.id||"",staffName:currentUser?.name||"-",
     status:"cancelled",time:nowIso(),orderDate:localDateKey(),cancelledAt:nowIso(),cancelReason:"ลูกค้ายกเลิกก่อนชำระ"
   };
-  state.orders.unshift(cancelled);
+  state.orders.unshift(cancelled);auditV65("ยกเลิกออเดอร์ปัจจุบัน",`#${String(cancelled.number).padStart(3,"0")}`,{orderId:cancelled.id});remoteSyncOrderV64(cancelled);
   advanceDailyOrderNumber();
   cart=[];$("discountInput").value=0;
   saveState();renderAll();
@@ -1083,7 +1155,7 @@ $("confirmPay").onclick=()=>{
   const num=currentDailyOrderNumber(),sub=subtotal(),disc=discount(),net=total(),cost=cart.reduce((s,x)=>s+(x.cost||0)*x.qty,0);
   const order={id:Date.now(),number:num,items:cart.map(x=>({...x})),subtotal:sub,discount:disc,total:net,cost,grossProfit:net-cost,payment:selectedMethod,cashReceived:selectedMethod==="เงินสด"?lastCashReceived:net,change:selectedMethod==="เงินสด"?lastChange:0,staffId:currentUser.id,staffName:currentUser.name,status:"paid",time:nowIso(),orderDate:localDateKey(),cancelledAt:null};
   cart.forEach(row=>{const p=state.products.find(x=>x.id===row.id);p.stock-=row.qty});
-  state.orders.unshift(order);advanceDailyOrderNumber();lastOrder=order;saveState();
+  state.orders.unshift(order);advanceDailyOrderNumber();lastOrder=order;saveState();auditV65("ขายสำเร็จ",`#${String(order.number).padStart(3,"0")} • ${money(order.total)} • ${order.payment}`,{orderId:order.id,amount:order.total});remoteSyncOrderV64(order);backupCloudV65(false);
   customerDisplaySuccess(order);
   $("paymentModal").classList.add("hidden");$("qrFullscreen").classList.add("hidden");
   $("successOrderNo").textContent=`ออเดอร์ #${num}`;$("successTotal").textContent=money(net);
@@ -1091,16 +1163,184 @@ $("confirmPay").onclick=()=>{
   $("successReceived").textContent=money(order.cashReceived);
   $("successCashSummary").classList.toggle("hidden",selectedMethod==="QR");
   if($("receiptNoteInput"))$("receiptNoteInput").value="";
-  $("successModal").classList.remove("hidden");startSuccessCountdownV46();playPaymentSuccessSound();announcePayment(order);renderAll();
+  $("successModal").classList.remove("hidden");startSuccessCountdownV46();playPaymentSuccessSound();announcePayment(order);autoPrintPaidOrderV66(order);renderAll();
 };
-$("newOrder").onclick=()=>{if(successAutoTimerV46){clearInterval(successAutoTimerV46);successAutoTimerV46=null}resetOrderAfterSuccessV46();};
-$("printBtn").onclick=()=>{
+$("newOrder").onclick=()=>{if(successAutoTimerV46){clearInterval(successAutoTimerV46);successAutoTimerV46=null}if(postPrintReturnTimerV71){clearTimeout(postPrintReturnTimerV71);postPrintReturnTimerV71=null}resetOrderAfterSuccessV46();};
+$("printBtn").onclick=async()=>{
   if(!lastOrder)return;
   lastOrder.receiptNote=String($("receiptNoteInput")?.value||"").trim();
   const savedOrder=state.orders.find(o=>o.id===lastOrder.id);
   if(savedOrder)savedOrder.receiptNote=lastOrder.receiptNote;
   saveState();
-  printOrder(lastOrder);
+  if(printerConfiguredV66()){
+    const ok=await directPrintReceiptV66(lastOrder);
+    if(ok)scheduleNewOrderAfterPrintV71();
+  }else printOrder(lastOrder);
+};
+
+
+/* =====================================================================
+   V66 — Raspberry Pi -> Epson Wi-Fi direct printing
+   No browser print dialog. The browser sends the order to the local
+   Raspberry Pi server, which talks to Epson ePOS-Print over the LAN.
+   ===================================================================== */
+function printerConfiguredV66(){
+  return !!(state.settings.printerEnabled && String(state.settings.printerIp||"").trim());
+}
+async function printerApiV66(path,payload){
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),15000);
+  try{
+    const r=await fetch(path,{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify(payload||{}),
+      signal:controller.signal
+    });
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok||j.ok===false)throw new Error(j.error||j.message||("HTTP "+r.status));
+    return j;
+  }finally{clearTimeout(timer)}
+}
+function printerPayloadV66(order){
+  return {
+    printer:{
+      ip:String(state.settings.printerIp||"").trim(),
+      deviceId:String(state.settings.printerDeviceId||"local_printer").trim()||"local_printer"
+    },
+    order:{
+      id:order.id,
+      number:order.number,
+      time:order.time,
+      items:(order.items||[]).map(i=>({name:i.name,qty:Number(i.qty||0),price:Number(i.price||0)})),
+      total:Number(order.total||0),
+      discount:Number(order.discount||0),
+      payment:order.payment||"-",
+      cashReceived:Number(order.cashReceived??order.total??0),
+      change:Number(order.change||0),
+      staffName:order.staffName||"-",
+      receiptNote:order.receiptNote||""
+    }
+  };
+}
+async function directPrintReceiptV66(order,{silent=false,retry=true}={}){
+  if(!printerConfiguredV66()){
+    if(!silent)alert("ยังไม่ได้ตั้งค่าเครื่องปริ้น Epson ในหน้าจัดการร้าน");
+    return false;
+  }
+  try{
+    await printerApiV66("/api/print/receipt",printerPayloadV66(order));
+    auditV65?.("พิมพ์ใบเสร็จ",`#${String(order.number).padStart(3,"0")} • Epson Wi‑Fi`,{orderId:order.id});
+    return true;
+  }catch(e){
+    console.error("Receipt print failed",e);
+    if(retry){
+      await new Promise(r=>setTimeout(r,700));
+      return directPrintReceiptV66(order,{silent,retry:false});
+    }
+    if(!silent)alert("พิมพ์ใบเสร็จไม่สำเร็จ: "+e.message);
+    const s=$("printerStatusV66");if(s){s.textContent="พิมพ์ไม่สำเร็จ • "+e.message;s.className="printer-status-v66 error";}
+    return false;
+  }
+}
+async function directPrintQueueV66(order,{silent=false}={}){
+  if(!printerConfiguredV66())return false;
+  try{
+    await printerApiV66("/api/print/queue",printerPayloadV66(order));
+    auditV65?.("พิมพ์บัตรคิว",`#${String(order.number).padStart(3,"0")} • Epson Wi‑Fi`,{orderId:order.id});
+    return true;
+  }catch(e){
+    console.error("Queue print failed",e);
+    if(!silent)alert("พิมพ์บัตรคิวไม่สำเร็จ: "+e.message);
+    return false;
+  }
+}
+async function autoPrintPaidOrderV66(order){
+  if(!printerConfiguredV66())return false;
+  // sequential jobs stop receipts/queue tickets interleaving
+  let receiptPrinted=false;
+  if(state.settings.autoPrintReceipt)receiptPrinted=await directPrintReceiptV66(order,{silent:true});
+  if(state.settings.autoPrintQueue)await directPrintQueueV66(order,{silent:true});
+  // V71: when the receipt has really finished sending to Epson,
+  // keep the success screen for 3 seconds, then start a clean new order.
+  if(receiptPrinted)scheduleNewOrderAfterPrintV71();
+  return receiptPrinted;
+}
+
+let postPrintReturnTimerV71=null;
+function scheduleNewOrderAfterPrintV71(){
+  if(successAutoTimerV46){clearInterval(successAutoTimerV46);successAutoTimerV46=null}
+  if(postPrintReturnTimerV71){clearTimeout(postPrintReturnTimerV71);postPrintReturnTimerV71=null}
+  let sec=3;
+  const el=$("successCountdown");
+  const paint=()=>{if(el)el.innerHTML=`พิมพ์ใบเสร็จแล้ว • กลับหน้าขายอัตโนมัติใน <b>${sec}</b> วินาที`};
+  paint();
+  const tick=()=>{
+    sec--;
+    if(sec<=0){
+      postPrintReturnTimerV71=null;
+      resetOrderAfterSuccessV46();
+      return;
+    }
+    paint();
+    postPrintReturnTimerV71=setTimeout(tick,1000);
+  };
+  postPrintReturnTimerV71=setTimeout(tick,1000);
+}
+
+
+
+/* V72 central direct-print helper for future POS documents */
+async function directPrintDocumentV72(kind,data){
+  if(!printerConfiguredV66()){alert("ยังไม่ได้ตั้งค่า Epson Wi‑Fi ในหน้าจัดการร้าน");return false}
+  await printerApiV66("/api/print/"+kind,{
+    printer:{ip:String(state.settings.printerIp||"").trim(),deviceId:String(state.settings.printerDeviceId||"local_printer").trim()||"local_printer"},
+    ...data
+  });
+  return true;
+}
+
+/* =====================================================================
+   V71 — Epson Wi-Fi preorder preparation ticket
+   A large, shop-facing ticket for tomorrow/preorders.
+   ===================================================================== */
+function preorderPrinterPayloadV71(o){
+  return {
+    printer:{
+      ip:String(state.settings.printerIp||"").trim(),
+      deviceId:String(state.settings.printerDeviceId||"local_printer").trim()||"local_printer"
+    },
+    preorder:{
+      id:o.id,
+      customer:o.customer||"-",
+      phone:o.phone||"",
+      date:o.date||"",
+      pickup:o.pickup||"-",
+      note:o.note||"",
+      staffName:o.staffName||"-",
+      total:Number(o.total||0),
+      items:(o.items||[]).map(i=>({name:i.name,qty:Number(i.qty||0),price:Number(i.price||0)}))
+    }
+  };
+}
+window.printPreorderV71=async id=>{
+  const o=state.preorders.find(x=>Number(x.id)===Number(id));
+  if(!o)return;
+  if(!printerConfiguredV66()){
+    alert("ยังไม่ได้ตั้งค่า Epson Wi‑Fi ในหน้าจัดการร้าน");
+    return;
+  }
+  const btn=document.querySelector(`[data-print-preorder="${id}"]`);
+  const old=btn?.innerHTML;
+  if(btn){btn.disabled=true;btn.innerHTML="กำลังพิมพ์…"}
+  try{
+    await printerApiV66("/api/print/preorder",preorderPrinterPayloadV71(o));
+    auditV65?.("พิมพ์ออเดอร์ล่วงหน้า",`${o.customer} • ${o.date} ${o.pickup} • ${money(o.total)}`,{preorderId:o.id});
+    if(btn){btn.innerHTML="✓ พิมพ์แล้ว";setTimeout(()=>{btn.disabled=false;btn.innerHTML=old},1400)}
+  }catch(e){
+    if(btn){btn.disabled=false;btn.innerHTML=old}
+    alert("พิมพ์รายการสั่งล่วงหน้าไม่สำเร็จ: "+e.message);
+  }
 };
 
 // Orders + receipt
@@ -1122,7 +1362,12 @@ document.querySelectorAll(".order-filter").forEach(btn=>btn.onclick=()=>{
   document.querySelectorAll(".order-filter").forEach(x=>x.classList.toggle("active",x===btn));
   renderOrders();
 });
-$("orderSearch").addEventListener("input",renderOrders);window.cancelOrder=id=>{const o=state.orders.find(x=>x.id===id);if(!o||o.status!=="paid")return;if(!confirm(`ยกเลิกออเดอร์ #${o.number} และคืนสต๊อกใช่ไหม?`))return;o.status="cancelled";o.cancelledAt=nowIso();o.items.forEach(row=>{const p=state.products.find(x=>x.id===row.id);if(p)p.stock+=row.qty});saveState();renderAll()};window.printOrderById=id=>printOrder(state.orders.find(x=>x.id===id),true);
+$("orderSearch").addEventListener("input",renderOrders);window.cancelOrder=id=>{const o=state.orders.find(x=>x.id===id);if(!o||o.status!=="paid")return;if(!confirm(`ยกเลิกออเดอร์ #${o.number} และคืนสต๊อกใช่ไหม?`))return;o.status="cancelled";o.cancelledAt=nowIso();o.items.forEach(row=>{const p=state.products.find(x=>x.id===row.id);if(p)p.stock+=row.qty});saveState();auditV65("ยกเลิกออเดอร์หลังชำระ",`#${String(o.number).padStart(3,"0")} • ${money(o.total)}`,{orderId:o.id,amount:o.total});remoteSyncOrderV64(o);renderAll()};window.printOrderById=async id=>{
+  const o=state.orders.find(x=>x.id===id);
+  if(!o)return;
+  if(printerConfiguredV66())await directPrintReceiptV66(o);
+  else printOrder(o,true);
+};
 function printOrder(o,isCopy=false){
   if(!o)return;
   const note=String(o.receiptNote||"").trim();
@@ -1148,17 +1393,17 @@ function printOrder(o,isCopy=false){
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-  @page{margin:7mm;size:auto}
+  @page{size:80mm auto;margin:3mm 4mm 4mm}
   *{box-sizing:border-box}
   body{margin:0;background:#f5f5f5;color:#000;font-family:"Sarabun","TH Sarabun New","Noto Sans Thai",Tahoma,sans-serif}
   .toolbar{position:sticky;top:0;z-index:5;display:flex;gap:8px;padding:10px;background:#fff;border-bottom:1px solid #ddd}
   .toolbar button{flex:1;min-height:44px;border-radius:8px;font:inherit;font-weight:700}
   .toolbar .back-btn{border:1px solid #F2B36F;background:#FFF1DF;color:#D96F0B}
   .toolbar .print-btn{border:1px solid #E67A18;background:#F28C28;color:#fff}
-  .receipt-wrap{width:350px;max-width:100%;margin:18px auto;background:#fff;border:1px solid #ddd}
-  .receipt{padding:16px 14px;font-size:14px;line-height:1.45;color:#000}
+  .receipt-wrap{width:80mm;max-width:100%;margin:14px auto;background:#fff;border:1px solid #ddd}
+  .receipt{width:72mm;margin:0 auto;padding:4mm 2mm;font-size:12.5px;line-height:1.35;color:#000;overflow:hidden}
   .brand{text-align:center;padding-bottom:10px;border-bottom:1px solid #111}.brand-v61{padding:2px 0 10px}.shop-contact-v61{margin-top:3px;display:flex;flex-direction:column;gap:1px;align-items:center}
-  .receipt-logo{display:block;width:232px;max-width:92%;height:auto;max-height:112px;object-fit:contain;margin:0 auto 6px;filter:grayscale(1) contrast(1.2)}
+  .receipt-logo{display:block;width:54mm;max-width:100%;height:auto;max-height:24mm;object-fit:contain;object-position:center;margin:0 auto 2mm;transform:translateX(2.6mm);filter:grayscale(1) contrast(1.25)}
   .shop{font-size:20px;font-weight:700;display:none}
   .shop-address,.shop-phone{font-size:12px;margin-top:0;line-height:1.35}
   .copy-mark{display:inline-block;margin-top:6px;padding:2px 7px;border:1px solid #000;border-radius:999px;font-size:10px;font-weight:600}
@@ -1176,7 +1421,7 @@ function printOrder(o,isCopy=false){
   .receipt-note{margin-top:8px;padding:7px 0;border-top:1px dashed #777;border-bottom:1px dashed #777;color:#000}
   .receipt-note span{display:block;font-size:10px}.receipt-note b{display:block;margin-top:2px;font-weight:500}
   .thanks{text-align:center;margin-top:12px;font-size:11px;color:#000}
-  @media print{body{background:#fff}.toolbar{display:none!important}.receipt-wrap{width:100%;margin:0;border:0}.receipt{padding:0}.receipt-logo{width:62mm;max-width:94%;max-height:27mm;filter:grayscale(1) contrast(1.3)}}
+  @media print{html,body{width:80mm;margin:0!important;padding:0!important;background:#fff}.toolbar{display:none!important}.receipt-wrap{width:80mm!important;max-width:80mm!important;margin:0!important;border:0}.receipt{width:72mm!important;margin:0 auto!important;padding:2mm 0 3mm!important}.brand{text-align:center;width:100%}.receipt-logo{display:block!important;width:52mm!important;max-width:52mm!important;height:auto!important;max-height:23mm!important;object-fit:contain!important;object-position:center!important;margin:0 auto 2mm!important;transform:translateX(2.6mm)!important;filter:grayscale(1) contrast(1.35)}}
   </style></head><body>
   <div class="toolbar"><button class="back-btn" id="backToOrders">กลับ</button><button class="print-btn" id="printAgain">พิมพ์ใบเสร็จ</button></div>
   <div class="receipt-wrap"><div class="receipt">
@@ -1332,7 +1577,7 @@ function renderSelectedDateDashboardDetailsV53(){
   }
 
   const count={};
-  os.forEach(o=>o.items.forEach(i=>count[i.name]=(count[i.name]||0)+i.qty));
+  os.forEach(o=>o.items.forEach(i=>count[`${i.name} ราคา ${money(i.price)}`]=(count[`${i.name} ราคา ${money(i.price)}`]||0)+i.qty));
   const top=Object.entries(count).sort((a,b)=>b[1]-a[1]).slice(0,5);
   if($("topProducts")){
     $("topProducts").innerHTML=top.length
@@ -1347,7 +1592,7 @@ function renderDashboard(){
   const cashOrders=os.filter(o=>o.payment==="เงินสด"),qrOrders=os.filter(o=>o.payment==="QR");
   const cash=cashOrders.reduce((s,o)=>s+Number(o.total||0),0),qr=qrOrders.reduce((s,o)=>s+Number(o.total||0),0);
   $("paymentSummary").innerHTML=`<div class="pay-line"><span class="pay-label"><svg class="pay-svg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M6 9h.01M18 15h.01"/></svg><span>เงินสด</span></span><b>${money(cash)} · ${cashOrders.length} ครั้ง</b></div><div class="pay-line"><span class="pay-label"><svg class="pay-svg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM15 14h2v2h-2zM19 14h1v3h-3v3h-3v-2h2v-2h3z"/></svg><span>QR</span></span><b>${money(qr)} · ${qrOrders.length} ครั้ง</b></div>`;
-  const count={};os.forEach(o=>o.items.forEach(i=>count[i.name]=(count[i.name]||0)+i.qty));
+  const count={};os.forEach(o=>o.items.forEach(i=>count[`${i.name} ราคา ${money(i.price)}`]=(count[`${i.name} ราคา ${money(i.price)}`]||0)+i.qty));
   const top=Object.entries(count).sort((a,b)=>b[1]-a[1]).slice(0,5);
   $("topProducts").innerHTML=top.length?top.map((x,i)=>`<div class="top-line"><span>${i+1}. ${x[0]}</span><b>${x[1]} ชิ้น</b></div>`).join(""):"<p class='empty'>ยังไม่มีข้อมูลวันนี้</p>";
   renderDayCloseSummary();renderSalesHistoryStats();renderSelectedDateDashboardDetailsV53();renderSalesCharts()
@@ -1373,20 +1618,38 @@ function renderDayCloseSummary(){
   const cells=[["ยอดขายรวม",money(d.sales)],["เงินสด",money(d.cash)],["QR",money(d.qr)],["ออเดอร์สำเร็จ",d.os.length+" ออเดอร์"],["ยกเลิก",d.cancelled.length+" ออเดอร์"],["ส่วนลด",money(d.discounts)],["ต้นทุนโดยประมาณ",money(d.cost)],["กำไรขั้นต้น",money(d.profit)]];
   box.innerHTML=cells.map(x=>`<div><span>${x[0]}</span><b>${x[1]}</b></div>`).join("");
 }
-function printDayClose(){
-  const d=getDayCloseData(),date=new Date().toLocaleDateString("th-TH",{day:"2-digit",month:"long",year:"numeric"});
-  const w=window.open("","day-close","width=520,height=760");if(!w){alert("กรุณาอนุญาต Pop-up เพื่อพิมพ์สรุป");return}
-  w.document.write(`<!doctype html><html lang="th"><head><meta charset="utf-8"><title>สรุปปิดยอด</title><style>
-  @page{margin:8mm}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans Thai",sans-serif;color:#111}.wrap{max-width:380px;margin:auto}.toolbar{display:flex;gap:8px;margin-bottom:12px}.toolbar button{flex:1;padding:12px;border:0;border-radius:10px;font-weight:800}.print{background:#e76613;color:white}.back{background:#eee}.shop{text-align:center;font-size:20px;font-weight:900}.date{text-align:center;margin:4px 0 14px}.row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed #aaa}.total{font-size:20px;font-weight:900}.foot{text-align:center;margin-top:16px;font-size:12px}@media print{.toolbar{display:none}}
-  </style></head><body><div class="wrap"><div class="toolbar"><button class="back" onclick="window.close()">กลับ</button><button class="print" onclick="window.print()">พิมพ์</button></div>
-  <div class="shop">${escapeHtml(state.settings.shopName)}</div><div class="date">สรุปปิดยอด · ${date}</div>
-  <div class="row total"><span>ยอดขายรวม</span><b>${money(d.sales)}</b></div>
-  <div class="row"><span>เงินสด</span><b>${money(d.cash)}</b></div><div class="row"><span>QR</span><b>${money(d.qr)}</b></div>
-  <div class="row"><span>ออเดอร์สำเร็จ</span><b>${d.os.length}</b></div><div class="row"><span>ออเดอร์ยกเลิก</span><b>${d.cancelled.length}</b></div>
-  <div class="row"><span>ส่วนลดรวม</span><b>${money(d.discounts)}</b></div><div class="row"><span>ต้นทุนโดยประมาณ</span><b>${money(d.cost)}</b></div>
-  <div class="row total"><span>กำไรขั้นต้น</span><b>${money(d.profit)}</b></div>
-  <div class="foot">บ้านดุง อุดรธานี 41190<br>โทรศัพท์ 0897109954<br>พิมพ์โดย ${escapeHtml(currentUser?.name||"-")}</div></div></body></html>`);
-  w.document.close();
+async function printDayClose(){
+  const d=getDayCloseData();
+  const now=new Date();
+  const date=now.toLocaleDateString("th-TH",{day:"2-digit",month:"long",year:"numeric"});
+  const time=now.toLocaleTimeString("th-TH",{hour:"2-digit",minute:"2-digit"});
+  if(!printerConfiguredV66()){
+    alert("ยังไม่ได้ตั้งค่า Epson Wi‑Fi ในหน้าจัดการร้าน");
+    return;
+  }
+  const btn=$("printDayCloseBtn"),old=btn?.innerHTML;
+  if(btn){btn.disabled=true;btn.innerHTML="กำลังพิมพ์…"}
+  try{
+    await printerApiV66("/api/print/day-close",{
+      printer:{
+        ip:String(state.settings.printerIp||"").trim(),
+        deviceId:String(state.settings.printerDeviceId||"local_printer").trim()||"local_printer"
+      },
+      close:{
+        shopName:state.settings.shopName||"ร้านทิพย์เกษรเมี่ยงปลาเผา",
+        date,time,
+        sales:d.sales,cash:d.cash,qr:d.qr,
+        paidOrders:d.os.length,cancelledOrders:d.cancelled.length,
+        discounts:d.discounts,cost:d.cost,profit:d.profit,
+        staffName:currentUser?.name||"-"
+      }
+    });
+    auditV65?.("พิมพ์สรุปปิดยอด",`${date} • ${money(d.sales)}`,{amount:d.sales});
+    if(btn){btn.innerHTML="✓ พิมพ์แล้ว";setTimeout(()=>{btn.disabled=false;btn.innerHTML=old},1400)}
+  }catch(e){
+    if(btn){btn.disabled=false;btn.innerHTML=old}
+    alert("พิมพ์สรุปปิดยอดไม่สำเร็จ: "+e.message);
+  }
 }
 $("printDayCloseBtn").onclick=printDayClose;
 $("salesHistoryDate").onchange=()=>{
@@ -1525,11 +1788,9 @@ function bindStockBulkV48(){
       const targets=state.products.filter(p=>selectedStockIdsV48.has(p.id));
       if(!targets.length)return;
 
-      targets.forEach(p=>{
-        p.stock=Math.max(0,(Number(p.stock)||0)-amount);
-      });
-
-      saveState();
+      const before=targets.map(p=>`${p.name}:${p.stock}`).join(", ");
+      targets.forEach(p=>{p.stock=Math.max(0,(Number(p.stock)||0)-amount);});
+      saveState();auditV65("ลดสต๊อกหลายรายการ",`−${amount} • ${targets.length} รายการ • ${before}`);
       selectedStockIdsV48.clear();
       renderAll();
     });
@@ -1542,8 +1803,8 @@ function bindStockBulkV48(){
       const amount=Math.max(1,Number(stockBulkAmountV48)||1);
       const targets=state.products.filter(p=>selectedStockIdsV48.has(p.id));
       if(!targets.length)return;
-      targets.forEach(p=>p.stock=Math.max(0,Number(p.stock)||0)+amount);
-      saveState();
+      const before=targets.map(p=>`${p.name}:${p.stock}`).join(", ");targets.forEach(p=>p.stock=Math.max(0,Number(p.stock)||0)+amount);
+      saveState();auditV65("เพิ่มสต๊อกหลายรายการ",`+${amount} • ${targets.length} รายการ • ${before}`);
       selectedStockIdsV48.clear();
       renderAll();
     });
@@ -1551,11 +1812,8 @@ function bindStockBulkV48(){
   updateStockBulkUiV48();
 }
 setTimeout(bindStockBulkV48,0);
-window.adjustStock=(id,d)=>{const p=state.products.find(x=>x.id===id);p.stock=Math.max(0,p.stock+d);saveState();renderAll()};
-window.setStock=id=>{
-  const p=state.products.find(x=>x.id===id);if(!p)return;
-  openNumericKeypad({title:`ตั้งค่าสต๊อก ${p.name}`,hint:"ใส่ได้มากกว่า 200",value:p.stock,min:0,max:999999,maxDigits:6,onConfirm:n=>{p.stock=n;saveState();renderAll()}});
-};
+window.adjustStock=(id,d)=>{const p=state.products.find(x=>x.id===id);if(!p)return;const before=Number(p.stock)||0;p.stock=Math.max(0,before+d);saveState();auditV65("ปรับสต๊อก",`${p.name}: ${before} → ${p.stock}`);renderAll()};
+window.setStock=id=>{const p=state.products.find(x=>x.id===id);if(!p)return;openNumericKeypad({title:`ตั้งค่าสต๊อก ${p.name}`,hint:"จำนวนคงเหลือ",value:p.stock,min:0,max:999999,maxDigits:6,onConfirm:n=>{const before=Number(p.stock)||0;p.stock=Math.max(0,Number(n)||0);saveState();auditV65("ตั้งค่าสต๊อก",`${p.name}: ${before} → ${p.stock}`);renderAll()}})};
 
 // Preorder reminder / notifications
 let lastReminderSignature="";
@@ -1907,6 +2165,9 @@ function renderPreorderList(){
       </div>
 
       <div class="preorder-card-actions">
+        <button type="button" class="pre-print-v71" data-print-preorder="${o.id}" onclick="printPreorderV71(${o.id})" title="พิมพ์ใบเตรียมออเดอร์ล่วงหน้า">
+          <span class="pre-print-icon-v71">🖨</span><span>พิมพ์ใบเตรียม</span>
+        </button>
         ${nextBtn}
         ${cancelBtn}
       </div>
@@ -1978,7 +2239,7 @@ $("savePreorderBtn").onclick=()=>{
   };
 
   state.preorders.push(o);
-  saveState();
+  saveState();auditV65("สร้างออเดอร์ล่วงหน้า",`${o.customer} • ${o.date} ${o.pickup} • ${money(o.total)}`,{preorderId:o.id});
 
   preorderCart=[];
   ["preCustomer","prePhone","preNote"].forEach(id=>$(id).value="");
@@ -1999,9 +2260,9 @@ window.setPreStatus=(id,status)=>{
   const allowed=["confirmed","completed","cancelled"];
   if(!allowed.includes(status))return;
   const o=state.preorders.find(x=>x.id===id);if(!o)return;
-  o.status=status;
+  const oldStatus=o.status;o.status=status;
   o.statusUpdatedAt=nowIso();
-  saveState();
+  saveState();auditV65("เปลี่ยนสถานะออเดอร์ล่วงหน้า",`${o.customer}: ${oldStatus||"confirmed"} → ${status}`,{preorderId:o.id});
   renderPreorderList();
   updatePreorderReminder();
   renderPreorderBell();
@@ -2163,7 +2424,7 @@ $("addCategoryBtn").onclick=()=>{
 $("addProductBtn").onclick=()=>{
   const name=$("newName").value.trim(),category=$("newCategory").value||"อื่นๆ";if(!name){alert("กรุณาใส่ชื่อสินค้า");return}
   const id=state.products.reduce((m,p)=>Math.max(m,p.id),0)+1;
-  state.products.push({id,name,category,price:Math.max(0,Number($("newPrice").value)||0),cost:Math.max(0,Number($("newCost").value)||0),stock:Math.max(0,Number($("newStock").value)||0),unit:$("newUnit").value.trim()||"ชิ้น",active:true});
+  const addedV65={id,name,category,price:Math.max(0,Number($("newPrice").value)||0),cost:Math.max(0,Number($("newCost").value)||0),stock:Math.max(0,Number($("newStock").value)||0),unit:$("newUnit").value.trim()||"ชิ้น",active:true};state.products.push(addedV65);auditV65("เพิ่มสินค้า",`${addedV65.name} • ${money(addedV65.price)}`);
   ["newName","newPrice","newCost","newStock","newUnit"].forEach(id=>$(id).value="");saveState();renderAll();
 };
 window.editProduct=id=>{
@@ -2175,11 +2436,11 @@ window.editProduct=id=>{
 };
 $("closeEditProduct").onclick=()=>$("editProductModal").classList.add("hidden");
 $("saveEditProduct").onclick=()=>{
-  const p=state.products.find(x=>x.id===Number($("editProductId").value));if(!p)return;
+  const p=state.products.find(x=>x.id===Number($("editProductId").value));if(!p)return;const beforeV65={...p};
   p.name=$("editName").value.trim()||p.name;p.category=$("editCategory").value;p.price=Math.max(0,Number($("editPrice").value)||0);p.cost=Math.max(0,Number($("editCost").value)||0);p.stock=Math.max(0,Number($("editStock").value)||0);p.unit=$("editUnit").value.trim()||p.unit;
-  saveState();$("editProductModal").classList.add("hidden");renderAll();
+  saveState();auditV65("แก้ไขสินค้า",`${beforeV65.name}: ราคา ${beforeV65.price}→${p.price}, สต๊อก ${beforeV65.stock}→${p.stock}`);$("editProductModal").classList.add("hidden");renderAll();
 };
-window.toggleProduct=id=>{const p=state.products.find(x=>x.id===id);p.active=!p.active;saveState();renderAll()};
+window.toggleProduct=id=>{const p=state.products.find(x=>x.id===id);p.active=!p.active;saveState();auditV65(p.active?"เปิดขายสินค้า":"ปิดขายสินค้า",p.name);renderAll()};
 function updateQrDisplay(){const src=state.settings.qrImage||"";if(src){$("paymentQrImage").src=src;$("paymentQrImage").style.display="block";$("qrFullscreenImage").src=src;$("qrPlaceholder").style.display="none"}else{$("paymentQrImage").style.display="none";$("qrPlaceholder").style.display="block"}}
 function updateAdminQrPreview(){if(currentUser?.role!=="owner")return;const src=state.settings.qrImage||"";if(src){$("adminQrPreview").src=src;$("adminQrPreview").style.display="block";$("adminQrEmpty").style.display="none"}else{$("adminQrPreview").style.display="none";$("adminQrEmpty").style.display="block"}}
 
@@ -2458,3 +2719,127 @@ function renderSalesCharts(){
     renderTodayChartInsightV41(hourly);
   });
 }
+
+
+/* =====================================================================
+   V64 — Optional remote sales dashboard configuration
+   ===================================================================== */
+(function setupRemoteSyncV64(){
+  const urlEl=$("remoteSyncUrlV64"), keyEl=$("remoteShopKeyV64"), saveBtn=$("saveRemoteSyncV64");
+  if(urlEl)urlEl.value=state.settings.remoteSyncUrl||"";
+  if(keyEl)keyEl.value=state.settings.remoteShopKey||"";
+  if(saveBtn)saveBtn.onclick=()=>{
+    state.settings.remoteSyncUrl=String(urlEl?.value||"").trim().replace(/\/+$/,"");
+    state.settings.remoteShopKey=String(keyEl?.value||"").trim();
+    saveState();scheduleBackupV65();flushSyncQueueV65();updateCloudStatusV65();
+    alert(state.settings.remoteSyncUrl&&state.settings.remoteShopKey
+      ?"บันทึก Cloud Sync แล้ว"
+      :"บันทึกแล้ว — หากยังไม่ใส่ URL/Shop Key ระบบจะทำงานแบบ Local เหมือนเดิม");
+  };
+})();
+
+/* =====================================================================
+   V65 — Audit Log + Backup/Remote + Period Revenue + Offline Sync
+   ===================================================================== */
+let auditFilterV65="all";
+function auditActionLabelV65(a){return a||"กิจกรรม"}
+function renderAuditV65(){
+  const host=$("auditLogListV65");if(!host||currentUser?.role!=="owner")return;
+  const q=String($("auditSearchV65")?.value||"").trim().toLowerCase();
+  const type=$("auditTypeV65")?.value||"all";
+  let rows=(state.auditLog||[]).slice();
+  if(type!=="all")rows=rows.filter(x=>String(x.action).includes(type));
+  if(q)rows=rows.filter(x=>(`${x.action} ${x.detail} ${x.staffName}`).toLowerCase().includes(q));
+  rows=rows.slice(0,150);
+  host.innerHTML=rows.length?rows.map(x=>{const d=new Date(x.time);return `<div class="audit-row-v65"><div class="audit-icon-v65">${String(x.action).includes("ยกเลิก")?'!':'•'}</div><div class="audit-main-v65"><b>${escapeHtml(auditActionLabelV65(x.action))}</b><p>${escapeHtml(x.detail||"")}</p></div><div class="audit-meta-v65"><b>${escapeHtml(x.staffName||"ระบบ")}</b><small>${d.toLocaleDateString("th-TH")} ${d.toLocaleTimeString("th-TH",{hour:"2-digit",minute:"2-digit"})}</small></div></div>`}).join(""):'<div class="empty">ยังไม่มีกิจกรรม</div>';
+}
+function ordersInRangeV65(start,end){return state.orders.filter(o=>o.status!=="cancelled"&&new Date(o.time)>=start&&new Date(o.time)<end)}
+function startDayV65(d){const x=new Date(d);x.setHours(0,0,0,0);return x}
+function addDaysV65(d,n){const x=new Date(d);x.setDate(x.getDate()+n);return x}
+function periodRangeV65(type,anchor=new Date()){
+  const now=new Date(anchor),today=startDayV65(now);
+  if(type==="today")return [today,addDaysV65(today,1),"วันนี้"];
+  if(type==="week"){const s=addDaysV65(today,-6);return [s,addDaysV65(today,1),"7 วันล่าสุด"]}
+  if(type==="month"){const s=new Date(now.getFullYear(),now.getMonth(),1),e=new Date(now.getFullYear(),now.getMonth()+1,1);return [s,e,now.toLocaleDateString("th-TH",{month:"long",year:"numeric"})]}
+  const s=new Date(now.getFullYear(),0,1),e=new Date(now.getFullYear()+1,0,1);return [s,e,`ปี ${now.getFullYear()+543}`]
+}
+function renderPeriodSummaryV65(type="today"){
+  const host=$("periodSummaryV65");if(!host)return;const [s,e,label]=periodRangeV65(type);const rows=ordersInRangeV65(s,e);
+  const revenue=rows.reduce((a,o)=>a+Number(o.total||0),0),cash=rows.filter(o=>o.payment==="เงินสด").reduce((a,o)=>a+Number(o.total||0),0),qr=rows.filter(o=>o.payment==="QR").reduce((a,o)=>a+Number(o.total||0),0),avg=rows.length?revenue/rows.length:0;
+  const cancelled=state.orders.filter(o=>o.status==="cancelled"&&new Date(o.time)>=s&&new Date(o.time)<e).length;
+  const product={};rows.forEach(o=>(o.items||[]).forEach(i=>product[`${i.name} ราคา ${money(i.price)}`]=(product[`${i.name} ราคา ${money(i.price)}`]||0)+Number(i.qty||0)));const top=Object.entries(product).sort((a,b)=>b[1]-a[1])[0];
+  $("periodLabelV65").textContent=label;
+  host.innerHTML=`<div><small>ยอดขายรวม</small><b>${money(revenue)}</b></div><div><small>ออเดอร์</small><b>${rows.length}</b></div><div><small>เฉลี่ย / บิล</small><b>${money(avg)}</b></div><div><small>QR</small><b>${money(qr)}</b></div><div><small>เงินสด</small><b>${money(cash)}</b></div><div><small>ยกเลิก</small><b>${cancelled}</b></div><div class="wide"><small>ขายดีที่สุด</small><b>${top?`${escapeHtml(top[0])} × ${top[1]}`:"—"}</b></div>`;
+}
+function initV65(){
+  if(!Array.isArray(state.auditLog))state.auditLog=[];if(!Array.isArray(state.syncQueue))state.syncQueue=[];
+  document.querySelectorAll("[data-period-v65]").forEach(b=>b.onclick=()=>{document.querySelectorAll("[data-period-v65]").forEach(x=>x.classList.toggle("active",x===b));renderPeriodSummaryV65(b.dataset.periodV65)});
+  $("auditSearchV65")?.addEventListener("input",renderAuditV65);$("auditTypeV65")?.addEventListener("change",renderAuditV65);
+  $("backupNowV65")?.addEventListener("click",()=>backupCloudV65(true));
+  $("syncNowV65")?.addEventListener("click",()=>flushSyncQueueV65());
+  renderAuditV65();renderPeriodSummaryV65("today");updateCloudStatusV65();scheduleBackupV65();flushSyncQueueV65();
+}
+setTimeout(initV65,250);
+
+
+(function setupPrinterV66(){
+  const ip=$("printerIpV66"), dev=$("printerDeviceIdV66"), enabled=$("printerEnabledV66"),
+        autoReceipt=$("autoReceiptV66"), autoQueue=$("autoQueueV66"),
+        save=$("savePrinterV66"), test=$("testPrinterV66"), status=$("printerStatusV66");
+  if(!ip)return;
+  const fill=()=>{
+    ip.value=state.settings.printerIp||"";
+    dev.value=state.settings.printerDeviceId||"local_printer";
+    enabled.checked=!!state.settings.printerEnabled;
+    autoReceipt.checked=state.settings.autoPrintReceipt!==false;
+    autoQueue.checked=state.settings.autoPrintQueue!==false;
+    status.textContent=printerConfiguredV66()
+      ? "พร้อมตั้งค่า • "+state.settings.printerIp
+      : "ยังไม่ได้เปิดใช้";
+    status.className="printer-status-v66";
+  };
+  fill();
+  save.onclick=()=>{
+    const value=String(ip.value||"").trim();
+    if(value && !/^(\d{1,3}\.){3}\d{1,3}$/.test(value)){
+      alert("IP เครื่องปริ้นไม่ถูกต้อง เช่น 192.168.1.60");return;
+    }
+    state.settings.printerIp=value;
+    state.settings.printerDeviceId=String(dev.value||"local_printer").trim()||"local_printer";
+    state.settings.printerEnabled=!!enabled.checked;
+    state.settings.autoPrintReceipt=!!autoReceipt.checked;
+    state.settings.autoPrintQueue=!!autoQueue.checked;
+    saveState();
+    auditV65?.("แก้ตั้งค่าเครื่องปริ้น",`${value||"ไม่ได้กำหนด IP"} • auto receipt ${autoReceipt.checked?"ON":"OFF"} • queue ${autoQueue.checked?"ON":"OFF"}`);
+    fill();
+    alert("บันทึกการตั้งค่าเครื่องปริ้นแล้ว");
+  };
+  test.onclick=async()=>{
+    const value=String(ip.value||"").trim();
+    if(!value){alert("กรุณาใส่ IP เครื่องปริ้นก่อน");return}
+    status.textContent="กำลังทดสอบ…";status.className="printer-status-v66 pending";
+    try{
+      await printerApiV66("/api/print/test",{printer:{ip:value,deviceId:String(dev.value||"local_printer").trim()||"local_printer"}});
+      status.textContent="เชื่อมต่อและส่งงานพิมพ์สำเร็จ ✓";status.className="printer-status-v66 ok";
+    }catch(e){
+      status.textContent="ไม่สำเร็จ • "+e.message;status.className="printer-status-v66 error";
+    }
+  };
+})();
+
+
+/* =====================================================================
+   V67 — Remote Dashboard button (no dashboard password)
+   ===================================================================== */
+(function setupRemoteDashboardButtonV67(){
+  const btn=$("remoteDashboardBtnV64");
+  if(!btn)return;
+  const refresh=()=>{
+    const base=String(state.settings.remoteSyncUrl||"").trim().replace(/\/+$/,"");
+    btn.href=base ? base+"/remote-dashboard.html" : "remote-dashboard.html";
+    btn.title=base ? "เปิด Dashboard ออนไลน์" : "เปิด Dashboard บน Raspberry Pi";
+  };
+  refresh();
+  const save=$("saveRemoteSyncV64");
+  if(save)save.addEventListener("click",()=>setTimeout(refresh,0));
+})();

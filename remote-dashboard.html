@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Remote Dashboard • ทิพย์เกษรเมี่ยงปลาเผา</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#f7f7f8;color:#181818;font-family:system-ui,-apple-system,"Noto Sans Thai",sans-serif}
+.wrap{max-width:1120px;margin:auto;padding:24px}
+.head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}
+.brand h1{margin:0;font-size:27px}.brand p{margin:5px 0 0;color:#777}
+.live{background:#e9f8ef;color:#247144;padding:9px 13px;border-radius:999px;font-weight:900}
+.tabs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:16px}
+.tabs button{padding:10px 15px;border-radius:999px;border:1px solid #e5ded8;background:#fff;font-weight:800;cursor:pointer}
+.tabs button.active{background:#fff0e5;color:#d7600d;border-color:#ef8a46}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.card{background:#fff;border:1px solid #e6e6e8;border-radius:20px;padding:18px;box-shadow:0 3px 14px rgba(0,0,0,.025)}
+.metric small{color:#777;display:block}.metric b{font-size:34px;display:block;margin-top:6px}
+.metric:first-child b{color:#e76613}
+.wide{grid-column:span 2}.section{margin-top:14px}.top-row{display:flex;justify-content:space-between;gap:12px}
+.products{display:grid;gap:9px;margin-top:10px}.product{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #eee}
+.last{font-size:20px;margin-top:8px}
+.loading{max-width:520px;margin:18vh auto;text-align:center;background:#fff;border:1px solid #e6e6e8;border-radius:22px;padding:28px}
+.loading b{font-size:22px}.loading p{color:#777}
+@media(max-width:800px){.wrap{padding:14px}.grid{grid-template-columns:repeat(2,1fr)}.wide{grid-column:span 2}}
+@media(max-width:480px){.grid{grid-template-columns:1fr}.wide{grid-column:span 1}.metric b{font-size:30px}}
+</style>
+</head>
+<body>
+<div id="loading" class="loading"><b>กำลังโหลดรายงาน…</b><p>เชื่อมต่อยอดขายแบบเรียลไทม์</p></div>
+<main id="app" class="wrap" hidden>
+  <div class="head">
+    <div class="brand"><h1>ทิพย์เกษรเมี่ยงปลาเผา</h1><p id="periodText">ยอดขายวันนี้</p></div>
+    <span class="live">● LIVE</span>
+  </div>
+  <div class="tabs">
+    <button class="active" data-range="today">วันนี้</button>
+    <button data-range="week">7 วัน</button>
+    <button data-range="month">เดือน</button>
+    <button data-range="year">ปี</button>
+  </div>
+  <div class="grid">
+    <div class="card metric"><small>ยอดขายรวม</small><b id="revenue">฿0</b></div>
+    <div class="card metric"><small>ออเดอร์</small><b id="orders">0</b></div>
+    <div class="card metric"><small>QR</small><b id="qr">฿0</b></div>
+    <div class="card metric"><small>เงินสด</small><b id="cash">฿0</b></div>
+    <div class="card metric"><small>เฉลี่ย / บิล</small><b id="avg">฿0</b></div>
+    <div class="card metric"><small>ยกเลิก</small><b id="cancelled">0</b></div>
+    <div class="card wide"><div class="top-row"><b>สินค้าขายดี</b><small id="rangeDates"></small></div><div id="products" class="products"></div></div>
+    <div class="card wide"><b>ออเดอร์ล่าสุด</b><div id="last" class="last">—</div></div>
+  </div>
+</main>
+<script>
+const $=x=>document.getElementById(x);
+const money=n=>'฿'+Number(n||0).toLocaleString('th-TH',{maximumFractionDigits:2});
+let range='today';
+function paint(s){
+  $('revenue').textContent=money(s.revenue);
+  $('orders').textContent=s.orders||0;
+  $('qr').textContent=money(s.qr);
+  $('cash').textContent=money(s.cash);
+  $('avg').textContent=money(s.average);
+  $('cancelled').textContent=s.cancelled||0;
+  $('rangeDates').textContent=`${s.start} ถึง ${s.end}`;
+  $('products').innerHTML=(s.topProducts||[]).length
+    ?s.topProducts.map((p,i)=>`<div class="product"><span>${i+1}. ${p.name}</span><b>× ${p.qty}</b></div>`).join('')
+    :'ยังไม่มีข้อมูล';
+  const o=s.lastOrder;
+  $('last').textContent=o?`#${String(o.number).padStart(3,'0')} • ${money(o.total)} • ${o.payment}`:'ยังไม่มีออเดอร์';
+}
+async function load(){
+  const r=await fetch(`/api/dashboard/summary?range=${range}`);
+  if(!r.ok)throw new Error('โหลดข้อมูลไม่ได้');
+  const j=await r.json();
+  paint(j.summary);
+  $('periodText').textContent={today:'ยอดขายวันนี้',week:'ยอดรวม 7 วันล่าสุด',month:'ยอดรวมเดือนนี้',year:'ยอดรวมปีนี้'}[range];
+}
+function live(){
+  const proto=location.protocol==='https:'?'wss:':'ws:';
+  const ws=new WebSocket(proto+'//'+location.host+'/live');
+  ws.onmessage=()=>{if(range==='today')load().catch(()=>{})};
+  ws.onclose=()=>setTimeout(live,2500);
+}
+document.querySelectorAll('[data-range]').forEach(b=>b.onclick=()=>{
+  range=b.dataset.range;
+  document.querySelectorAll('[data-range]').forEach(x=>x.classList.toggle('active',x===b));
+  load().catch(()=>{});
+});
+(async()=>{
+  try{
+    await load();
+    $('loading').hidden=true;
+    $('app').hidden=false;
+    live();
+  }catch(e){
+    $('loading').innerHTML='<b>ยังเชื่อมต่อรายงานไม่ได้</b><p>กรุณาเปิดหน้านี้ผ่าน Raspberry Pi หรือ Cloud Server ที่กำลังทำงานอยู่</p>';
+  }
+})();
+</script>
+</body>
+</html>
